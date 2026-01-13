@@ -17,7 +17,7 @@ my $application = route {
         #  localhost => True,
         #  no_sudo   => True,
         #  conf      => "/path/to/file.conf"
-          tags => "sha=tags/{%json<after>},scm={%json<repository><ssh_url>}",
+          tags => "sha={%json<after>},scm={%json<repository><ssh_url>}",
         )
       );
       my $key = "{%json<after>}.{now.Int()}";
