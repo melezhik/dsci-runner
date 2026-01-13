@@ -20,9 +20,12 @@ does Sparky::JobApi::Role
 
     directory "scm";
 
-    git-scm "http://127.0.0.1:3000/root/test.git", %(
+    say "scm: ",tags()<scm>;
+    say "sha: ",tags()<sha>;
+
+    git-scm tags()<scm>, %(
       :to<scm>,
-      :branch<main>,
+      :branch(tags()<sha>),
     );
 
     my $jobs = load-yaml("scm/.dsci/jobs.yaml".IO.slurp);
@@ -30,6 +33,8 @@ does Sparky::JobApi::Role
     #say $jobs.raku;
 
     my %_dsci;
+
+    my $status = True;
 
     for $jobs<jobs>.flat -> $job {
 
@@ -55,13 +60,34 @@ does Sparky::JobApi::Role
 
       my $st = self.wait-job($j);
 
-      die unless $st<OK>;
+      unless $st<OK> {
+        say $j.report;
+        last;
+      }
 
       %_dsci{$job<id>} = $j.get-stash();
 
       say $j.report();
       
     }
+
+    my $f-state = $status ?? "success" !! "fail";
+    my %p = %(
+      description => "update forgejo status" 
+    );
+    my $cmd = q:to /BASH/.subst("%status%",$f-state,:g).subst("%token%",%*ENV<DSCI_FORGEJO_TOKEN>);
+    curl -X POST "127.0.0.1:3000/repos/root/test/statuses/{sha}" \
+     -H "Authorization: token %token%" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "state": "%status%",
+           "target_url": "http://127.0.0.1:4000",
+           "description": "The build status: %status%",
+           "context": "dsci"
+         }'
+
+    BASH
+    bash $cmd,%p;
   }
 
   method stage-job-run {
@@ -99,6 +125,7 @@ does Sparky::JobApi::Role
       my $s = task-run "scm/.dsci/{tags()<path>}", %params;
 
       $me.put-stash($s);
+
     }
   }
 
