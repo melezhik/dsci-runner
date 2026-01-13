@@ -26,6 +26,7 @@ does Sparky::JobApi::Role
     git-scm tags()<scm>, %(
       :to<scm>,
       :branch(tags()<sha>),
+      :skip-pull,
     );
 
     my $jobs = load-yaml("scm/.dsci/jobs.yaml".IO.slurp);
@@ -48,6 +49,8 @@ does Sparky::JobApi::Role
         job_id  => $job<id>,
         path    => $job<path>,
         stage   => "job-run",
+        scm     => tags()<scm>,
+        sha     => tags()<sha>,
       );
 
       # TBD - pass results from previous jobs
@@ -101,9 +104,10 @@ does Sparky::JobApi::Role
 
     directory "scm";
 
-    git-scm "http://127.0.0.1:3000/root/test.git", %(
+    git-scm tags()<scm>, %(
       :to<scm>,
-      :branch<main>,
+      :branch(tags()<sha>),
+      :skip-pull,
     );
 
     for "scm/.dsci/{tags()<path>}".IO.dir: test => /^^ "job." \S+ $$/ -> $file {

@@ -1,0 +1,16 @@
+#crontab: "2 * * * *"
+sparrowdo:
+  no_sudo: true
+  no_index_update: true
+  bootstrap: false
+  format: default
+  #tags: foo=bar,message=hello world,name=alex,name=.env[NAME],lastname=.env[LASTNAME]
+  #secretsfile: /Users/alex/secrets.env
+  #verbose: true
+disabled: false
+allow_manual_run: true  
+keep_builds: 5
+#vars:
+#  -
+#        name: lines
+#        type: textarea
