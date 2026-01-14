@@ -22,6 +22,8 @@ does Sparky::JobApi::Role
 
     say "scm: ",tags()<scm>;
     say "sha: ",tags()<sha>;
+    say "message: ",tags()<message>;
+    say "=======";
 
     git-scm tags()<scm>, %(
       :to<scm>,
@@ -83,7 +85,7 @@ does Sparky::JobApi::Role
           :dump-header('-'),
           :header('"Content-Type: application/json"'),
           :data(
-            qq['\{ "state": "{$f-state}", "target_url": "http://127.0.0.1:4000/report/raw/dsci/{tags()<SPARKY_JOB_ID>}", "description": "The build status: {$f-state}", "context": "dsci" \}']
+            qq['\{ "state": "{$f-state}", "target_url": "http://127.0.0.1:4000/report_jid/dsci/{tags()<SPARKY_JOB_ID>}", "description": "The build status: {$f-state}", "context": "dsci" \}']
           ),
         ),
         [

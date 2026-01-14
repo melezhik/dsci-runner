@@ -11,13 +11,13 @@ my $application = route {
       say "hit for {%json<after>}";
 
       my %trigger = %(
-        description => "ci: sha={%json<after>}",
+        description => "{%json<after>} | {%json<head_commit><message>}",
         #cwd => "/path/to/working/directory",
         sparrowdo => %(
         #  localhost => True,
         #  no_sudo   => True,
         #  conf      => "/path/to/file.conf"
-          tags => "sha={%json<after>},scm={%json<repository><ssh_url>}",
+          tags => "sha={%json<after>},scm={%json<repository><ssh_url>},message={%json<head_commit><message>}",
         )
       );
       my $key = "{%json<after>}.{now.Int()}";
