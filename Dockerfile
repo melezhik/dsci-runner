@@ -52,7 +52,7 @@ RUN mkdir /home/worker/projects && cd /home/worker/projects && git clone https:/
 
 RUN sudo apk add sqlite-libs openssh-keygen 
 
-RUN ssh-keygen -b 4000 -t rsa -f ~/.ssh/id_rsa -q -N '""'
+RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N '""'
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
@@ -60,9 +60,9 @@ ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 
-COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
-
 COPY .cro.yml app.raku /home/worker/projects/dsci/
+
+RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/
 
 WORKDIR /home/worker/projects
 
