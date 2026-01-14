@@ -22,7 +22,7 @@ does Sparky::JobApi::Role
 
     say "scm: ",tags()<scm>;
     say "sha: ",tags()<sha>;
-    say "message: ",tags()<message>;
+    say "message: ",tags()<message>.chomp;
     say "=======";
 
     git-scm tags()<scm>, %(
@@ -64,13 +64,15 @@ does Sparky::JobApi::Role
 
       unless $st<OK> {
         #say $j.report;
-        say ">>> job {$job<id>} ... FAIL";
+        say "job {$job<id>} ... [FAIL]";
+        say "...";
         last;
       }
 
       %_dsci{$job<id>} = $j.get-stash();
 
-      say ">>> job {$job<id>} ... OK";
+      say "job {$job<id>} ... [OK]";
+      say "...";
 
       #say $j.report();
       
