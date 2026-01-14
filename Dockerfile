@@ -54,9 +54,13 @@ RUN sudo apk add sqlite-libs
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
-ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start &&  tail -f ~/.sparky/sparkyd.log
+ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cd /home/worker/projects/dsci && cro run
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
+
+COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
+
+COPY .cro.yml app.raku /home/worker/projects/dsci/
 
 WORKDIR /home/worker/projects
 
