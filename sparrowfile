@@ -80,25 +80,15 @@ does Sparky::JobApi::Role
 
     my $f-state = $status ?? "success" !! "fail";
 
-    task-run "utils/curl", "curl", %(
-      args => [
-        %( 
-          :output</dev/null>,
-          :dump-header('-'),
-          :header('"Content-Type: application/json"'),
-          :data(
-            qq['\{ "state": "{$f-state}", "target_url": "http://127.0.0.1:4000/report_jid/dsci/{tags()<SPARKY_JOB_ID>}", "description": "The build status: {$f-state}", "context": "dsci" \}']
-          ),
-        ),
-        [
-          "-H \"Authorization: token {%*ENV<DSCI_FORGEJO_TOKEN>}\"",
-          "silent",
-          "fail",
-          "location",
-        ],
-        "127.0.0.1:3000/api/v1/repos/root/test/statuses/{tags()<sha>}"
-      ]
-    );
+    my $url = "http://127.0.0.1:4000/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+
+    my $data = qq['\{ "state": "{$f-state}", "target_url": "{$url}", "description": "The build status: {$f-state}", "context": "dsci" \}'];
+
+    my $params = "--data $data -H \"Authorization: token {%*ENV<DSCI_FORGEJO_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
+
+    my $ext-url = "127.0.0.1:3000/api/v1/repos/root/test/statuses/{tags()<sha>}";
+
+    say qqx[curl $params $ext-url];
 
   }
 
