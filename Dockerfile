@@ -50,11 +50,13 @@ RUN zef install --/test --force-install https://github.com/melezhik/sparky.git
 
 RUN mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git
 
-RUN sudo apk add sqlite-libs
+RUN sudo apk add sqlite-libs openssh-keygen 
+
+RUN ssh-keygen -b 4000 -t rsa -f ~/.ssh/id_rsa -q -N '""'
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
-ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cd /home/worker/projects/dsci && cro run
+ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cat ~/.ssh/id_rsa.pub  && cd /home/worker/projects/dsci && cro run
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 
@@ -69,3 +71,5 @@ ENV SP6_FORMAT_COLOR=1
 ENV FORGEJO_HOST=http://127.0.0.1:3000
 
 ENV FORGEJO_API_TOKEN=changeme
+
+EXPOSE 3333 4000

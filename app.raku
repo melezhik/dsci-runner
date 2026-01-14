@@ -30,7 +30,7 @@ my $application = route {
 }
 
 my Cro::Service $service = Cro::HTTP::Server.new:
-    :host(%*ENV<DSCI_HOST> || "127.0.0.1"), :port(%*ENV<DSCI_PORT> || 3333), :$application;
+    :host(%*ENV<DSCI_HOST> || "0.0.0.0"), :port(%*ENV<DSCI_PORT> || 3333), :$application;
 
 $service.start;
 
