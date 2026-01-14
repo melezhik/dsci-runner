@@ -1,6 +1,6 @@
 #!raku
 
-my $scm = "http://127.0.0.1:3000/root/test.git";
+my $scm = "http://{%*ENV<FORGEJO_HOST>}/root/test.git";
 
 use Sparky::JobApi;
 
@@ -84,9 +84,9 @@ does Sparky::JobApi::Role
 
     my $data = qq['\{ "state": "{$f-state}", "target_url": "{$url}", "description": "The build status: {$f-state}", "context": "dsci" \}'];
 
-    my $params = "--data $data -H \"Authorization: token {%*ENV<DSCI_FORGEJO_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
+    my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "127.0.0.1:3000/api/v1/repos/root/test/statuses/{tags()<sha>}";
+    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/root/test/statuses/{tags()<sha>}";
 
     say qqx[curl $params $ext-url];
 
