@@ -8,3 +8,5 @@ ignore:
   - README.md
   - .precomp
   - sparrowfile  
+  - sparman.sh
+  - docker-run.sh
