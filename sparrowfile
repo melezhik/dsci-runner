@@ -53,9 +53,6 @@ does Sparky::JobApi::Role
         sha     => tags()<sha>,
       );
 
-      # TBD - pass results from previous jobs
-      # via job stash
-
       $j.queue({
         :description($job<id>), 
         :tags(%tags),
@@ -64,33 +61,41 @@ does Sparky::JobApi::Role
       my $st = self.wait-job($j);
 
       unless $st<OK> {
-        say $j.report;
+        #say $j.report;
+        say ">>> job {$job<id>} ... FAIL";
         last;
       }
 
       %_dsci{$job<id>} = $j.get-stash();
 
-      say $j.report();
+      say ">>> job {$job<id>} ... OK";
+
+      #say $j.report();
       
     }
 
     my $f-state = $status ?? "success" !! "fail";
-    my %p = %(
-      description => "update forgejo status" 
-    );
-    my $cmd = q:to /BASH/.subst("%status%",$f-state,:g).subst("%token%",%*ENV<DSCI_FORGEJO_TOKEN>);
-    curl -X POST "127.0.0.1:3000/repos/root/test/statuses/{sha}" \
-     -H "Authorization: token %token%" \
-     -H "Content-Type: application/json" \
-     -d '{
-           "state": "%status%",
-           "target_url": "http://127.0.0.1:4000",
-           "description": "The build status: %status%",
-           "context": "dsci"
-         }'
 
-    BASH
-    bash $cmd,%p;
+    task-run "utils/curl", "curl", %(
+      args => [
+        %( 
+          :output</dev/null>,
+          :dump-header('-'),
+          :header('"Content-Type: application/json"'),
+          :data(
+            qq['\{ "state": "{$f-state}", "target_url": "http://127.0.0.1:4000/report/raw/dsci/{tags()<SPARKY_JOB_ID>}", "description": "The build status: {$f-state}", "context": "dsci" \}']
+          ),
+        ),
+        [
+          "-H \"Authorization: token {%*ENV<DSCI_FORGEJO_TOKEN>}\"",
+          "silent",
+          "fail",
+          "location",
+        ],
+        "127.0.0.1:3000/api/v1/repos/root/test/statuses/{tags()<sha>}"
+      ]
+    );
+
   }
 
   method stage-job-run {
