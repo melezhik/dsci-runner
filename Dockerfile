@@ -48,7 +48,7 @@ RUN zef install --/test Sparrowdo
 
 RUN echo OK && zef install --/test --force-install https://github.com/melezhik/sparky.git
 
-RUN sudo apk add sqlite-libs openssh-keygen util-linux openssh-client
+RUN sudo apk add sqlite-libs openssh-keygen util-linux openssh-client python3
 
 RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
