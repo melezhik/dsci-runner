@@ -62,6 +62,7 @@ does Sparky::JobApi::Role
 
       unless $st<OK> {
         #say $j.report;
+        $status = False;
         say "job {$job<id>} ... [FAIL]";
         say "...";
         last;
