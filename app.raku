@@ -17,7 +17,7 @@ my $application = route {
         #  localhost => True,
         #  no_sudo   => True,
         #  conf      => "/path/to/file.conf"
-          tags => "sha={%json<after>},scm={%json<repository><ssh_url>.subst('127.0.0.1','host.docker.internal')},message={%json<head_commit><message>}",
+          tags => "sha={%json<after>},scm={%json<repository><clone_url>.subst('127.0.0.1','host.docker.internal')},message={%json<head_commit><message>}",
         )
       );
       my $key = "{%json<after>}.{now.Int()}";
