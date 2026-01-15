@@ -56,7 +56,7 @@ RUN echo OK && mkdir /home/worker/projects && cd /home/worker/projects && git cl
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
-ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cat ~/.ssh/id_rsa.pub  && cd /home/worker/projects/dsci && cro run
+ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cd /home/worker/projects/dsci && cro run
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 
