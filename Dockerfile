@@ -52,15 +52,13 @@ RUN sudo apk add sqlite-libs openssh-keygen util-linux openssh-client
 
 RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
-RUN echo OK && mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd /home/worker/projects/sparky && zef install . --force-install --/test
+RUN echo OK2 && mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd /home/worker/projects/sparky && zef install . --force-install --/test
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
-ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && cd /home/worker/projects/dsci && cro run
+ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf &&  sparman worker_ui start  && sparman --env SPARKY_TIMEOUT=10 worker start && tail -f ~/.sparky/sparkyd.log
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
-
-COPY .cro.yml app.raku /home/worker/projects/dsci/
 
 RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/
 
@@ -68,8 +66,8 @@ WORKDIR /home/worker/projects
 
 ENV SP6_FORMAT_COLOR=1
 
-ENV FORGEJO_HOST=http://127.0.0.1:3000
+ENV FORGEJO_HOST=http://host.docker.internal:3000
 
 ENV FORGEJO_API_TOKEN=changeme
 
-EXPOSE 3333 4000
+EXPOSE 4000
