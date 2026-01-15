@@ -6,8 +6,6 @@ use Sparky::JobApi;
 
 use JSON::Fast;
 
-use URI::Encode;
-
 use YAMLish;
 
 class Pipeline

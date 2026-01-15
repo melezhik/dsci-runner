@@ -46,13 +46,13 @@ RUN zef install --/test Cro::TLS
 
 RUN zef install --/test Sparrowdo
 
-RUN zef install --/test --force-install https://github.com/melezhik/sparky.git
+RUN echo OK && zef install --/test --force-install https://github.com/melezhik/sparky.git
 
-RUN mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git
-
-RUN sudo apk add sqlite-libs openssh-keygen 
+RUN sudo apk add sqlite-libs openssh-keygen util-linux openssh-client
 
 RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N '""'
+
+RUN echo OK && mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd /home/worker/projects/sparky && zef install . --force-install --/test
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
