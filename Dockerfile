@@ -30,9 +30,7 @@ RUN git clone https://github.com/ugexe/zef.git /tmp/zef && \
 
 cd /tmp/zef && raku -I. bin/zef install . --/test --install-to=home
 
-#RUN zef update
-
-RUN zef install --/test JSON::Fast --debug 
+RUN zef install --/test JSON::Fast --debug
 
 RUN sudo apk add build-base
 
@@ -63,8 +61,6 @@ COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/
 
 WORKDIR /home/worker/projects
-
-ENV SP6_FORMAT_COLOR=1
 
 ENV FORGEJO_HOST=http://host.docker.internal:3000
 
