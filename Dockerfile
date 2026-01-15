@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ENV PATH="/home/worker/.raku/bin:/opt/rakudo-pkg/bin:${PATH}"
+ENV PATH="/home/worker/.raku/bin:${PATH}"
 
 ENV SP6_DUMP_TASK_CODE=0
 
@@ -10,9 +10,7 @@ RUN apk update && apk add openssl bash curl wget perl openssl-dev sudo git
 
 RUN apk add --no-cache bash
 
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/nxadm-pkgs/rakudo-pkg/setup.alpine.sh' | bash 
-
-RUN apk add rakudo-pkg
+RUN apk add rakudo zef
 
 RUN adduser -D -h /home/worker -s /bin/bash -G wheel worker
 
@@ -24,11 +22,7 @@ RUN sudo echo
 
 USER worker
 
-RUN git clone https://github.com/ugexe/zef.git /tmp/zef && \
-
-cd /tmp/zef && raku -I. bin/zef install . --/test --install-to=home
-
-RUN zef install --/test JSON::Fast --debug
+RUN zef install --/test JSON::Fast
 
 RUN sudo apk add build-base
 
