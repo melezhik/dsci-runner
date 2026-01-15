@@ -1,7 +1,5 @@
 #!raku
 
-my $scm = "http://{%*ENV<FORGEJO_HOST>}/root/test.git";
-
 use Sparky::JobApi;
 
 use JSON::Fast;
@@ -85,7 +83,7 @@ does Sparky::JobApi::Role
 
     my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/root/test/statuses/{tags()<sha>}";
+    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
     say qqx[curl $params $ext-url];
 
