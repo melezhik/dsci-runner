@@ -41,8 +41,6 @@ does Sparky::JobApi::Role
         :project("job.run"),
       );
 
-      $j.put-stash(%_dsci);
-
       my %tags = (
         job_id  => $job<id>,
         path    => $job<path>,
@@ -51,8 +49,30 @@ does Sparky::JobApi::Role
         sha     => tags()<sha>,
       );
 
+      if $job<plugin> {
+        %tags<plugin> = $job<plugin>
+      } elsif $job<path> {
+        %tags<path> = $job<path>
+      } else {
+        $status = False;
+        say "neither path nor path is set";
+        last;
+      }
+
+      if $job<params> {
+        $j.put-stash(%(
+          params => $job<params>,
+          dsci => %_dsci,
+        ));
+      } else {
+        $j.put-stash(%(
+          dsci => %_dsci,
+          params => Hash.new,
+        ));
+      }
+
       $j.queue({
-        :description($job<id>), 
+        :description($job<id>),
         :tags(%tags),
       });
 
@@ -98,6 +118,18 @@ does Sparky::JobApi::Role
     say "run job: {tags()<job_id>}";
     say "===";
 
+    if tags()<plugin> {
+
+      my $params = $me.get-stash()<params>;
+
+      my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
+
+      $me.put-stash($s);
+
+      return;
+
+    } 
+
     directory "scm";
 
     git-scm tags()<scm>, %(
@@ -118,11 +150,15 @@ does Sparky::JobApi::Role
         find . -type f -name hook.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
       BASH
 
-      my %params; 
+      my %p_ = $me.get-stash();
 
-      %params<_dsci_> = $me.get-stash();
+      my %params = %p_<params>; 
 
-      my $s = task-run "scm/.dsci/{tags()<path>}", %params;
+      %params<_dsci_> = %p_<dsci>;
+
+      chdir "scm/.dsci/{tags()<path>}";
+
+      my $s = task-run ".", %params;
 
       $me.put-stash($s);
 
