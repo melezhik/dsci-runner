@@ -65,69 +65,73 @@ does Sparky::JobApi::Role
     }
 
     if $status {
-    for $jobs<jobs>.flat -> $job {
+      for $jobs<jobs>.flat -> $job {
 
-      my $j = Sparky::JobApi.new(
-        :project("job.run"),
-      );
+        my $j = Sparky::JobApi.new(
+          :project("job.run"),
+        );
 
-      my %tags = (
-        job_id  => $job<id>,
-        path    => $job<path>,
-        stage   => "job-run",
-        scm     => tags()<scm>,
-        sha     => tags()<sha>,
-      );
+        my %tags = (
+          job_id  => $job<id>,
+          path    => $job<path>,
+          stage   => "job-run",
+          scm     => tags()<scm>,
+          sha     => tags()<sha>,
+        );
 
-      if $job<plugin> {
-        %tags<plugin> = $job<plugin>
-      } elsif $job<path> {
-        %tags<path> = $job<path>
-      } else {
-        $status = False;
-        say "neither path nor path is set";
-        last;
-      }
+        if $job<plugin> {
+          %tags<plugin> = $job<plugin>
+        } elsif $job<path> {
+          %tags<path> = $job<path>
+        } else {
+          $status = False;
+          say "neither path nor path is set";
+          last;
+        }
 
-      if $job<params> {
-        $j.put-stash(%(
-          params => $job<params>,
-          dsci => %_dsci,
-        ));
-      } else {
-        $j.put-stash(%(
-          dsci => %_dsci,
-          params => Hash.new,
-        ));
-      }
+        if $job<debug> {
+          %tags<dump-task-config> = True;
+        }
 
-      $j.queue({
-        :description($job<id>),
-        :tags(%tags),
-        :sparrowdo(%(
-          :docker<dsci-agent>,
-          :no_sudo,
-        )),
-      });
+        if $job<params> {
+          $j.put-stash(%(
+            params => $job<params>,
+            dsci => %_dsci,
+          ));
+        } else {
+          $j.put-stash(%(
+            dsci => %_dsci,
+            params => Hash.new,
+          ));
+        }
 
-      my $st = self.wait-job($j);
+        $j.queue({
+          :description($job<id>),
+          :tags(%tags),
+          :sparrowdo(%(
+            :docker<dsci-agent>,
+            :no_sudo,
+          )),
+        });
 
-      unless $st<OK> {
-        #say $j.report;
-        $status = False;
-        say "job {$job<id>} ... [FAIL]";
+        my $st = self.wait-job($j);
+
+        unless $st<OK> {
+          #say $j.report;
+          $status = False;
+          say "job {$job<id>} ... [FAIL]";
+          say "...";
+          last;
+        }
+
+        %_dsci{$job<id>} = $j.get-stash();
+
+        say "job {$job<id>} ... [OK]";
         say "...";
-        last;
+
+        #say $j.report();
+
       }
-
-      %_dsci{$job<id>} = $j.get-stash();
-
-      say "job {$job<id>} ... [OK]";
-      say "...";
-
-      #say $j.report();
-      
-    }
     }
 
     my $f-state = $status ?? "success" !! "failure";
@@ -167,6 +171,10 @@ does Sparky::JobApi::Role
 
       my $params = $me.get-stash()<params>;
 
+      if tags()<dump-task-config> {
+        %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
+      }
+
       my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
 
       $me.put-stash($s);
@@ -203,6 +211,9 @@ does Sparky::JobApi::Role
 
       chdir "scm/.dsci/{tags()<path>}";
 
+      if tags()<dump-task-config> {
+        %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
+      }
       my $s = task-run ".", %params;
 
       $me.put-stash($s);
