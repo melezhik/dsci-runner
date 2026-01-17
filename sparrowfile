@@ -105,8 +105,9 @@ does Sparky::JobApi::Role
 
     my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
+    say "send update to CI ...";
     say qqx[curl $params $ext-url];
-
+    say "done";
   }
 
   method stage-job-run {
