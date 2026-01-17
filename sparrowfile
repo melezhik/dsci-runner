@@ -37,7 +37,7 @@ does Sparky::JobApi::Role
   
     bash "sudo chmod 666 /var/run/docker.sock";
 
-    bash "docker stop -t 1 dsci-agent";
+    bash "docker stop -t 1 dsci-agent || :";
 
     bash "docker run -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh alpine:latest";
 
