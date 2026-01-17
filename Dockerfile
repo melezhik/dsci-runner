@@ -44,7 +44,7 @@ RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
 RUN echo OK2 && mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd /home/worker/projects/sparky && zef install . --force-install --/test
 
-RUN echo OK3 && cd /home/worker/projects/sparky && zef install . --force-install --/test
+RUN echo OK5 && cd /home/worker/projects/sparky && git pull && zef install . --force-install --/test
 
 RUN cd /home/worker/projects/sparky && raku db-init.raku
 
