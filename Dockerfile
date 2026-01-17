@@ -52,7 +52,7 @@ ENTRYPOINT cd /home/worker/projects/sparky && sparman --base $PWD worker_ui conf
 
 COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 
-RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/
+RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/ && sudo apk add docker-cli
 
 WORKDIR /home/worker/projects
 

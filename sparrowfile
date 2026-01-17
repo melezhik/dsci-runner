@@ -34,7 +34,37 @@ does Sparky::JobApi::Role
     my %_dsci;
 
     my $status = True;
+  
+    bash "sudo chmod 666 /var/run/docker.sock";
 
+    bash "docker stop -t 1 dsci-agent";
+
+    bash "docker run -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh alpine:latest";
+
+    my $j = Sparky::JobApi.new(
+        :project("job.bootstrap"),
+    );
+
+    $j.queue({
+        :description("dsci agent boorstrap"),
+        :tags(%(stage => "bootstrap")),
+        :sparrowdo(%(
+          :docker<dsci-agent>,
+          :bootstrap,
+          :no_sudo,
+        )),
+    });
+ 
+
+    my $st = self.wait-job($j);
+
+    unless $st<OK> {
+      $status = False;
+      say "dsci agent boorstrap ... [FAIL]";
+      say "...";
+    }
+
+    if $status {
     for $jobs<jobs>.flat -> $job {
 
       my $j = Sparky::JobApi.new(
@@ -74,6 +104,10 @@ does Sparky::JobApi::Role
       $j.queue({
         :description($job<id>),
         :tags(%tags),
+        :sparrowdo(%(
+          :docker<dsci-agent>,
+          :no_sudo,
+        )),
       });
 
       my $st = self.wait-job($j);
@@ -94,6 +128,7 @@ does Sparky::JobApi::Role
       #say $j.report();
       
     }
+    }
 
     my $f-state = $status ?? "success" !! "failure";
 
@@ -110,6 +145,14 @@ does Sparky::JobApi::Role
     say "done";
   }
 
+  method stage-bootstrap {
+
+    bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
+
+    say "dsci agent is ready!";
+
+  }
+
   method stage-job-run {
 
     #say tags().raku;
@@ -117,6 +160,7 @@ does Sparky::JobApi::Role
     my $me = Sparky::JobApi.new( :mine );
 
     say "run job: {tags()<job_id>}";
+
     say "===";
 
     if tags()<plugin> {
