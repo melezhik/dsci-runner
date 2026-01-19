@@ -35,11 +35,11 @@ does Sparky::JobApi::Role
 
     my $status = True;
   
-    bash "sudo chmod 666 /var/run/docker.sock";
+    bash "sudo chmod 666 /var/run/docker.sock" unless %*ENV<DSCI_ORCHESTRATOR_NO_CONTAINER>;
 
     bash "docker stop -t 1 dsci-agent || :";
 
-    bash "docker run -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh alpine:latest";
+    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh alpine:latest";
 
     my $j = Sparky::JobApi.new(
         :project("job.bootstrap"),
@@ -136,7 +136,7 @@ does Sparky::JobApi::Role
 
     my $f-state = $status ?? "success" !! "failure";
 
-    my $url = "http://127.0.0.1:4000/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $url = "{%*ENV<DSCI_FEEDBACK_URL>}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$f-state}", "target_url": "{$url}", "description": "The build status: {$f-state}", "context": "dsci" \}'];
 

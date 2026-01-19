@@ -60,4 +60,6 @@ ENV FORGEJO_HOST=http://host.docker.internal:3000
 
 ENV FORGEJO_API_TOKEN=changeme
 
+ENV DSCI_FEEDBACK_URL=http:/127.0.0.1:4000
+
 EXPOSE 4000
