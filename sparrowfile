@@ -104,6 +104,7 @@ does Sparky::JobApi::Role
 
         if $job<debug> {
           %tags<dump-task-config> = True;
+          %tags<dump-task-code> = True;
         }
 
         if $job<params> {
@@ -185,10 +186,13 @@ does Sparky::JobApi::Role
 
       my $params = $me.get-stash()<params>;
 
+      if tags()<dump-task-code> {
+        %*ENV<SP6_DUMP_TASK_CODE> =  1;
+      }
+
       if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
       }
-
       my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
 
       $me.put-stash($s);
