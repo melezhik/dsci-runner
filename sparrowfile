@@ -232,6 +232,11 @@ does Sparky::JobApi::Role
       if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
       }
+
+      if tags()<dump-task-code> {
+        %*ENV<SP6_DUMP_TASK_CODE> =  1;
+      }
+
       my $s = task-run ".", %params;
 
       $me.put-stash($s);
