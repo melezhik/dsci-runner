@@ -39,30 +39,35 @@ does Sparky::JobApi::Role
 
     bash "docker stop -t 1 dsci-agent || :";
 
-    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh alpine:latest";
+    say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>}";
 
-    my $j = Sparky::JobApi.new(
-        :project("job.bootstrap"),
-    );
+    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE>}";
 
-    $j.queue({
-        :description("dsci agent boorstrap"),
-        :tags(%(stage => "bootstrap")),
-        :sparrowdo(%(
-          :docker<dsci-agent>,
-          :bootstrap,
-          :no_sudo,
-        )),
-    });
+    unless %*ENV<DSCI_AGENT_SKIP_BOOTSTRAP> {
+      my $j = Sparky::JobApi.new(
+          :project("job.bootstrap"),
+      );
+
+      $j.queue({
+          :description("dsci agent boorstrap"),
+          :tags(%(stage => "bootstrap")),
+          :sparrowdo(%(
+            :docker<dsci-agent>,
+            :bootstrap,
+            :no_sudo,
+          )),
+      });
  
 
-    my $st = self.wait-job($j);
+      my $st = self.wait-job($j);
 
-    unless $st<OK> {
-      $status = False;
-      say "dsci agent boorstrap ... [FAIL]";
-      say "...";
-    }
+      unless $st<OK> {
+        $status = False;
+        say "dsci agent boorstrap ... [FAIL]";
+        say "...";
+      }
+
+      }
 
     if $status {
       for $jobs<jobs>.flat -> $job {
@@ -152,6 +157,8 @@ does Sparky::JobApi::Role
   method stage-bootstrap {
 
     bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
+
+    package-install "python3";
 
     say "dsci agent is ready!";
 
