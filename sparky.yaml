@@ -5,5 +5,5 @@ sparrowdo:
   bootstrap: false
   format: default
 disabled: false
-allow_manual_run: true  
+allow_manual_run: true
 keep_builds: 1000

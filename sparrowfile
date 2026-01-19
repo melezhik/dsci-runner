@@ -97,6 +97,16 @@ does Sparky::JobApi::Role
 
       for $jobs<jobs>.flat -> $job {
 
+        if $job<only> {
+          use MONKEY-SEE-NO-EVAL;
+          next unless EVAL("for tags() \{ {$job<only>} \}");
+        }
+
+        if $job<skip> {
+          use MONKEY-SEE-NO-EVAL;
+          next if EVAL("for tags() \{ {$job<skip>} \}");
+        }
+
         my $j = Sparky::JobApi.new(
           :project("job.run"),
         );
