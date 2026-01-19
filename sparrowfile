@@ -168,7 +168,7 @@ does Sparky::JobApi::Role
 
     package-install "python3";
 
-    say "dsci agent is ready!";
+    say "dsci agent is ready!!!";
 
   }
 
