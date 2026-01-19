@@ -54,6 +54,8 @@ COPY sparrowfile sparky.yaml /home/worker/.sparky/projects/dsci/
 
 RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/ && sudo apk add docker-cli
 
+RUN git config --global advice.detachedHead false
+
 WORKDIR /home/worker/projects
 
 ENV FORGEJO_HOST=http://host.docker.internal:3000
