@@ -1,0 +1,4 @@
+FROM melezhik/sparrow:ubuntu_arm
+
+RUN sudo apt-get update && sudo apt install python3 -yq
+RUN zef install --/test --force-install https://github.com/melezhik/Sparrow6.git
