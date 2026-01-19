@@ -49,7 +49,7 @@ does Sparky::JobApi::Role
       );
 
       $j.queue({
-          :description("dsci agent boorstrap"),
+          :description("dsci agent bootstrap"),
           :tags(%(stage => "bootstrap")),
           :sparrowdo(%(
             :docker<dsci-agent>,
@@ -61,15 +61,21 @@ does Sparky::JobApi::Role
 
       my $st = self.wait-job($j);
 
-      unless $st<OK> {
+      if ! $st<OK> {
         $status = False;
         say "dsci agent boorstrap ... [FAIL]";
         say "...";
+        say $j.report();
+      } else {
+        say "dsci agent boorstrap ... [OK]";
+        say "...";
+        say $j.report();
       }
 
-      }
+    }
 
     if $status {
+
       for $jobs<jobs>.flat -> $job {
 
         my $j = Sparky::JobApi.new(
@@ -122,10 +128,10 @@ does Sparky::JobApi::Role
         my $st = self.wait-job($j);
 
         unless $st<OK> {
-          #say $j.report;
           $status = False;
           say "job {$job<id>} ... [FAIL]";
           say "...";
+          say $j.report;
           last;
         }
 
@@ -133,8 +139,7 @@ does Sparky::JobApi::Role
 
         say "job {$job<id>} ... [OK]";
         say "...";
-
-        #say $j.report();
+        say $j.report();
 
       }
     }
