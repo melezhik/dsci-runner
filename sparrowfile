@@ -11,7 +11,7 @@ class Pipeline
 does Sparky::JobApi::Role
 
 {
-  method update-commit-status ($s) {
+  method !update-commit-status ($s) {
     
     my $url = "{%*ENV<DSCI_FEEDBACK_URL>}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
 
