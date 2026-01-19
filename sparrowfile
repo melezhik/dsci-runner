@@ -11,8 +11,25 @@ class Pipeline
 does Sparky::JobApi::Role
 
 {
+  method update-commit-status ($s) {
+    
+    my $url = "{%*ENV<DSCI_FEEDBACK_URL>}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+
+    my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
+
+    my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
+
+    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+
+    say "send update to CI ...";
+    say qqx[curl $params $ext-url];
+    say "done";
+
+  }
 
   method stage-main {
+
+    self!update-commit-status("pending");
 
     directory "scm";
 
@@ -147,19 +164,7 @@ does Sparky::JobApi::Role
       }
     }
 
-    my $f-state = $status ?? "success" !! "failure";
-
-    my $url = "{%*ENV<DSCI_FEEDBACK_URL>}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
-
-    my $data = qq['\{ "state": "{$f-state}", "target_url": "{$url}", "description": "The build status: {$f-state}", "context": "dsci" \}'];
-
-    my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
-
-    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
-
-    say "send update to CI ...";
-    say qqx[curl $params $ext-url];
-    say "done";
+    self!update-commit-status($status ?? "success" !! "failure");
   }
 
   method stage-bootstrap {
