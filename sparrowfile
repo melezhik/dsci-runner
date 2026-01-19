@@ -21,7 +21,7 @@ does Sparky::JobApi::Role
     say "message: ",tags()<message>.chomp;
     say "=======";
 
-    bash "RUN git config --global advice.detachedHead false";
+    bash "git config --global advice.detachedHead false";
 
     git-scm tags()<scm>, %(
       :to<scm>,
