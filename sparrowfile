@@ -11,6 +11,50 @@ class Pipeline
 does Sparky::JobApi::Role
 
 {
+
+  method !validate-cond-expression ($exp) {
+    my @b; # bogus lines
+    for $exp.split(/\s [ "and" || "or" || "&&" || "||" ]  \s/)
+    .map({
+      .subst("(","",:g)
+      .subst(")","",:g)
+      .subst(/^^ \s+/,"")
+      .subst(/\s+ $$/,"")
+      .subst('$$',"rx_end_of_line",:g)
+      }) -> $i {
+      say "parse [$i]";  
+      if  $i !~~ /
+          ^^ 
+            ".<" 
+              \w+ 
+            ">" 
+          \s+ 
+          [ 
+            ">" || ">=" || "<" || "<=" || "eq" || "ne" ||  "~~" || "!~~" 
+          ]
+          \s+
+          [
+            \" <[ \/ \\ \d \. \: \w \d ]> + \" || 
+            \d+ || 
+            "m:" <[i m g r s \:]> + \/ <-[ \{ \{ \$  ]> +  \/
+          ] 
+          $$
+        / {
+        push @b, $i
+      }
+    }
+    if @b.elems {
+      say "alidate-cond-expression: does not look good";
+      say "validated expression: $exp";
+      say "===";
+      for @b -> $i {
+        say "bogus chunk found: $i"
+      }
+      say "===";
+    }
+    return @b.elems == 0;
+  }
+
   method !update-commit-status ($s) {
     
     my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:4000'}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
@@ -102,13 +146,25 @@ does Sparky::JobApi::Role
       for $jobs<jobs>.flat -> $job {
 
         if $job<only> {
-          use MONKEY-SEE-NO-EVAL;
-          next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a()");
+          if self!validate-cond-expression($job<only>) {
+            use MONKEY-SEE-NO-EVAL;
+            next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a()");
+          } else {
+            warn "only: job condition validation failed";
+            $status = False;
+            last; 
+          }
         }
 
         if $job<skip> {
+          if self!validate-cond-expression($job<skip>) {
           use MONKEY-SEE-NO-EVAL;
-          next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a()");
+            next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a()");
+          } else {
+            warn "skip: job condition validation failed";
+            $status = False;
+            last; 
+          }
         }
 
         my $j = Sparky::JobApi.new(
