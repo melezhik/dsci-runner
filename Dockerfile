@@ -58,7 +58,7 @@ RUN git config --global advice.detachedHead false
 
 WORKDIR /home/worker/projects
 
-ENV FORGEJO_HOST=http://host.docker.internal:3000
+ENV FORGEJO_HOST=http://127.0.0.1:3000
 
 ENV FORGEJO_API_TOKEN=changeme
 
