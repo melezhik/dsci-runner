@@ -13,16 +13,18 @@ does Sparky::JobApi::Role
 {
   method !update-commit-status ($s) {
     
-    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:3000'}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:4000'}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
 
     my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "{%*ENV<FORGEJO_HOST>}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+    my $ext-url = "{%*ENV<FORGEJO_HOST> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
-    say "send update to CI ...";
+    say "send update to CI ... ext-url: $ext-url";
+
     say qqx[curl $params $ext-url];
+
     say "done";
 
   }
