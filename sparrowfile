@@ -13,7 +13,7 @@ does Sparky::JobApi::Role
 {
   method !update-commit-status ($s) {
     
-    my $url = "{%*ENV<DSCI_FEEDBACK_URL>}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:3000'}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
 
@@ -40,6 +40,8 @@ does Sparky::JobApi::Role
 
     bash "git config --global advice.detachedHead false";
 
+    my $scm = tags()<scm>;
+
     git-scm tags()<scm>, %(
       :to<scm>,
       :branch(tags()<sha>),
@@ -58,9 +60,9 @@ does Sparky::JobApi::Role
 
     bash "docker stop -t 1 dsci-agent || :";
 
-    say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>}";
+    say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>||'alpine:latest'}";
 
-    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE>}";
+    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE> || 'alpine:latest'}";
 
     unless %*ENV<DSCI_AGENT_SKIP_BOOTSTRAP> {
       my $j = Sparky::JobApi.new(
@@ -115,7 +117,7 @@ does Sparky::JobApi::Role
           job_id  => $job<id>,
           path    => $job<path>,
           stage   => "job-run",
-          scm     => tags()<scm>,
+          scm     => tags()<scm>.subst('127.0.0.1','host.docker.internal'),
           sha     => tags()<sha>,
         );
 
