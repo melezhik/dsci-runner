@@ -23,3 +23,5 @@ USER worker
 RUN git config --global advice.detachedHead false
 
 RUN zef install --/test --force-install https://github.com/melezhik/Sparrow6.git
+
+RUN zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
