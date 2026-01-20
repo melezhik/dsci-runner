@@ -1,0 +1,25 @@
+FROM alpine:latest
+
+ENV PATH="/home/worker/.raku/bin:${PATH}"
+
+ENV SP6_FORMAT_COLOR=1
+
+RUN apk update && apk add openssl bash curl wget perl openssl-dev sudo git python3
+
+RUN apk add --no-cache bash
+
+RUN apk add rakudo zef raku-sparrow6
+
+RUN adduser -D -h /home/worker -s /bin/bash -G wheel worker
+
+RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+
+RUN addgroup worker wheel
+
+RUN sudo echo
+
+USER worker
+
+RUN git config --global advice.detachedHead false
+
+RUN zef install --/test --force-install https://github.com/melezhik/Sparrow6.git

@@ -1,1 +1,1 @@
-docker build --file Dockerfile.agent.custom . -t dsci-agent-ubuntu
+docker build --file Dockerfile.agent.ubuntu . -t dsci-agent-ubuntu
