@@ -44,7 +44,7 @@ does Sparky::JobApi::Role
       }
     }
     if @b.elems {
-      say "alidate-cond-expression: does not look good";
+      say "validate-cond-expression: does not look good";
       say "validated expression: $exp";
       say "===";
       for @b -> $i {
