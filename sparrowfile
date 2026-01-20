@@ -99,12 +99,12 @@ does Sparky::JobApi::Role
 
         if $job<only> {
           use MONKEY-SEE-NO-EVAL;
-          next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a");
+          next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a()");
         }
 
         if $job<skip> {
           use MONKEY-SEE-NO-EVAL;
-          next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a");
+          next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a()");
         }
 
         my $j = Sparky::JobApi.new(
