@@ -12,7 +12,7 @@ does Sparky::JobApi::Role
 
 {
 
-  method !validate-cond-expression ($exp) {
+  method !validate-cond-expression ($exp,$debug = False) {
     my @b; # bogus lines
     for $exp.split(/\s [ "and" || "or" || "&&" || "||" ]  \s/)
     .map({
@@ -22,7 +22,7 @@ does Sparky::JobApi::Role
       .subst(/\s+ $$/,"")
       .subst('$$',"rx_end_of_line",:g)
       }) -> $i {
-      say "parse [$i]";  
+      say "parse [$i]" if $debug;  
       if  $i !~~ /
           ^^ 
             ".<" 
@@ -30,7 +30,7 @@ does Sparky::JobApi::Role
             ">" 
           \s+ 
           [ 
-            ">" || ">=" || "<" || "<=" || "==" !! "!=" || "eq" || "ne" ||  "~~" || "!~~" 
+            ">" || ">=" || "<" || "<=" || "==" || "!=" || "eq" || "ne" ||  "~~" || "!~~" 
           ]
           \s+
           [
@@ -67,7 +67,7 @@ does Sparky::JobApi::Role
 
     say "send update to CI ... ext-url: $ext-url";
 
-    say qqx[curl $params $ext-url];
+    say qqx[curl $params $ext-url].chomp;
 
     say "done";
 
@@ -96,144 +96,171 @@ does Sparky::JobApi::Role
 
     my $jobs = load-yaml("scm/.dsci/jobs.yaml".IO.slurp);
 
+    my $status = True;
+
     #say $jobs.raku;
 
-    my %_dsci;
+    my $cont = True;
 
-    my $status = True;
-  
-    bash "sudo chmod 666 /var/run/docker.sock" unless %*ENV<DSCI_ORCHESTRATOR_NO_CONTAINER>;
-
-    bash "docker stop -t 1 dsci-agent || :";
-
-    say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>||'alpine:latest'}";
-
-    bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE> || 'alpine:latest'}";
-
-    unless %*ENV<DSCI_AGENT_SKIP_BOOTSTRAP> {
-      my $j = Sparky::JobApi.new(
-          :project("job.bootstrap"),
-      );
-
-      $j.queue({
-          :description("dsci agent bootstrap"),
-          :tags(%(stage => "bootstrap")),
-          :sparrowdo(%(
-            :docker<dsci-agent>,
-            :bootstrap,
-            :no_sudo,
-          )),
-      });
- 
-
-      my $st = self.wait-job($j);
-
-      if ! $st<OK> {
-        $status = False;
-        say "dsci agent boorstrap ... [FAIL]";
-        say "...";
-        say $j.report();
+    if $jobs<global> && $jobs<global><skip> {
+      if self!validate-cond-expression($jobs<global><skip>,$jobs<global><debug>||False) {
+        use MONKEY-SEE-NO-EVAL;
+        $cont = False if EVAL("my \$a = \{given (tags()) \{ {$jobs<global><skip>} \}\}; \$a()");
       } else {
-        say "dsci agent boorstrap ... [OK]";
-        say "...";
-        say $j.report();
+        warn "skip: job condition validation failed";
+        $status = False;
+        $cont = False; 
       }
-
     }
 
-    if $status {
+    if $cont && $jobs<global> && $jobs<global><only> {
+      if self!validate-cond-expression($jobs<global><only>,$jobs<global><debug>||False) {
+        use MONKEY-SEE-NO-EVAL;
+        $cont = False unless EVAL("my \$a = \{given (tags()) \{ {$jobs<global><only>} \}\}; \$a()");
+      } else {
+        warn "only: job condition validation failed";
+        $status = False;
+        $cont = False; 
+      }
+    }
 
-      for $jobs<jobs>.flat -> $job {
+    if $cont {
 
-        if $job<only> {
-          if self!validate-cond-expression($job<only>) {
-            use MONKEY-SEE-NO-EVAL;
-            next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a()");
-          } else {
-            warn "only: job condition validation failed";
-            $status = False;
-            last; 
-          }
-        }
+      my %_dsci;
+    
+      bash "sudo chmod 666 /var/run/docker.sock" unless %*ENV<DSCI_ORCHESTRATOR_NO_CONTAINER>;
 
-        if $job<skip> {
-          if self!validate-cond-expression($job<skip>) {
-          use MONKEY-SEE-NO-EVAL;
-            next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a()");
-          } else {
-            warn "skip: job condition validation failed";
-            $status = False;
-            last; 
-          }
-        }
+      bash "docker stop -t 1 dsci-agent || :";
 
+      say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>||'alpine:latest'}";
+
+      bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE> || 'alpine:latest'}";
+
+      unless %*ENV<DSCI_AGENT_SKIP_BOOTSTRAP> {
         my $j = Sparky::JobApi.new(
-          :project("job.run"),
+            :project("job.bootstrap"),
         );
-
-        my %tags = (
-          job_id  => $job<id>,
-          path    => $job<path>,
-          stage   => "job-run",
-          scm     => tags()<scm>.subst('127.0.0.1','host.docker.internal'),
-          sha     => tags()<sha>,
-        );
-
-        if $job<plugin> {
-          %tags<plugin> = $job<plugin>
-        } elsif $job<path> {
-          %tags<path> = $job<path>
-        } else {
-          $status = False;
-          say "neither path nor path is set";
-          last;
-        }
-
-        if $job<debug> {
-          %tags<dump-task-config> = True;
-          %tags<dump-task-code> = True;
-        }
-
-        if $job<params> {
-          $j.put-stash(%(
-            params => $job<params>,
-            dsci => %_dsci,
-          ));
-        } else {
-          $j.put-stash(%(
-            dsci => %_dsci,
-            params => Hash.new,
-          ));
-        }
 
         $j.queue({
-          :description($job<id>),
-          :tags(%tags),
-          :sparrowdo(%(
-            :docker<dsci-agent>,
-            :no_sudo,
-          )),
+            :description("dsci agent bootstrap"),
+            :tags(%(stage => "bootstrap")),
+            :sparrowdo(%(
+              :docker<dsci-agent>,
+              :bootstrap,
+              :no_sudo,
+            )),
         });
+  
 
         my $st = self.wait-job($j);
 
-        unless $st<OK> {
+        if ! $st<OK> {
           $status = False;
-          say "job {$job<id>} ... [FAIL]";
+          say "dsci agent boorstrap ... [FAIL]";
           say "...";
-          say $j.report;
-          last;
+          say $j.report();
+        } else {
+          say "dsci agent boorstrap ... [OK]";
+          say "...";
+          say $j.report();
         }
 
-        %_dsci{$job<id>} = $j.get-stash();
-
-        say "job {$job<id>} ... [OK]";
-        say "...";
-        say $j.report();
-
       }
-    }
 
+      if $status {
+
+        for $jobs<jobs>.flat -> $job {
+
+          if $job<only> {
+            if self!validate-cond-expression($job<only>,$job<debug>||False) {
+              use MONKEY-SEE-NO-EVAL;
+              next unless EVAL("my \$a = \{given (tags()) \{ {$job<only>} \}\}; \$a()");
+            } else {
+              warn "only: job condition validation failed";
+              $status = False;
+              last; 
+            }
+          }
+
+          if $job<skip> {
+            if self!validate-cond-expression($job<skip>,$job<debug>||False) {
+            use MONKEY-SEE-NO-EVAL;
+              next if EVAL("my \$a = \{given (tags()) \{ {$job<skip>} \}\}; \$a()");
+            } else {
+              warn "skip: job condition validation failed";
+              $status = False;
+              last; 
+            }
+          }
+
+          my $j = Sparky::JobApi.new(
+            :project("job.run"),
+          );
+
+          my %tags = (
+            job_id  => $job<id>,
+            path    => $job<path>,
+            stage   => "job-run",
+            scm     => tags()<scm>.subst('127.0.0.1','host.docker.internal'),
+            sha     => tags()<sha>,
+          );
+
+          if $job<plugin> {
+            %tags<plugin> = $job<plugin>
+          } elsif $job<path> {
+            %tags<path> = $job<path>
+          } else {
+            $status = False;
+            say "neither path nor path is set";
+            last;
+          }
+
+          if $job<debug> {
+            %tags<dump-task-config> = True;
+            %tags<dump-task-code> = True;
+          }
+
+          if $job<params> {
+            $j.put-stash(%(
+              params => $job<params>,
+              dsci => %_dsci,
+            ));
+          } else {
+            $j.put-stash(%(
+              dsci => %_dsci,
+              params => Hash.new,
+            ));
+          }
+
+          $j.queue({
+            :description($job<id>),
+            :tags(%tags),
+            :sparrowdo(%(
+              :docker<dsci-agent>,
+              :no_sudo,
+            )),
+          });
+
+          my $st = self.wait-job($j);
+
+          unless $st<OK> {
+            $status = False;
+            say "job {$job<id>} ... [FAIL]";
+            say "...";
+            say $j.report;
+            last;
+          }
+
+          %_dsci{$job<id>} = $j.get-stash();
+
+          say "job {$job<id>} ... [OK]";
+          say "...";
+          say $j.report();
+
+        }
+      }
+
+    }
     self!update-commit-status($status ?? "success" !! "failure");
   }
 
