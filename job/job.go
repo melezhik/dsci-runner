@@ -42,7 +42,7 @@ func JobQueueFs(r types.JobRequest) {
 	if err != nil {
 		log.Fatal("Error marshaling to JSON:", err)
 	}
-	err = os.WriteFile(fmt.Sprintf("%s/config.raku", cache_dir), jsonData, 0644)
+	err = os.WriteFile(fmt.Sprintf("%s/config.json", cache_dir), jsonData, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
