@@ -1,3 +1,5 @@
 .cache/
 .precomp
 .env
+go.sum
+dsci_runner
