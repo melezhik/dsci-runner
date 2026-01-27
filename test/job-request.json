@@ -1,0 +1,22 @@
+{
+  "config" : {
+    "project" : "foo",
+    "job-id": "id123456",
+    "tags": {
+      "hello": ",hello,hello,",
+      "name": "Alex",
+      "kind": true
+    },
+    "description": "ok"
+  },
+  "trigger" : {
+    "tags": "ok,ok",
+    "description": "ok100"
+  },
+  "sparrowfile" : "say 'hello from Raku'",
+  "sparrowdo-config" : {
+    "foo" : {
+      "baz": "baz"
+    }
+  }
+}

@@ -62,7 +62,7 @@ func queue_job(c *echo.Context) error {
 	//       return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	// }
 
-	log.Printf("data: %v", r)
+	//log.Printf("data: %v", r)
 	// Process the data (e.g., save to a database)
 
 	job.JobQueueFs(r)
