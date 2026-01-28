@@ -32,3 +32,14 @@ type JobRequest struct {
 	Sparrowfile     string      `json:"sparrowfile"`
 	SparrowdoConfig interface{} `json:"sparrowdo-config"`
 }
+
+
+type JobStashConfig struct {
+  Project string `json:"project"`
+  JobId string `json:"job-id"`
+}
+type JobStash struct {
+  Config JobStashConfig `json:"config"`
+  Data map[string]interface{}
+
+}
