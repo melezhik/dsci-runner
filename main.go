@@ -25,6 +25,7 @@ func main() {
 	e.GET("/", hello)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
+	e.GET("/stash/:project/:key", get_job_stash)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -85,5 +86,25 @@ func put_job_stash(c *echo.Context) error {
 	job.PutJobStash(r.Config.Project,r.Config.JobId,r.Data)
 
 	return c.String(http.StatusOK, "file created")
+
+}
+
+func get_job_stash(c *echo.Context) error {
+
+  project := c.Param("project")
+
+  job_id := c.Param("key")
+
+	stash_json := []byte(job.GetJobStash(project,job_id))
+
+  var p interface{}
+
+  err := json.Unmarshal(stash_json, &p)
+  
+	if err != nil {
+		log.Fatalf("put_job_stash json.Unmarshel error: %v", err)
+	}
+
+	return c.JSON(http.StatusOK, p)
 
 }

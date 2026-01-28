@@ -5,7 +5,9 @@
   },
   "data" : {
     "foo" : {
-      "baz": "baz!!!"
+      "baz": "baz!!!",
+      "hello": true,
+      "colors": [1,2,3,4]
     }
   }
 }

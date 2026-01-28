@@ -1,0 +1,14 @@
+begin:
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=UTF-8
+Date:
+Content-Length:
+:any:
+file created
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date:
+Content-Length:
+:any:
+{"foo":{"baz":"baz!!!","colors":[1,2,3,4],"hello":true}}
+end:
