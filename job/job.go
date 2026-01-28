@@ -8,6 +8,9 @@ import (
 	"log"
 	"os"
 	"strings"
+	"path/filepath"
+	"errors"
+
 )
 
 func JobQueueFs(r types.JobRequest) {
@@ -91,15 +94,53 @@ func JobQueueFs(r types.JobRequest) {
 
 }
 
-func PutJobStash(r types.JobStash) {
+func PutJobStash ( p string, job_id string, data interface{}) {
 
-	project := r.Config.Project
+	utils.CreateSparkyStashDir(p)
 
-	job_id := r.Config.JobId
+	path := filepath.Join(utils.SparkyStashDir(p), job_id)
 
-	fmt.Printf("start job for project: %s, job_id: %s\n", project, job_id)
+	file, err := os.Create(path)
+	if err != nil {
+		log.Fatalf("PutJobStash: Error creating file:", err)
+	}
+	defer file.Close()
 
+	encoder := json.NewEncoder(file)
+	
+	encoder.SetIndent("", "  ") // Optional: prettify
 
-	_ = utils.CreateSparkyProjectDir(project)
+	err = encoder.Encode(data)
 
+	if err != nil {
+		log.Fatalf("Error encoding JSON:", err)
+	}
 }
+
+func GetJobStash ( p string, job_id string) string {
+	path := filepath.Join(utils.SparkyStashDir(p), job_id)
+
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return "{}"
+	}
+
+    dat, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("Error reading file:", err)
+	}
+	return string(dat)
+}
+
+func GetJobFile ( p string, job_id string, filename string) string {
+
+	path := filepath.Join(utils.SparkyFilesDir(p),job_id,filename)
+
+    dat, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("Error reading file:", err)
+	}
+	return string(dat)
+}
+

@@ -23,9 +23,8 @@ func main() {
 
 	// Routes
 	e.GET("/", hello)
-
-	// Routes
 	e.POST("/queue", queue_job)
+	e.POST("/stash", put_job_stash)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -58,15 +57,33 @@ func queue_job(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	}
 
-	// if err != nil {
-	//       return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
-	// }
-
-	//log.Printf("data: %v", r)
-	// Process the data (e.g., save to a database)
-
 	job.JobQueueFs(r)
 
 	return c.String(http.StatusOK, "job queued")
+
+}
+
+func put_job_stash(c *echo.Context) error {
+
+	var r types.StashRequest
+
+	bodyBytes, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
+	defer c.Request().Body.Close()
+
+	log.Printf("Request Body: %s\n", string(bodyBytes))
+
+	err = json.Unmarshal(bodyBytes, &r)
+
+	if err != nil {
+		log.Printf("error unmarshaling JSON: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
+	}
+
+	job.PutJobStash(r.Config.Project,r.Config.JobId,r.Data)
+
+	return c.String(http.StatusOK, "file created")
 
 }

@@ -64,3 +64,41 @@ func CreateSparkyCacheDir(job_id string) string {
 	return dir
 }
 
+func SparkyFilesDir(p string) string {
+	dir := SparkyProjectDir(p)
+	return fmt.Sprintf("%s/.files", dir)
+}
+
+func CreateSparkyFilesDir(p string) string {
+
+	dir := SparkyFilesDir(p)
+
+	err := os.MkdirAll(dir, 0755)
+
+	if err != nil {
+		log.Fatalf("Error creating directory:", err)
+	}
+
+	return dir
+}
+
+
+func SparkyStashDir(p string) string {
+	dir := SparkyProjectDir(p)
+	return fmt.Sprintf("%s/.stash", dir)
+}
+
+func CreateSparkyStashDir(p string) string {
+
+	dir := SparkyStashDir(p)
+
+	err := os.MkdirAll(dir, 0755)
+
+	if err != nil {
+		log.Fatalf("Error creating directory:", err)
+	}
+
+	return dir
+}
+
+

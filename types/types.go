@@ -43,3 +43,8 @@ type JobStash struct {
   Data map[string]interface{}
 
 }
+
+type StashRequest struct {
+	Config          Config       `json:"config"`
+	Data            interface{}  `json:"data"`
+}

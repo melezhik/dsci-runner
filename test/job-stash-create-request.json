@@ -1,0 +1,11 @@
+{
+  "config" : {
+    "project" : "foo",
+    "job-id": "id123456"
+  },
+  "data" : {
+    "foo" : {
+      "baz": "baz!!!"
+    }
+  }
+}
