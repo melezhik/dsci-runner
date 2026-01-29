@@ -104,7 +104,7 @@ func JobQueueFs(r types.JobRequest) {
 
 	jsonData, err = json.MarshalIndent(r.Trigger, "", "  ") // Use MarshalIndent for pretty printing
 
-	err = os.WriteFile(fmt.Sprintf("%s/.triggers/%s.json", sparky_project_dir, job_id), jsonData, 0644)
+	err = os.WriteFile(fmt.Sprintf("%s/.triggers/%s", sparky_project_dir, job_id), jsonData, 0644)
 
 	if err != nil {
 		log.Fatalf("JobQueueFs: can't create trigger file: %s",err)
@@ -210,4 +210,51 @@ func GetSparrowdoConfig (p string, filename string) interface{} {
 	}
 
 	return c
+}
+
+func JobState ( p string, job_id string ) string {
+
+	path := filepath.Join(utils.SparkyTriggersDir(p),job_id)
+
+	_, err := os.Stat(path)
+
+	if errors.Is(err, os.ErrNotExist) {
+
+		path := filepath.Join(utils.ProjectStateDir(p),job_id)
+		
+		_, err := os.Stat(path)
+
+		if errors.Is(err, os.ErrNotExist) {
+			log.Printf("JobState: project: %s job_id: %s, state: unknown 1 (state file does not exist)",p,job_id)
+			return  "-2" // unknown state, state file does not exist
+		} else if err == nil {
+
+			dat, err := os.ReadFile(path)
+
+			if err != nil {
+				log.Fatalf("Error reading file:", err)
+			}
+			
+			switch st := string(dat); st {
+				case "0":
+					log.Printf("JobState: project: %s job_id: %s, state: running ",p,job_id)
+				case "1":
+					log.Printf("JobState: project: %s job_id: %s, state: success ",p,job_id)
+				case "-1":
+					log.Printf("JobState: project: %s job_id: %s, state: failed ",p,job_id)
+			}
+			return string(dat)
+
+		} else {
+			log.Fatalf("JobState: error accessing state file: %s", err)			
+		}
+	
+	} else if err == nil {
+		log.Printf("JobState: project: %s job_id: %s, state: in queue",p,job_id)
+		return "-2" // trigger exists, job in queue
+	} else {
+		log.Fatalf("JobState: error accessing trigger file: %s", err)
+	}
+	log.Printf("JobState: project: %s job_id: %s, state: unknown 2",p,job_id)
+	return "-2"
 }

@@ -7,6 +7,4 @@ DSCI_ORCHESTRATOR_NO_CONTAINER=1,\
 DSCI_AGENT_IMAGE=dsci-agent-alpine:latest,\
 DSCI_FEEDBACK_URL=$DSCI_FEEDBACK_URL \
 worker start
-sparman worker_ui stop
-sparman worker_ui start
 

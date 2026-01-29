@@ -102,3 +102,7 @@ func CreateSparkyStashDir(p string) string {
 }
 
 
+func ProjectStateDir(p string) string {
+	hdir, _ := os.UserHomeDir()
+	return fmt.Sprintf("%s/.sparky/work/%s/.states", hdir, p )
+}

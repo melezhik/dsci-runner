@@ -31,6 +31,7 @@ func main() {
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.POST("/forgejo_hook", forgejo_hook)
+	e.GET("/status/:project/:key", status)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -170,5 +171,18 @@ func forgejo_hook(c *echo.Context) error {
 	job.JobQueueFs(q)
 
 	return c.String(http.StatusOK, fmt.Sprintf("job quedued: %s",q.Config.JobId))
+
+}
+
+
+func status(c *echo.Context) error {
+
+  project := c.Param("project")
+
+  job_id := c.Param("key")
+
+  state := job.JobState(project,job_id)
+
+  return c.String(http.StatusOK, state)
 
 }
