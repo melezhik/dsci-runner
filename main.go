@@ -11,6 +11,10 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+  "time"
+  "fmt"
+  "strconv"
+
 )
 
 func main() {
@@ -26,6 +30,7 @@ func main() {
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)
+	e.POST("/forgejo_hook", forgejo_hook)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -54,7 +59,7 @@ func queue_job(c *echo.Context) error {
 	err = json.Unmarshal(bodyBytes, &r)
 
 	if err != nil {
-		log.Printf("error unmarshaling JSON: %v", err)
+		log.Printf("queue_job: error unmarshaling JSON: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	}
 
@@ -79,7 +84,7 @@ func put_job_stash(c *echo.Context) error {
 	err = json.Unmarshal(bodyBytes, &r)
 
 	if err != nil {
-		log.Printf("error unmarshaling JSON: %v", err)
+		log.Printf("put_job_stash: error unmarshaling JSON: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	}
 
@@ -102,9 +107,68 @@ func get_job_stash(c *echo.Context) error {
   err := json.Unmarshal(stash_json, &p)
   
 	if err != nil {
-		log.Fatalf("put_job_stash json.Unmarshel error: %v", err)
+		log.Fatalf("get_job_stash: put_job_stash json.Unmarshel error: %v", err)
 	}
 
 	return c.JSON(http.StatusOK, p)
+
+}
+
+func forgejo_hook(c *echo.Context) error {
+
+  var r types.ForgejoHook
+
+	bodyBytes, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
+	defer c.Request().Body.Close()
+
+	log.Printf("Request Body: %s\n", string(bodyBytes))
+
+	err = json.Unmarshal(bodyBytes, &r)
+
+	if err != nil {
+		log.Printf("forgejo_hook: error unmarshaling JSON: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
+	}
+
+	// job.PutJobStash(r.Config.Project,r.Config.JobId,r.Data)
+
+  var q types.JobRequest
+  now := time.Now()
+  q.Config.Project = "dsci"
+  q.Config.JobId = strconv.FormatInt(now.Unix(),10)
+  q.Config.Description = fmt.Sprintf("%s | %s",r.Sha,r.HeadCommit.Message)
+  q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
+    "ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s",
+    r.Ref,
+    r.Repository.FullName,
+    r.Sha,
+    r.Repository.CloneUrl,
+    r.HeadCommit.Message,
+  )
+
+  q.Trigger.Sparrowdo.NoSudo = true
+
+  q.Trigger.Sparrowdo.Localhost = true
+
+  dat := job.GetSparkyScenarioFile("dsci","sparrowfile")
+
+  q.Sparrowfile = dat
+
+  // jsonData, err := json.MarshalIndent(q, "", "  ")
+
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// fmt.Println(string(jsonData))
+
+  // log.Printf("dsci job: %s",jsonData)
+
+	job.JobQueueFs(q)
+
+	return c.String(http.StatusOK, fmt.Sprintf("job quedued: %s",q.Config.JobId))
 
 }

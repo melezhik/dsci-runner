@@ -7,7 +7,10 @@
       "name": "Alex1977",
       "kind": true
     },
-    "description": "ok"
+    "description": "ok",
+    "sparrowdo": {
+      "no_sudo" : true
+    }
   },
   "trigger" : {
     "tags": "ok,ok",

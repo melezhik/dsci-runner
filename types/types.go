@@ -11,7 +11,7 @@ type Config struct {
 type Sparrowdo struct {
 	Localhost bool   `json:"localhost"`
 	NoSudo    bool   `json:"no_sudo"`
-	Sudo      bool   `json:"no_sudo"`
+	Sudo      bool   `json:"sudo"`
 	Conf      string `json:"conf"`
 	Host      string `json:"host"`
 	Docker    string `json:"docker"`
@@ -47,4 +47,21 @@ type JobStash struct {
 type StashRequest struct {
 	Config          Config       `json:"config"`
 	Data            interface{}  `json:"data"`
+}
+
+
+type ForgejoHookRepository struct {
+  FullName string `json:"full_name"`
+  CloneUrl string `json:"clone_url"`
+}
+
+type ForgejoHookRepositoryHeadCommit struct {
+  Message string `json:"message"`
+}
+
+type ForgejoHook struct {
+  Ref string `json:"ref"`
+  Sha string `json:"after"`
+  Repository  ForgejoHookRepository `json:"repository"`
+  HeadCommit ForgejoHookRepositoryHeadCommit `json:"head_commit"`
 }
