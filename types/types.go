@@ -15,7 +15,7 @@ type Sparrowdo struct {
 	Conf      string `json:"conf"`
 	Host      string `json:"host"`
 	Docker    string `json:"docker"`
-	Image     string `json:"images"`
+	Image     string `json:"image"`
 	SshUser   string `json:"ssh_user"`
 	Tags      string `json:"tags"`
 }
@@ -33,35 +33,32 @@ type JobRequest struct {
 	SparrowdoConfig interface{} `json:"sparrowdo-config"`
 }
 
-
 type JobStashConfig struct {
-  Project string `json:"project"`
-  JobId string `json:"job-id"`
+	Project string `json:"project"`
+	JobId   string `json:"job-id"`
 }
 type JobStash struct {
-  Config JobStashConfig `json:"config"`
-  Data map[string]interface{}
-
+	Config JobStashConfig `json:"config"`
+	Data   map[string]interface{}
 }
 
 type StashRequest struct {
-	Config          Config       `json:"config"`
-	Data            interface{}  `json:"data"`
+	Config Config      `json:"config"`
+	Data   interface{} `json:"data"`
 }
 
-
 type ForgejoHookRepository struct {
-  FullName string `json:"full_name"`
-  CloneUrl string `json:"clone_url"`
+	FullName string `json:"full_name"`
+	CloneUrl string `json:"clone_url"`
 }
 
 type ForgejoHookRepositoryHeadCommit struct {
-  Message string `json:"message"`
+	Message string `json:"message"`
 }
 
 type ForgejoHook struct {
-  Ref string `json:"ref"`
-  Sha string `json:"after"`
-  Repository  ForgejoHookRepository `json:"repository"`
-  HeadCommit ForgejoHookRepositoryHeadCommit `json:"head_commit"`
+	Ref        string                          `json:"ref"`
+	Sha        string                          `json:"after"`
+	Repository ForgejoHookRepository           `json:"repository"`
+	HeadCommit ForgejoHookRepositoryHeadCommit `json:"head_commit"`
 }

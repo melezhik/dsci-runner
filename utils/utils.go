@@ -10,7 +10,7 @@ func SparkyDbFile() string {
 
 	hdir, _ := os.UserHomeDir()
 
-	return fmt.Sprintf("%s/.sparky/projects/db.sqlite3",hdir)
+	return fmt.Sprintf("%s/.sparky/projects/db.sqlite3", hdir)
 
 }
 
@@ -18,10 +18,9 @@ func SparkyReportsDir() string {
 
 	hdir, _ := os.UserHomeDir()
 
-	return fmt.Sprintf("%s/.sparky/projects/.reports",hdir)
+	return fmt.Sprintf("%s/.sparky/projects/.reports", hdir)
 
 }
-
 
 func SparkyProjectDir(p string) string {
 
@@ -30,7 +29,6 @@ func SparkyProjectDir(p string) string {
 	return fmt.Sprintf("%s/.sparky/projects/%s", hdir, p)
 
 }
-
 
 func CreateSparkyProjectDir(p string) string {
 
@@ -99,7 +97,6 @@ func CreateSparkyFilesDir(p string) string {
 	return dir
 }
 
-
 func SparkyStashDir(p string) string {
 	dir := SparkyProjectDir(p)
 	return fmt.Sprintf("%s/.stash", dir)
@@ -118,9 +115,7 @@ func CreateSparkyStashDir(p string) string {
 	return dir
 }
 
-
 func ProjectStateDir(p string) string {
 	hdir, _ := os.UserHomeDir()
-	return fmt.Sprintf("%s/.sparky/work/%s/.states", hdir, p )
+	return fmt.Sprintf("%s/.sparky/work/%s/.states", hdir, p)
 }
-
