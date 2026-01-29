@@ -6,6 +6,23 @@ import (
 	"os"
 )
 
+func SparkyDbFile() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.sparky/projects/db.sqlite3",hdir)
+
+}
+
+func SparkyReportsDir() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.sparky/projects/.reports",hdir)
+
+}
+
+
 func SparkyProjectDir(p string) string {
 
 	hdir, _ := os.UserHomeDir()
@@ -106,3 +123,4 @@ func ProjectStateDir(p string) string {
 	hdir, _ := os.UserHomeDir()
 	return fmt.Sprintf("%s/.sparky/work/%s/.states", hdir, p )
 }
+

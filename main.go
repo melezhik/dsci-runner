@@ -32,6 +32,7 @@ func main() {
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.POST("/forgejo_hook", forgejo_hook)
 	e.GET("/status/:project/:key", status)
+	e.GET("/report/raw/:project/:key", report)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -186,3 +187,16 @@ func status(c *echo.Context) error {
   return c.String(http.StatusOK, state)
 
 }
+
+func report(c *echo.Context) error {
+
+	project := c.Param("project")
+  
+	job_id := c.Param("key")
+  
+	data := job.Report(project,job_id)
+  
+	return c.String(http.StatusOK, data)
+  
+  }
+  

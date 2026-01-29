@@ -10,6 +10,8 @@ import (
 	"strings"
 	"path/filepath"
 	"errors"
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 
 )
 
@@ -257,4 +259,50 @@ func JobState ( p string, job_id string ) string {
 	}
 	log.Printf("JobState: project: %s job_id: %s, state: unknown 2",p,job_id)
 	return "-2"
+}
+
+func Report (p string, job_id string) string { 
+
+	log.Printf("Report request project: %s, job_id: %s",p,job_id)
+
+	db, err := sql.Open("sqlite3", utils.SparkyDbFile())
+
+	defer db.Close()
+
+	if err != nil {
+		log.Fatalf("JobReport: error opening db file: %s",err)
+	}
+
+	sqlQuery := `SELECT id FROM builds WHERE job_id = ? LIMIT 1`
+	
+	// QueryRow returns a *sql.Row
+	row := db.QueryRow(sqlQuery, job_id)
+
+	r := struct {
+		ID   int
+	}{}
+	
+	err = row.Scan(&r.ID)
+
+	if err != nil {
+		log.Printf("Report return emtpy, database error: %s",err)
+		return ""
+	}
+
+	path := fmt.Sprintf(
+		"%s/%s/build-%d.txt",
+		utils.SparkyReportsDir(),
+		p,
+		r.ID,
+	)
+
+    dat, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("JobReport: error reading file %s %s:", path,err)
+	}
+
+	log.Printf("Report return: path: %s",path)
+	return string(dat)
+
 }
