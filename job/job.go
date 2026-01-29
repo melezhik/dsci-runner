@@ -106,7 +106,7 @@ func JobQueueFs(r types.JobRequest) {
 			"JobQueueFs: append tags from Config.Tags to Trigger.Sparrowdo.Tags string: %s\n",
 			strings.Join(tags, ","),
 		)
-		r.Trigger.Sparrowdo.Tags = r.Trigger.Sparrowdo.Tags + strings.Join(tags, ",")
+		r.Trigger.Sparrowdo.Tags = r.Trigger.Sparrowdo.Tags + "," + strings.Join(tags, ",")
 	}
 
 	if r.SparrowdoConfig != nil {
