@@ -1,7 +1,10 @@
 package main
 
 import (
-	//"errors"
+	"embed"
+	"os"
+	"io/fs"
+	"path/filepath"
 	"database/sql"
 	"dsci_runner/job"
 	"dsci_runner/types"
@@ -19,9 +22,16 @@ import (
 	"strconv"
 	"time"
 	"github.com/robert-nix/ansihtml"
+	"os/exec"
 )
 
+//go:embed docker
+var staticFiles embed.FS
+
 func main() {
+
+	go startJobDispatcher()
+
 	// Echo instance
 	e := echo.New()
 
@@ -294,4 +304,150 @@ func livebuilds(c *echo.Context) error {
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 	return nil
+}
+
+
+func startJobDispatcher() {
+
+	log.Printf("startJobDispatcher: start")
+
+	dname, err := os.MkdirTemp("", "dsci_docker")
+    defer os.RemoveAll(dname)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error creating temp dir: %s",err)
+	}
+
+	log.Printf("startJobDispatcher: creating temp dir: %s OK",dname)
+
+	var content []byte
+
+	// Dockerfile
+
+	content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/Dockerfile: %s",err)
+	}
+
+	fname := filepath.Join(dname, "Dockerfile")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/Dockerfile: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/Dockerfile OK",dname)
+
+	// sparrowfile
+
+	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s",err)
+	}
+
+	fname = filepath.Join(dname, "sparrowfile")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/sparrowfile OK",dname)
+	
+	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s",err)
+	}
+
+	fname = filepath.Join(dname, "sparrowfile")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/sparrowfile OK",dname)
+
+	// sparky.yaml
+
+	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s",err)
+	}
+
+	fname = filepath.Join(dname, "sparrowfile")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/sparrowfile OK",dname)
+	
+	content, err = fs.ReadFile(staticFiles, "docker/sparky.yaml")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/sparky.yaml: %s",err)
+	}
+
+	fname = filepath.Join(dname, "sparky.yaml")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/sparky.yaml: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/sparky.yaml OK",dname)
+	
+	// build.sh
+
+	content, err = fs.ReadFile(staticFiles, "docker/build.sh")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s",err)
+	}
+
+	fname = filepath.Join(dname, "build.sh")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/build.sh OK",dname)
+	
+	content, err = fs.ReadFile(staticFiles, "docker/build.sh")
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s",err)
+	}
+
+	fname = filepath.Join(dname, "sparrowfile")
+
+	err = os.WriteFile(fname, []byte(content), 0666)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s",dname, err)
+	}
+
+	log.Printf("startJobDispatcher: writting %s/build.sh OK",dname)
+
+
+	// run docker build
+
+	cmd := exec.Command("sh", "build.sh")
+
+	cmd.Dir = dname
+
+	output, err := cmd.CombinedOutput() // Run the command and wait for completion
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: build.sh failed with: %s\n", err)
+	}	
+
+	log.Printf("startJobDispatcher: build.sh OK: %s", output)
+
 }
