@@ -58,7 +58,7 @@ does Sparky::JobApi::Role
 
   method !update-commit-status ($s) {
     
-    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:4000'}/report_jid/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:8080'}/report/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
 
@@ -129,7 +129,7 @@ does Sparky::JobApi::Role
 
       my %_dsci;
     
-      bash "sudo chmod 666 /var/run/docker.sock" unless %*ENV<DSCI_ORCHESTRATOR_NO_CONTAINER>;
+      bash "sudo chmod 666 /var/run/docker.sock";
 
       bash "docker stop -t 1 dsci-agent || :";
 

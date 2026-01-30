@@ -34,19 +34,13 @@ RUN zef install --/test JSON::Fast Sparrowdo YAMLish DBIish DBIish::Pool JSON::F
 
 #RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
-RUN echo OK1 && mkdir /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd /home/worker/projects/sparky && zef install . --force-install --/test
+RUN echo OK2 && mkdir -p /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends . 
 
-RUN echo OK2 && cd /home/worker/projects/sparky && git pull && zef install . --force-install --/test
+ENTRYPOINT cd /home/worker/projects/sparky; if test -f ~/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; mkdir -p ~/.sparky/projects/dsci; cp /home/worker/distro/sparrowfile ~/.sparky/projects/dsci/; cp /home/worker/distro/sparky.yaml ~/sparky.yaml; sparkyd
 
-RUN if test -f ~/.sparky/projects/db.sqlite3; then echo "db exist"; else cd /home/worker/projects/sparky && raku db-init.raku; fi
+COPY sparrowfile sparky.yaml /home/worker/distro/
 
-ENTRYPOINT cd /home/worker/projects/sparky; test -f ~/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; raku bin/sparkyd
-
-COPY sparrowfile /home/worker/.sparky/projects/dsci/
-
-COPY sparky.yaml /home/worker/
-
-RUN sudo chown -R worker /home/worker/.sparky/ /home/worker/projects/
+RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro
 
 RUN git config --global advice.detachedHead false
 

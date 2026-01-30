@@ -41,7 +41,7 @@ func JobQueueFs(r types.JobRequest) {
 		log.Fatal(err)
 	}
 
-	r.Trigger.Cwd = cache_dir
+	r.Trigger.Cwd = utils.SparkyCacheDirDocker(r.Config.JobId)
 
 	if r.Config.Sparrowdo.Localhost {
 		r.Trigger.Sparrowdo.Docker = ""
@@ -118,6 +118,8 @@ func JobQueueFs(r types.JobRequest) {
 		sparky_project_dir,
 		job_id,
 	)
+
+	utils.CreateSparkyTriggersDir(r.Config.Project)
 
 	jsonData, err = json.MarshalIndent(r.Trigger, "", "  ") // Use MarshalIndent for pretty printing
 

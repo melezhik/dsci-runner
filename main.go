@@ -28,6 +28,9 @@ import (
 //go:embed docker
 var staticFiles embed.FS
 
+//go:embed public
+var staticFiles2 embed.FS
+
 func main() {
 
 	go startJobDispatcher()
@@ -40,7 +43,7 @@ func main() {
 	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
 	// Routes
-	e.GET("/", hello)
+	e.GET("/", livebuilds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)
@@ -50,7 +53,7 @@ func main() {
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
 	e.GET("/livebuilds", livebuilds)
-	e.File("/builds", "public/builds.html")
+	e.GET("/builds", builds)
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -291,7 +294,7 @@ func livebuilds(c *echo.Context) error {
 				log.Printf("livebuilds: failed to write WS message: %s", "error", err)
 			}
 			//log.Printf("livebuilds: send data: %s", string(jsonData))
-			log.Printf("\n===\nlivebuilds: sleep for 10 second\n===\n")
+			//log.Printf("\n===\nlivebuilds: sleep for 10 second\n===\n")
 			time.Sleep(10 * time.Second)
 
 			//   // Read
@@ -306,6 +309,14 @@ func livebuilds(c *echo.Context) error {
 	return nil
 }
 
+func builds(c *echo.Context) error {
+
+	content, err := fs.ReadFile(staticFiles2, "public/builds.html")
+	if err != nil {
+		log.Fatalf("builds: error reading public/builds.html: %s",err)
+	}
+	return c.HTML(http.StatusOK,string(content))
+}
 
 func startJobDispatcher() {
 
@@ -425,7 +436,7 @@ func startJobDispatcher() {
 		log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s",err)
 	}
 
-	fname = filepath.Join(dname, "sparrowfile")
+	fname = filepath.Join(dname, "build.sh")
 
 	err = os.WriteFile(fname, []byte(content), 0666)
 
@@ -451,3 +462,5 @@ func startJobDispatcher() {
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
 }
+
+
