@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"github.com/robert-nix/ansihtml"
 )
 
 func main() {
@@ -35,6 +36,7 @@ func main() {
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.POST("/forgejo_hook", forgejo_hook)
 	e.GET("/status/:project/:key", status)
+	e.GET("/report/:project/:key", report_ui)
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
 	e.GET("/livebuilds", livebuilds)
@@ -205,6 +207,44 @@ func report(c *echo.Context) error {
 
 }
 
+func report_ui(c *echo.Context) error {
+
+	project := c.Param("project")
+
+	job_id := c.Param("key")
+
+	data := job.Report(project, job_id)
+
+	htmlOutput := ansihtml.ConvertToHTML([]byte(data))
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`<html data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
+    <title>DSCI Jobs</title>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">DSCI Report: %s@%s</p>
+        <hr>
+        <pre>%s</pre>
+      </div>
+    </section>
+</body>
+</html>`,
+	project,
+	job_id,
+	string(htmlOutput),
+		),
+	)
+
+}
+
 func trigger(c *echo.Context) error {
 
 	project := c.Param("project")
@@ -240,7 +280,7 @@ func livebuilds(c *echo.Context) error {
 			if err := websocket.Message.Send(ws, string(jsonData)); err != nil {
 				log.Printf("livebuilds: failed to write WS message: %s", "error", err)
 			}
-			log.Printf("livebuilds: send data: %s", string(jsonData))
+			//log.Printf("livebuilds: send data: %s", string(jsonData))
 			log.Printf("\n===\nlivebuilds: sleep for 10 second\n===\n")
 			time.Sleep(10 * time.Second)
 

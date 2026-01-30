@@ -360,7 +360,7 @@ func JobTriggerFile(p string, job_id string) string {
 
 func Builds(db *sql.DB) []types.JobBuild {
 
-	q := `SELECT id, project, job_id, description, dt, state FROM builds order by id desc LIMIT 2`
+	q := `SELECT id, project, job_id, description, dt, state FROM builds order by id desc LIMIT 30`
 
 	rows, err := db.Query(q)
 

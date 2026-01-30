@@ -1,3 +1,21 @@
+<html data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
+    <title>DSCI Jobs</title>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">DSCI Jobs</p>
+        <hr>
+        <p id="builds" id="data"></p>
+      </div>
+    </section>
+</body>
+</html>
+
 <script>
 
 var ip = location.host;
@@ -29,8 +47,66 @@ function connect() {
     };
 
     ws.onmessage = function(e) {
-        console.log('ws - data - ', e.data);
+        //console.log('ws - data - ', e.data);
         const builds = JSON.parse(e.data)
+        var p_cont = document.createElement('table');
+        p_cont.setAttribute("id","builds_table");
+        var table = document.createElement('table');
+        table.setAttribute("class","table is-striped");
+        var th = document.createElement('tr');
+        var thd1 = document.createElement('td');
+        thd1.appendChild(document.createTextNode('build'));
+        var thd2 = document.createElement('td');
+        thd2.appendChild(document.createTextNode('description'));
+        var thd3 = document.createElement('td');
+        thd3.appendChild(document.createTextNode('state'));
+        th.appendChild(thd1);
+        th.appendChild(thd2);
+        th.appendChild(thd3);
+        table.appendChild(th);          
+        for (const build of builds) {
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td');
+            var a = document.createElement('a');
+            a.setAttribute("href","/report/" + build.Project + "/" + build.JobId);
+            a.setAttribute("target","_blank");
+            a.appendChild(document.createTextNode(build.Project + '@' + build.ID));
+            td1.appendChild(a);
+            var td2 = document.createElement('td');
+            td2.appendChild(document.createTextNode(build.Description));
+
+            var state = build.State;
+            var build_st_str = "";
+            if (state == 0 ){
+                build_st_str = "unknown"
+            }
+            if (state == -1 ){
+                build_st_str = "fail"
+            }
+            if (state == -11 ){
+                build_st_str = "terminated"
+            }
+            if (state == 1 ){
+                build_st_str = "ok"
+            }
+            if (state == 0 ){
+                build_st_str = "run"
+            }
+            if (state == -2 ){
+                build_st_str = "unknown"
+            }
+            //console.log(build);
+            var td3 = document.createElement('td');
+            td3.appendChild(document.createTextNode(build_st_str)); 
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            table.appendChild(tr);          
+        }
+        p_cont.appendChild(table) 
+        var builds_obj = document.getElementById('builds');
+        //builds_ws.replaceChildren(p_cont);
+        builds_obj.innerHTML = p_cont.outerHTML
     }
 
     ws.onclose = function(e) {
