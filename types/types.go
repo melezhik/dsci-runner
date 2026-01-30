@@ -62,3 +62,12 @@ type ForgejoHook struct {
 	Repository ForgejoHookRepository           `json:"repository"`
 	HeadCommit ForgejoHookRepositoryHeadCommit `json:"head_commit"`
 }
+
+type JobBuild struct {
+	ID          int
+	Project     string
+	JobId       string
+	Description string
+	Dt          string
+	State       int
+}

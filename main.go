@@ -2,12 +2,16 @@ package main
 
 import (
 	//"errors"
+	"database/sql"
 	"dsci_runner/job"
 	"dsci_runner/types"
+	"dsci_runner/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/net/websocket"
 	"io"
 	"log"
 	"log/slog"
@@ -33,6 +37,8 @@ func main() {
 	e.GET("/status/:project/:key", status)
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
+	e.GET("/livebuilds", livebuilds)
+	e.File("/builds", "public/builds.html")
 
 	// Start server
 	if err := e.Start(":8080"); err != nil {
@@ -213,4 +219,39 @@ func trigger(c *echo.Context) error {
 		return c.String(http.StatusOK, data)
 	}
 
+}
+
+func livebuilds(c *echo.Context) error {
+
+	db, err := sql.Open("sqlite3", utils.SparkyDbFile())
+	defer db.Close()
+
+	if err != nil {
+		log.Fatalf("livebuilds: error opening db file: %s", err)
+	}
+
+	websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+		for {
+			// Write
+			builds := job.Builds(db)
+			jsonData, _ := json.MarshalIndent(builds, "", "  ") // Use MarshalIndent for pretty printing
+
+			if err := websocket.Message.Send(ws, string(jsonData)); err != nil {
+				log.Printf("livebuilds: failed to write WS message: %s", "error", err)
+			}
+			log.Printf("livebuilds: send data: %s", string(jsonData))
+			log.Printf("\n===\nlivebuilds: sleep for 10 second\n===\n")
+			time.Sleep(10 * time.Second)
+
+			//   // Read
+			//   msg := ""
+			//   if err := websocket.Message.Receive(ws, &msg); err != nil {
+			//    c.Logger().Error("failed to read WS message", "error", err)
+			//   }
+			//   fmt.Printf("%s\n", msg)
+
+		}
+	}).ServeHTTP(c.Response(), c.Request())
+	return nil
 }

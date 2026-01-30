@@ -1,0 +1,53 @@
+<script>
+
+var ip = location.host;
+if (location.protocol == 'https:') {
+    var proto = "wss"
+} else {
+    var proto = "ws"
+}
+    
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+    
+function connect() {
+
+    var ip = location.host;
+    if (location.protocol == 'https:') {
+      var proto = "wss"
+    } else {
+      var proto = "ws"
+    }
+
+    var ws = new WebSocket(`${proto}://${ip}/livebuilds`);
+
+    ws.onopen = function() {
+        console.log('ws - socket is open');
+        // subscribe to some channels
+        ws.send("Меня зовут Джон");
+    };
+
+    ws.onmessage = function(e) {
+        console.log('ws - data - ', e.data);
+        const builds = JSON.parse(e.data)
+    }
+
+    ws.onclose = function(e) {
+
+        console.log('ws - socket is closed, reconnecting', e.reason);
+
+        sleep(10000).then(() => {
+            connect();
+        });
+    }    
+
+    ws.onerror = function(err) {
+        console.error('ws - socket encountered error: ', err.message, 'Closing socket');
+        ws.close();
+    };
+}
+
+connect();
+
+</script>

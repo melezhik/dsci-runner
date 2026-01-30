@@ -357,3 +357,34 @@ func JobTriggerFile(p string, job_id string) string {
 	log.Printf("JobTriggerFile. trigger file not found\n")
 	return ""
 }
+
+func Builds(db *sql.DB) []types.JobBuild {
+
+	q := `SELECT id, project, job_id, description, dt, state FROM builds order by id desc LIMIT 2`
+
+	rows, err := db.Query(q)
+
+	if err != nil {
+		log.Fatalf("Builds: database select error: %s", err)
+	}
+
+	var builds []types.JobBuild
+
+	for rows.Next() {
+		var b types.JobBuild
+		err = rows.Scan(&b.ID, &b.Project, &b.JobId, &b.Description, &b.Dt, &b.State)
+		if err != nil {
+			log.Fatalf("Builds, rows.Scan error: ", err)
+		}
+		builds = append(builds, b)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		log.Fatalf("Builds rows.Err: %s", err)
+	}
+
+	return builds
+
+}
