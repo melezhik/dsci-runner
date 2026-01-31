@@ -72,7 +72,7 @@ does Sparky::JobApi::Role
 
     my $params = "--data $data -H \"Authorization: token {%config<ForgejoApiToken>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "{%config<ForgejoHost> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+    my $ext-url = "{%config<ForgejoHost> || 'http://host.docker.internal:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
     say "send update to CI ... ext-url: $ext-url";
 
