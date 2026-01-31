@@ -8,7 +8,11 @@ ls -l
 
 2>&1
 
-mkdir -p ~/.dsci/
+mkdir -p ~/.dsci/.sparky
+
+chmod a+w ~/.dsci
+
+chmod a+w ~/.dsci/.sparky/
 
 cp ~/.dsci.toml .
 
