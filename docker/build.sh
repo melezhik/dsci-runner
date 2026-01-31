@@ -19,7 +19,7 @@ docker run \
 --env FORGEJO_HOST=$FORGEJO_HOST \
 --env FORGEJO_API_TOKEN=$FORGEJO_API_TOKEN \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v $HOME/.sparky:/home/worker/.sparky \
+-v /opt/.dsci:/home/worker/.sparky \
 dsci-dispatch
 
 sleep 10
