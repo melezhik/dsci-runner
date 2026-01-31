@@ -1,10 +1,16 @@
 set -e
 
 echo "start build ..."
+
 pwd
+
 ls -l
 
 2>&1
+
+mkdir -p /opt/.dsci
+
+chmod a+w /opt/.dsci
 
 docker network create dsci || :
 
