@@ -8,9 +8,9 @@ ls -l
 
 2>&1
 
-mkdir -p ~/.dsci/.sparky
+mkdir -p ~/.dsci/
 
-#chmod a+w ~/.dsci
+cp ~/.dsci.toml .
 
 docker network create dsci || :
 

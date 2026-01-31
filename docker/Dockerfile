@@ -46,7 +46,9 @@ ENTRYPOINT cd /home/worker/projects/sparky; if test -f ~/.sparky/projects/db.sql
 
 COPY sparrowfile sparky.yaml /home/worker/distro/
 
-RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro
+COPY .dsci.toml /home/worker/
+
+RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro 
 
 RUN git config --global advice.detachedHead false
 
@@ -54,11 +56,4 @@ RUN zef install --/test TOML
 
 WORKDIR /home/worker/projects
 
-ENV FORGEJO_HOST=http://127.0.0.1:3000
-
-ENV FORGEJO_API_TOKEN=changeme
-
-ENV DSCI_FEEDBACK_URL=http:/127.0.0.1:4000
-
-ENV DSCI_AGENT_IMAGE=alpine:latest
 
