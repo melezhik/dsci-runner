@@ -6,11 +6,17 @@ use JSON::Fast;
 
 use YAMLish;
 
+use TOML;
+
 class Pipeline
 
 does Sparky::JobApi::Role
 
 {
+
+  method !config {
+    return from-toml("{%*ENV<HOME>}/.dsci.toml".IO.slurp);
+  }
 
   method !validate-cond-expression ($exp,$debug = False) {
     my @b; # bogus lines
@@ -58,13 +64,15 @@ does Sparky::JobApi::Role
 
   method !update-commit-status ($s) {
     
-    my $url = "{%*ENV<DSCI_FEEDBACK_URL> || 'http://127.0.0.1:8080'}/report/dsci/{tags()<SPARKY_JOB_ID>}";
+    my %config = self!config();
+
+    my $url = "{%config<DsciFeedbackUrl> || 'http://127.0.0.1:8080'}/report/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
 
-    my $params = "--data $data -H \"Authorization: token {%*ENV<FORGEJO_API_TOKEN>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
+    my $params = "--data $data -H \"Authorization: token {%config<ForgejoApiToken>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "{%*ENV<FORGEJO_HOST> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+    my $ext-url = "{%config<ForgejoHost> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
     say "send update to CI ... ext-url: $ext-url";
 
@@ -75,6 +83,8 @@ does Sparky::JobApi::Role
   }
 
   method stage-main {
+
+    my %config = self!config();
 
     self!update-commit-status("pending");
 
@@ -133,11 +143,11 @@ does Sparky::JobApi::Role
 
       bash "docker stop -t 1 dsci-agent || :";
 
-      say "run dsci agent container from image: {%*ENV<DSCI_AGENT_IMAGE>||'alpine:latest'}";
+      say "run dsci agent container from image: {%config<DsciAgentImage>||'alpine:latest'}";
 
-      bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%*ENV<DSCI_AGENT_IMAGE> || 'alpine:latest'}";
+      bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%config<DsciAgentImage> || 'alpine:latest'}";
 
-      unless %*ENV<DSCI_AGENT_SKIP_BOOTSTRAP> {
+      unless %config<DsciAgentSkipBootstrap> {
         my $j = Sparky::JobApi.new(
             :project("job.bootstrap"),
         );

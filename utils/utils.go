@@ -14,6 +14,14 @@ func SparkyDbFile() string {
 
 }
 
+func DsciConfigFile() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.dsci.toml", hdir)
+
+}
+
 func SparkyReportsDir() string {
 
 	hdir, _ := os.UserHomeDir()

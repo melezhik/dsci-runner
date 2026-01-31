@@ -23,8 +23,6 @@ docker run \
 --network dsci \
 --rm --name dsci-dispatch \
 --add-host host.docker.internal:host-gateway \
---env FORGEJO_HOST=$FORGEJO_HOST \
---env FORGEJO_API_TOKEN=$FORGEJO_API_TOKEN \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
 dsci-dispatch

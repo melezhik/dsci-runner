@@ -23,6 +23,7 @@ import (
 	"time"
 	"github.com/robert-nix/ansihtml"
 	"os/exec"
+  "github.com/pelletier/go-toml/v2"
 )
 
 //go:embed docker
@@ -322,16 +323,33 @@ func startJobDispatcher() {
 
 	log.Printf("startJobDispatcher: start")
 
-	dname, err := os.MkdirTemp("", "dsci_docker")
-    defer os.RemoveAll(dname)
+	var cfg types.AppConfig
+
+	path := utils.DsciConfigFile()
+
+	content, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: error reading file %s: %s",path, err)
+	}
+
+	err = toml.Unmarshal(content, &cfg)
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher: config unmashall error: %s",err)
+	}
+
+	var dname string
+
+	dname, err = os.MkdirTemp("", "dsci_docker")
+
+	defer os.RemoveAll(dname)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error creating temp dir: %s",err)
 	}
 
 	log.Printf("startJobDispatcher: creating temp dir: %s OK",dname)
-
-	var content []byte
 
 	// Dockerfile
 

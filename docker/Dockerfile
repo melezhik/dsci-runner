@@ -50,6 +50,8 @@ RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro
 
 RUN git config --global advice.detachedHead false
 
+RUN zef install --/test TOML
+
 WORKDIR /home/worker/projects
 
 ENV FORGEJO_HOST=http://127.0.0.1:3000
