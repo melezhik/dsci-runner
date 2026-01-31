@@ -21,7 +21,7 @@ docker stop -t 1 dsci-dispatch || :
 docker run \
 -id \
 --network dsci \
---rm --name dsci-dispatch -it \
+--rm --name dsci-dispatch \
 --add-host host.docker.internal:host-gateway \
 --env FORGEJO_HOST=$FORGEJO_HOST \
 --env FORGEJO_API_TOKEN=$FORGEJO_API_TOKEN \
