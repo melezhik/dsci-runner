@@ -328,7 +328,7 @@ func JobTriggerFile(p string, job_id string) string {
 
 	log.Printf("JobTriggerFile. look up trigger: %s %s\n", p, job_id)
 
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir)
+	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
 
 	path := fmt.Sprintf("%s/.sparky/projects/%s/.triggers/%s", hdir, p, job_id)
 
