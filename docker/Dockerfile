@@ -20,6 +20,14 @@ RUN addgroup worker wheel
 
 RUN sudo echo
 
+ARG UID=1000
+ARG GID=1000
+
+RUN addgroup -g $GID -S worker && \
+    adduser -u $UID -S worker -G worker -h /home/worker -s /bin/bash
+
+RUN chown -R worker:worker /home/worker
+
 USER worker
 
 RUN sudo apk add build-base sqlite-libs openssh-keygen util-linux openssh-client python3

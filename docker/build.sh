@@ -14,7 +14,7 @@ chmod a+w ~/.dsci
 
 docker network create dsci || :
 
-docker build . -t dsci-dispatch
+docker build . --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t dsci-dispatch
 
 docker stop -t 1 dsci-dispatch || :
 
