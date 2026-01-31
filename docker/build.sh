@@ -8,9 +8,9 @@ ls -l
 
 2>&1
 
-mkdir -p ~/.dsci
+mkdir -p ~/.dsci/.sparky
 
-chmod a+w ~/.dsci
+#chmod a+w ~/.dsci
 
 docker network create dsci || :
 
@@ -19,13 +19,13 @@ docker build . --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t dsci-dispatc
 docker stop -t 1 dsci-dispatch || :
 
 docker run \
--td \
+-id \
 --network dsci \
 --rm --name dsci-dispatch -it \
 --env FORGEJO_HOST=$FORGEJO_HOST \
 --env FORGEJO_API_TOKEN=$FORGEJO_API_TOKEN \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v $HOME/.dsci/.sparky:/home/worker/.sparky \
+-v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
 dsci-dispatch
 
 sleep 10

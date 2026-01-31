@@ -12,12 +12,6 @@ RUN apk add --no-cache bash
 
 RUN apk add rakudo zef
 
-RUN adduser -D -h /home/worker -s /bin/bash -G wheel worker
-
-RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-
-RUN addgroup worker wheel
-
 RUN sudo echo
 
 ARG UID=1000
@@ -27,6 +21,10 @@ RUN addgroup -g $GID -S worker && \
     adduser -u $UID -S worker -G worker -h /home/worker -s /bin/bash
 
 RUN chown -R worker:worker /home/worker
+
+RUN addgroup worker wheel 
+
+RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 USER worker
 
