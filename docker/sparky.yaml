@@ -1,2 +1,3 @@
 SPARKY_TCP_PORT: 8080
 SPARKY_TRIGGER_FORMAT: json
+SPARKY_HOST: host.docker.internal
