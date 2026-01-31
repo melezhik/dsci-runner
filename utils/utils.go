@@ -8,25 +8,25 @@ import (
 
 func SparkyDbFile() string {
 
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
+	hdir, _ := os.UserHomeDir()
 
-	return fmt.Sprintf("%s/.sparky/projects/db.sqlite3", hdir)
+	return fmt.Sprintf("%s/.dsci/.sparky/projects/db.sqlite3", hdir)
 
 }
 
 func SparkyReportsDir() string {
 
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
+	hdir, _ := os.UserHomeDir()
 
-	return fmt.Sprintf("%s/.sparky/projects/.reports", hdir)
+	return fmt.Sprintf("%s/.dsci/.sparky/projects/.reports", hdir)
 
 }
 
 func SparkyProjectDir(p string) string {
 
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
+	hdir, _ := os.UserHomeDir()
 
-	return fmt.Sprintf("%s/.sparky/projects/%s", hdir, p)
+	return fmt.Sprintf("%s/.dsci/.sparky/projects/%s", hdir, p)
 
 }
 
@@ -62,8 +62,8 @@ func CreateSparkyTriggersDir(p string) string {
 }
 
 func SparkyCacheDir(job_id string) string {
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
-	return fmt.Sprintf("%s/.sparky/.cache/%s", hdir, job_id)
+	hdir, _ := os.UserHomeDir()
+	return fmt.Sprintf("%s/.dsci/.sparky/.cache/%s", hdir, job_id)
 }
 
 func SparkyCacheDirDocker(job_id string) string {
@@ -120,6 +120,6 @@ func CreateSparkyStashDir(p string) string {
 }
 
 func ProjectStateDir(p string) string {
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
-	return fmt.Sprintf("%s/.sparky/work/%s/.states", hdir, p)
+	hdir, _ := os.UserHomeDir()
+	return fmt.Sprintf("%s/.dsci/.sparky/work/%s/.states", hdir, p)
 }

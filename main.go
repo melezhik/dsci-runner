@@ -43,7 +43,7 @@ func main() {
 	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
 	// Routes
-	e.GET("/", livebuilds)
+	e.GET("/", builds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)

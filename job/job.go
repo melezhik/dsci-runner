@@ -328,14 +328,14 @@ func JobTriggerFile(p string, job_id string) string {
 
 	log.Printf("JobTriggerFile. look up trigger: %s %s\n", p, job_id)
 
-	hdir := fmt.Sprintf("%s/.dsci",os.UserHomeDir())
+	hdir, _ := os.UserHomeDir()
 
-	path := fmt.Sprintf("%s/.sparky/projects/%s/.triggers/%s", hdir, p, job_id)
+	path := fmt.Sprintf("%s/.dsci/.sparky/projects/%s/.triggers/%s", hdir, p, job_id)
 
 	_, err := os.Stat(path)
 
 	if errors.Is(err, os.ErrNotExist) {
-		path = fmt.Sprintf("%s/.sparky/work/%s/.triggers/%s", hdir, p, job_id)
+		path = fmt.Sprintf("%s/.dsci/.sparky/work/%s/.triggers/%s", hdir, p, job_id)
 		_, err = os.Stat(path)
 		if errors.Is(err, os.ErrNotExist) {
 		} else if err != nil {
