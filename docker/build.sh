@@ -16,21 +16,16 @@ chmod a+w ~/.dsci/.sparky/
 
 cp ~/.dsci.toml .
 
-docker network create dsci || :
-
 docker build . --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t dsci-dispatch
 
 docker stop -t 1 dsci-dispatch || :
 
 docker run \
 -id \
---network dsci \
 --rm --name dsci-dispatch \
---add-host host.docker.internal:host-gateway \
+--network host \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
-dsci-dispatch
-
-sleep 10
+dsci-dispatch || :
 
 docker logs --tail 100 dsci-dispatch

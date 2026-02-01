@@ -72,7 +72,7 @@ does Sparky::JobApi::Role
 
     my $params = "--data $data -H \"Authorization: token {%config<ForgejoApiToken>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $ext-url = "{%config<ForgejoHost> || 'http://host.docker.internal:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+    my $ext-url = "{%config<ForgejoHost> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
 
     say "send update to CI ... ext-url: $ext-url";
 
@@ -145,7 +145,7 @@ does Sparky::JobApi::Role
 
       say "run dsci agent container from image: {%config<DsciAgentImage>||'alpine:latest'}";
 
-      bash "docker run --add-host host.docker.internal:host-gateway -dit --rm --name dsci-agent --network dsci --entrypoint /bin/sh {%config<DsciAgentImage> || 'alpine:latest'}";
+      bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {%config<DsciAgentImage> || 'alpine:latest'}";
 
       unless %config<DsciAgentSkipBootstrap> {
         my $j = Sparky::JobApi.new(
@@ -212,7 +212,7 @@ does Sparky::JobApi::Role
             job_id  => $job<id>,
             path    => $job<path>,
             stage   => "job-run",
-            scm     => tags()<scm>.subst('127.0.0.1','host.docker.internal'),
+            scm     => tags()<scm>,
             sha     => tags()<sha>,
           );
 
