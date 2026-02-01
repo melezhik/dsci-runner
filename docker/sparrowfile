@@ -6,8 +6,6 @@ use JSON::Fast;
 
 use YAMLish;
 
-use TOML;
-
 class Pipeline
 
 does Sparky::JobApi::Role
@@ -15,7 +13,8 @@ does Sparky::JobApi::Role
 {
 
   method !config {
-    return from-toml("{%*ENV<HOME>}/.dsci.toml".IO.slurp);
+    require TOML;
+    return &TOML::from-toml("{%*ENV<HOME>}/.dsci.toml".IO.slurp);
   }
 
   method !validate-cond-expression ($exp,$debug = False) {
