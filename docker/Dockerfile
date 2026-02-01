@@ -40,7 +40,7 @@ RUN zef install --/test JSON::Fast Sparrowdo YAMLish DBIish DBIish::Pool JSON::F
 
 #RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
-RUN echo OK5 && mkdir -p /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
+RUN echo OK6 && mkdir -p /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
 
 ENTRYPOINT cd /home/worker/projects/sparky; if test -f ~/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; mkdir -p ~/.sparky/projects/dsci; cp /home/worker/distro/sparrowfile ~/.sparky/projects/dsci/; cp /home/worker/distro/sparky.yaml ~/sparky.yaml; sparkyd
 
@@ -54,7 +54,7 @@ RUN git config --global advice.detachedHead false
 
 RUN zef install --/test TOML 
 
-RUN zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
+RUN echo OK && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git --force-install
 
 WORKDIR /home/worker/projects
 
