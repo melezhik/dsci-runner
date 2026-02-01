@@ -1,13 +1,5 @@
 package types
 
-type AppConfig struct {
-	ForgejoApiToken string
-	ForgejoHost     string
-	DsciFeedbackUrl  string
-	DsciAgentSkipBootstrap bool
-	DsciAgentImage         string
-}
-
 type Config struct {
 	Project     string                 `json:"project"`
 	Description string                 `json:"description"`
