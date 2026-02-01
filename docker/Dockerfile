@@ -54,7 +54,7 @@ RUN git config --global advice.detachedHead false
 
 RUN zef install --/test TOML 
 
-RUN echo OK && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git --force-install
+RUN echo OK2 && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
 
 WORKDIR /home/worker/projects
 
