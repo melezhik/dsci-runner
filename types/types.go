@@ -19,6 +19,7 @@ type Config struct {
 type Sparrowdo struct {
 	Localhost bool   `json:"localhost"`
 	NoSudo    bool   `json:"no_sudo"`
+	Bootstrap bool   `json:"bootstrap"`
 	Sudo      bool   `json:"sudo"`
 	Conf      string `json:"conf"`
 	Host      string `json:"host"`
