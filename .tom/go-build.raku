@@ -1,7 +1,1 @@
-my $path = [
-  "main.go",
-];
-
-task-run "build", "go-build", %(
-  :$path,
-);
+task-run ".tom/tasks/go-build";

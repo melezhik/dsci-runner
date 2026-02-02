@@ -180,8 +180,12 @@ func forgejo_hook(c *echo.Context) error {
 	q.Config.Project = "dsci"
 	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 	q.Config.Description = fmt.Sprintf("%s | %s", r.Sha, r.HeadCommit.Message)
+	skip_bootstrap := ""
+	if AppConfig.DsciAgentSkipBootstrap == true {
+		skip_bootstrap = ",DsciAgentSkipBootstrap"
+	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentSkipBootstrap=%s,DsciAgentImage=%s",
+		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s",
 		r.Ref,
 		r.Repository.FullName,
 		r.Sha,
@@ -190,8 +194,8 @@ func forgejo_hook(c *echo.Context) error {
 		AppConfig.ForgejoApiToken,
 		AppConfig.ForgejoHost,
 		AppConfig.DsciFeedbackUrl,
-		AppConfig.DsciAgentSkipBootstrap,
 		AppConfig.DsciAgentImage,
+		skip_bootstrap,
 	)
 
 	q.Trigger.Sparrowdo.NoSudo = true

@@ -58,8 +58,6 @@ does Sparky::JobApi::Role
 
   method !update-commit-status ($s) {
     
-    my %config = self!config();
-
     my $url = "{tags()<DsciFeedbackUrl> || 'http://127.0.0.1:8080'}/report/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
@@ -77,8 +75,6 @@ does Sparky::JobApi::Role
   }
 
   method stage-main {
-
-    my %config = self!config();
 
     self!update-commit-status("pending");
 
