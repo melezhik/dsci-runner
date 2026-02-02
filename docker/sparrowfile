@@ -137,7 +137,7 @@ does Sparky::JobApi::Role
 
       bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
 
-      unless tags()<DsciAgentSkipBootstrap> eq "true" {
+      unless tags()<DsciAgentSkipBootstrap> {
         my $j = Sparky::JobApi.new(
             :project("job.bootstrap"),
         );
