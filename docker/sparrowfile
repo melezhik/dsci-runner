@@ -159,11 +159,11 @@ does Sparky::JobApi::Role
           $status = False;
           say "dsci agent boorstrap ... [FAIL]";
           say "...";
-          say $j.report();
+          say $j.report().subst(/\r/,:g);
         } else {
           say "dsci agent boorstrap ... [OK]";
           say "...";
-          say $j.report();
+          say $j.report().subst(/\r/,:g);
         }
 
       }
@@ -249,7 +249,7 @@ does Sparky::JobApi::Role
             $status = False;
             say "job {$job<id>} ... [FAIL]";
             say "...";
-            say $j.report;
+            say $j.report().subst(/\r/,:g);
             last;
           }
 
@@ -257,7 +257,7 @@ does Sparky::JobApi::Role
 
           say "job {$job<id>} ... [OK]";
           say "...";
-          say $j.report();
+          say $j.report().subst(/\r/,:g);
 
         }
       }
