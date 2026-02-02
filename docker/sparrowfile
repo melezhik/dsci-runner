@@ -272,6 +272,9 @@ does Sparky::JobApi::Role
 
     package-install "python3";
 
+    bash "zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git", %(
+      description => "update sparky-job-api",
+    );
     say "dsci agent is ready!!!";
 
   }
