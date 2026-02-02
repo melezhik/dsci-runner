@@ -181,7 +181,7 @@ func forgejo_hook(c *echo.Context) error {
 	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 	q.Config.Description = fmt.Sprintf("%s | %s", r.Sha, r.HeadCommit.Message)
 	skip_bootstrap := ""
-	if AppConfig.DsciAgentSkipBootstrap == true {
+	if AppConfig.DsciAgentSkipBootstrap == false {
 		skip_bootstrap = ",DsciAgentSkipBootstrap"
 	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
