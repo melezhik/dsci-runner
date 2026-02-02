@@ -14,11 +14,16 @@ chmod a+w ~/.dsci
 
 chmod a+w ~/.dsci/.sparky/
 
-cp ~/.dsci.toml .
+if [[ $OSTYPE == darwin* ]]; then
+    gid=1001
+else
+    git=$(id -g)
+fi
 
-docker build . --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t dsci-dispatch
+docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
 
 docker stop -t 1 dsci-dispatch || :
+
 
 docker run \
 -id \

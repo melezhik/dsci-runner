@@ -23,6 +23,7 @@ import (
 	"time"
 	"github.com/robert-nix/ansihtml"
 	"os/exec"
+	"github.com/pelletier/go-toml/v2"
 )
 
 //go:embed docker
@@ -31,7 +32,23 @@ var staticFiles embed.FS
 //go:embed public
 var staticFiles2 embed.FS
 
+var AppConfig types.AppConfig
+
 func main() {
+
+	path := utils.DsciConfigFile()
+
+	dat, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("main: Error reading file: %s : %s", path, err)
+	}
+
+	err = toml.Unmarshal(dat, &AppConfig)
+
+	if err != nil {
+		log.Fatalf("main: Error parsing toml config: %s : %s", path, err)
+	}
 
 	go startJobDispatcher()
 
@@ -164,12 +181,17 @@ func forgejo_hook(c *echo.Context) error {
 	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 	q.Config.Description = fmt.Sprintf("%s | %s", r.Sha, r.HeadCommit.Message)
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s",
+		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentSkipBootstrap=%s,DsciAgentImage=%s",
 		r.Ref,
 		r.Repository.FullName,
 		r.Sha,
 		r.Repository.CloneUrl,
 		r.HeadCommit.Message,
+		AppConfig.ForgejoApiToken,
+		AppConfig.ForgejoHost,
+		AppConfig.DsciFeedbackUrl,
+		AppConfig.DsciAgentSkipBootstrap,
+		AppConfig.DsciAgentImage,
 	)
 
 	q.Trigger.Sparrowdo.NoSudo = true
