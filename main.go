@@ -24,6 +24,7 @@ import (
 	"github.com/robert-nix/ansihtml"
 	"os/exec"
 	"github.com/pelletier/go-toml/v2"
+	"strings"
 )
 
 //go:embed docker
@@ -253,6 +254,8 @@ func report_ui(c *echo.Context) error {
 	job_id := c.Param("key")
 
 	data := job.Report(project, job_id)
+
+	data = strings.ReplaceAll(data, "\r\n", "\n")
 
 	htmlOutput := ansihtml.ConvertToHTML([]byte(data))
 
