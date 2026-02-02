@@ -68,7 +68,7 @@ function connect() {
             var tr = document.createElement('tr');
             var td1 = document.createElement('td');
             var a = document.createElement('a');
-            a.setAttribute("href","/report/" + build.Project + "/" + build.JobId);
+            a.setAttribute("href","/report/ui/" + build.Project + "/" + build.JobId);
             a.setAttribute("target","_blank");
             a.appendChild(document.createTextNode(build.Project + '@' + build.ID));
             td1.appendChild(a);

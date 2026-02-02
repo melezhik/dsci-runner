@@ -58,7 +58,7 @@ does Sparky::JobApi::Role
 
   method !update-commit-status ($s) {
     
-    my $url = "{tags()<DsciFeedbackUrl> || 'http://127.0.0.1:8080'}/report/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $url = "{tags()<DsciFeedbackUrl> || 'http://127.0.0.1:8080'}/report/ui/dsci/{tags()<SPARKY_JOB_ID>}";
 
     my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
 

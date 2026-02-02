@@ -66,7 +66,7 @@ func main() {
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.POST("/forgejo_hook", forgejo_hook)
 	e.GET("/status/:project/:key", status)
-	e.GET("/report/:project/:key", report_ui)
+	e.GET("/report/ui/:project/:key", report_ui)
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
 	e.GET("/livebuilds", livebuilds)
