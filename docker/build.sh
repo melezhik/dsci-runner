@@ -17,7 +17,7 @@ chmod a+w ~/.dsci/.sparky/
 if [[ $OSTYPE == darwin* ]]; then
     gid=1001
 else
-    git=$(id -g)
+    gid=$(id -g)
 fi
 
 docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
