@@ -144,7 +144,7 @@ does Sparky::JobApi::Role
 
         $j.queue({
             :description("dsci agent bootstrap"),
-            :tags(%(stage => "bootstrap")),
+            :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
             :sparrowdo(%(
               :docker<dsci-agent>,
               :bootstrap,
@@ -204,6 +204,7 @@ does Sparky::JobApi::Role
             stage   => "job-run",
             scm     => tags()<scm>,
             sha     => tags()<sha>,
+            SPARKY_HOST => "127.0.0.1",
           );
 
           if $job<plugin> {
