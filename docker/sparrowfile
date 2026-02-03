@@ -68,7 +68,7 @@ does Sparky::JobApi::Role
 
     say "send update to CI ... ext-url: $ext-url";
 
-    say qqx[curl $params $ext-url].chomp;
+    say qqx[curl $params $ext-url].split("\n").head.chomp;
 
     say "done";
 
