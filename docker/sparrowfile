@@ -103,6 +103,10 @@ does Sparky::JobApi::Role
 
     my $cont = True;
 
+    my $localhost-mode = $jobs<global> && $jobs<global><localhost>;
+
+    say "pipeline mode: {$localhost-mode ?? 'localhost' !! 'docker'}";
+
     if $jobs<global> && $jobs<global><skip> {
       if self!validate-cond-expression($jobs<global><skip>,$jobs<global><debug>||False) {
         use MONKEY-SEE-NO-EVAL;
@@ -129,41 +133,78 @@ does Sparky::JobApi::Role
 
       my %_dsci;
     
-      bash "sudo chmod 666 /var/run/docker.sock";
+      if $localhost-mode {
 
-      bash "docker stop -t 1 dsci-agent || :";
+        unless tags()<DsciAgentSkipBootstrap> {
+          my $j = Sparky::JobApi.new(
+              :project("job.bootstrap"),
+          );
 
-      say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
+          $j.queue({
+              :description("dsci bootstrap"),
+              :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
+              :sparrowdo(%(
+                :host<127.0.0.1>,
+                :ssh_user(%*ENV<HOST_SSH_USER>),
+                :bootstrap,
+                :no_sudo,
+              )),
+          });
 
-      bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
+          my $st = self.wait-job($j);
 
-      unless tags()<DsciAgentSkipBootstrap> {
-        my $j = Sparky::JobApi.new(
-            :project("job.bootstrap"),
-        );
+          if ! $st<OK> {
+            $status = False;
+            say "dsci bootstrap ... [FAIL]";
+            say "...";
+            say $j.report();
+          } else {
+            say "dsci bootstrap ... [OK]";
+            say "...";
+            say $j.report();
+          }
 
-        $j.queue({
-            :description("dsci agent bootstrap"),
-            :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
-            :sparrowdo(%(
-              :docker<dsci-agent>,
-              :bootstrap,
-              :no_sudo,
-            )),
-        });
-  
+        }
 
-        my $st = self.wait-job($j);
+      } else {
 
-        if ! $st<OK> {
-          $status = False;
-          say "dsci agent boorstrap ... [FAIL]";
-          say "...";
-          say $j.report();
-        } else {
-          say "dsci agent boorstrap ... [OK]";
-          say "...";
-          say $j.report();
+        bash "sudo chmod 666 /var/run/docker.sock";
+
+        bash "docker stop -t 1 dsci-agent || :";
+
+        say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
+
+        bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
+
+        unless tags()<DsciAgentSkipBootstrap> {
+          my $j = Sparky::JobApi.new(
+              :project("job.bootstrap"),
+          );
+
+          $j.queue({
+              :description("dsci agent bootstrap"),
+              :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
+              :sparrowdo(%(
+                :docker<dsci-agent>,
+                :bootstrap,
+                :no_sudo,
+              )),
+          });
+    
+
+          my $st = self.wait-job($j);
+
+          if ! $st<OK> {
+            $status = False;
+            say "dsci agent bootstrap ... [FAIL]";
+            say "...";
+            say $j.report();
+          } else {
+            say "dsci agent bootstrap ... [OK]";
+            say "...";
+            say $j.report();
+          }
+
         }
 
       }
@@ -234,13 +275,17 @@ does Sparky::JobApi::Role
             ));
           }
 
+          my $sparrowdo = %( :no_sudo );
+          if $localhost-mode {
+            $sparrowdo<host> = "127.0.0.1";
+            $sparrowdo<ssh_user> = %*ENV<HOST_SSH_USER>,
+          } else {
+            $sparrowdo<docker> = "dsci-agent"
+          }
           $j.queue({
             :description($job<id>),
             :tags(%tags),
-            :sparrowdo(%(
-              :docker<dsci-agent>,
-              :no_sudo,
-            )),
+            :$sparrowdo,
           });
 
           my $st = self.wait-job($j);

@@ -38,7 +38,7 @@ RUN sudo apk add go --repository=http://dl-cdn.alpinelinux.org/alpine/edge/commu
 
 RUN zef install --/test JSON::Fast Sparrowdo YAMLish DBIish DBIish::Pool JSON::Fast  Time::Crontab File::Directory::Tree Data::Dump
 
-#RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
+RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
 
 RUN echo OK8 && mkdir -p /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
 
@@ -54,4 +54,4 @@ RUN echo OK4 && zef install --/test --force-install https://github.com/melezhik/
 
 WORKDIR /home/worker/projects
 
-
+ENV HOST_SSH_USER=root

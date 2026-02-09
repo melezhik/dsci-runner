@@ -319,9 +319,10 @@ func livebuilds(c *echo.Context) error {
 			builds := job.Builds(db)
 			jsonData, _ := json.MarshalIndent(builds, "", "  ") // Use MarshalIndent for pretty printing
 
-			if err := websocket.Message.Send(ws, string(jsonData)); err != nil {
-				log.Printf("livebuilds: failed to write WS message: %s", "error", err)
-			}
+			_  = websocket.Message.Send(ws, string(jsonData))
+			// if err := websocket.Message.Send(ws, string(jsonData)); err != nil {
+			// 	log.Printf("livebuilds: failed to write WS message: %s", "error", err)
+			// }
 			//log.Printf("livebuilds: send data: %s", string(jsonData))
 			//log.Printf("\n===\nlivebuilds: sleep for 10 second\n===\n")
 			time.Sleep(10 * time.Second)
