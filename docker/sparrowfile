@@ -275,18 +275,27 @@ does Sparky::JobApi::Role
             ));
           }
 
-          my $sparrowdo = %( :no_sudo );
+          my %sparrowdo = %( :no_sudo );
           if $localhost-mode {
-            $sparrowdo<host> = "127.0.0.1";
-            $sparrowdo<ssh_user> = %*ENV<HOST_SSH_USER>,
+            $j.queue({
+              :description($job<id>),
+              :tags(%tags),
+              sparrowdo => %(
+                :no_sudo,
+                :host<127.0.0.1>,
+                :ssh_user("{%*ENV<HOST_SSH_USER>}"),
+              ),
+            });
           } else {
-            $sparrowdo<docker> = "dsci-agent"
+            $j.queue({
+              :description($job<id>),
+              :tags(%tags),
+              sparrowdo => %( 
+                :no_sudo, 
+                :docker<dsci-agent>,
+              ),
+            });
           }
-          $j.queue({
-            :description($job<id>),
-            :tags(%tags),
-            :$sparrowdo,
-          });
 
           my $st = self.wait-job($j);
 
