@@ -372,6 +372,12 @@ does Sparky::JobApi::Role
 
     for "scm/.dsci/{tags()<path>}".IO.dir: test => /^^ "job." \S+ $$/ -> $file {
 
+      $file.basename ~~ /^^ "job." (\S+) $$/;
+      my $ext = "$0";
+      #say "cp {$file.basename} hook.{$ext} ...";
+      copy "scm/.dsci/{tags()<path>}/{$file.basename}",
+           "scm/.dsci/{tags()<path>}/hook.{$ext}";
+
       bash q:to /BASH/, %( cwd => "scm/.dsci/{tags()<path>}", description => "patch python files" );
         find . -type f -name task.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
         find . -type f -name hook.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
