@@ -1,11 +1,12 @@
 package types
 
 type AppConfig struct {
-	ForgejoApiToken  string          
-	ForgejoHost string                 
-	DsciFeedbackUrl  string                 
-	DsciAgentSkipBootstrap  bool            
-	DsciAgentImage string  
+	ForgejoApiToken        string
+	ForgejoHost            string
+	DsciFeedbackUrl        string
+	DsciAgentSkipBootstrap bool
+	DsciAgentImage         string
+  DsciAllowLocalhostMode bool
 }
 
 type Config struct {

@@ -86,9 +86,9 @@ func JobQueueFs(r types.JobRequest) {
 		r.Trigger.Sparrowdo.Conf = r.Config.Sparrowdo.Conf
 	}
 
-  if r.Config.Sparrowdo.Bootstrap == true {
-    r.Trigger.Sparrowdo.Bootstrap = r.Config.Sparrowdo.Bootstrap
-  }
+	if r.Config.Sparrowdo.Bootstrap == true {
+		r.Trigger.Sparrowdo.Bootstrap = r.Config.Sparrowdo.Bootstrap
+	}
 
 	var tags []string
 

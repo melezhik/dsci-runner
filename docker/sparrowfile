@@ -107,7 +107,13 @@ does Sparky::JobApi::Role
 
     say "pipeline mode: {$localhost-mode ?? 'localhost' !! 'docker'}";
 
-    if $jobs<global> && $jobs<global><skip> {
+    if $localhost-mode and ! tags()<DsciAllowLocalhostMode> {
+      warn "localhost is forbidden, enanle DsciAllowLocalhostMode to allow it";
+      $status = False;
+      $cont = False; 
+    }
+
+    if $cont && $jobs<global> && $jobs<global><skip> {
       if self!validate-cond-expression($jobs<global><skip>,$jobs<global><debug>||False) {
         use MONKEY-SEE-NO-EVAL;
         $cont = False if EVAL("my \$a = \{given (tags()) \{ {$jobs<global><skip>} \}\}; \$a()");
