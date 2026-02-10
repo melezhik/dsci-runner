@@ -376,40 +376,32 @@ does Sparky::JobApi::Role
       :skip-pull,
     );
 
-    for "scm/.dsci/{tags()<path>}".IO.dir: test => /^^ "job." \S+ $$/ -> $file {
 
-      $file.basename ~~ /^^ "job." (\S+) $$/;
-      my $ext = "$0";
-      #say "cp {$file.basename} hook.{$ext} ...";
-      copy "scm/.dsci/{tags()<path>}/{$file.basename}",
-           "scm/.dsci/{tags()<path>}/hook.{$ext}";
+    chdir "scm/.dsci/{tags()<path>}";
 
-      bash q:to /BASH/, %( cwd => "scm/.dsci/{tags()<path>}", description => "patch python files" );
+    bash q:to /BASH/, %( cwd => "{$*CWD}", description => "prepare dsci scripts" );
         find . -type f -name task.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
         find . -type f -name hook.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
-      BASH
+    BASH
 
-      my %p_ = $me.get-stash();
+    my %p_ = $me.get-stash();
 
-      my %params = %p_<params>; 
+    my %params = %p_<params>; 
 
-      %params<_dsci_> = %p_<dsci>;
+    %params<_dsci_> = %p_<dsci>;
 
-      chdir "scm/.dsci/{tags()<path>}";
-
-      if tags()<dump-task-config> {
+    if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
-      }
-
-      if tags()<dump-task-code> {
-        %*ENV<SP6_DUMP_TASK_CODE> =  1;
-      }
-
-      my $s = task-run ".", %params;
-
-      $me.put-stash($s);
-
     }
+
+    if tags()<dump-task-code> {
+        %*ENV<SP6_DUMP_TASK_CODE> =  1;
+    }
+
+    my $s = task-run ".", %params;
+
+    $me.put-stash($s);
+
   }
 
 }
