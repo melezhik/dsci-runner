@@ -8,7 +8,7 @@ RUN apk update && apk add openssl bash curl wget perl openssl-dev sudo git pytho
 
 RUN apk add --no-cache bash
 
-RUN apk add rakudo zef raku-sparrow6
+RUN apk add rakudo zef raku-sparrow6 php
 
 RUN adduser -D -h /home/worker -s /bin/bash -G wheel worker
 
@@ -25,3 +25,4 @@ RUN git config --global advice.detachedHead false
 RUN echo OK && zef install --/test --force-install https://github.com/melezhik/Sparrow6.git
 
 RUN echo OK && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
+
