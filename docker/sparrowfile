@@ -380,6 +380,7 @@ does Sparky::JobApi::Role
     chdir "scm/.dsci/{tags()<path>}";
 
     bash q:to /BASH/, %( cwd => "{$*CWD}", description => "prepare dsci scripts" );
+        find . -type f -name job.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
         find . -type f -name task.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
         find . -type f -name hook.py  | raku -e  'for lines() -> $i { my $c = $i.IO.slurp; $c = "from sparrow6lib import *\n\n$c"; $i.IO.spurt($c) }' 
     BASH
