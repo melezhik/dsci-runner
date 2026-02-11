@@ -392,6 +392,16 @@ does Sparky::JobApi::Role
     %params<_dsci_> = %p_<dsci>;
 
     if tags()<dump-task-config> {
+
+      # inject git repo parameters
+      
+      %params<DSCI_COMMIT> = tags()<sha>;
+      %params<DSCI_SCM> = tags()<scm>;
+      %params<DSCI_JOBID> = tags()<job_id>;
+
+      chdir "scm/.dsci/{tags()<path>}";
+
+      if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
     }
 

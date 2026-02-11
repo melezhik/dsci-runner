@@ -14,6 +14,14 @@ func SparkyDbFile() string {
 
 }
 
+func DsciAdminTokenFile() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.dsci.admin.token", hdir)
+
+}
+
 func DsciConfigFile() string {
 
 	hdir, _ := os.UserHomeDir()

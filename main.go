@@ -25,6 +25,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"flag"
+	"golang.org/x/crypto/bcrypt"
+	"math/rand"
 )
 
 //go:embed docker
@@ -37,6 +40,11 @@ var AppConfig types.AppConfig
 
 func main() {
 
+	if len(os.Args) > 1 {
+        // Run CLI logic
+        runCLI()
+        return
+    }
 	path := utils.DsciConfigFile()
 
 	dat, err := os.ReadFile(path)
@@ -379,7 +387,7 @@ func startJobDispatcher() {
 
 	fname := filepath.Join(dname, "Dockerfile")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/Dockerfile: %s", dname, err)
@@ -396,7 +404,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "sparrowfile")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
@@ -411,7 +419,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "sparrowfile")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
@@ -428,7 +436,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "sparrowfile")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
@@ -443,7 +451,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "sparky.yaml")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/sparky.yaml: %s", dname, err)
@@ -460,7 +468,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "build.sh")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s", dname, err)
@@ -475,7 +483,7 @@ func startJobDispatcher() {
 
 	fname = filepath.Join(dname, "build.sh")
 
-	err = os.WriteFile(fname, []byte(content), 0666)
+	err = os.WriteFile(fname, []byte(content), 0644)
 
 	if err != nil {
 		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s", dname, err)
@@ -497,4 +505,34 @@ func startJobDispatcher() {
 
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
+}
+
+func runCLI() {
+
+	actPtr := flag.String("action", "generate-token", "a string")
+    //numbPtr := flag.Int("numb", 42, "an int")
+    adminPtr := flag.Bool("admin", false, "a bool")	
+
+	flag.Parse()
+	//fmt.Printf("run cli: %s %s\n",*adminPtr,*actPtr)
+
+	if *adminPtr == true {
+		if *actPtr == "generate-token" {
+			length := 10
+			rand.Seed(time.Now().UnixNano())
+			b := make([]byte, length+2)
+			rand.Read(b)
+			password := fmt.Sprintf("%x", b)[2 : length+2]			
+			bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+			fname := utils.DsciAdminTokenFile()
+			err = os.WriteFile(fname, bytes, 0644)
+			if err != nil {
+				log.Fatalf("runCLI: error writting to %s: %s", fname, err)
+			}			
+			fmt.Printf(
+				"admin token generated:\n%s\ncopy this string into a repo web hook settings Secret\n",
+				password,
+			)
+		}
+	}
 }
