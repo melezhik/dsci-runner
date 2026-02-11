@@ -360,6 +360,13 @@ does Sparky::JobApi::Role
       if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
       }
+
+      # inject git repo parameters
+      
+      $params<DSCI_COMMIT> = tags()<sha>;
+      $params<DSCI_SCM> = tags()<scm>;
+      $params<DSCI_JOBID> = tags()<job_id>;
+
       my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
 
       $me.put-stash($s);
@@ -392,23 +399,18 @@ does Sparky::JobApi::Role
     %params<_dsci_> = %p_<dsci>;
 
     if tags()<dump-task-config> {
-
-      # inject git repo parameters
-      
-      %params<DSCI_COMMIT> = tags()<sha>;
-      %params<DSCI_SCM> = tags()<scm>;
-      %params<DSCI_JOBID> = tags()<job_id>;
-
-      chdir "scm/.dsci/{tags()<path>}";
-
-      if tags()<dump-task-config> {
-        %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
-      }
+      %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
     }
 
     if tags()<dump-task-code> {
-        %*ENV<SP6_DUMP_TASK_CODE> =  1;
+      %*ENV<SP6_DUMP_TASK_CODE> =  1;
     }
+
+    # inject git repo parameters
+      
+    %params<DSCI_COMMIT> = tags()<sha>;
+    %params<DSCI_SCM> = tags()<scm>;
+    %params<DSCI_JOBID> = tags()<job_id>;
 
     my $s = task-run ".", %params;
 
