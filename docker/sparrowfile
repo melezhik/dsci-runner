@@ -403,6 +403,7 @@ does Sparky::JobApi::Role
 
       if tags()<dump-task-config> {
         %*ENV<SP6_DUMP_TASK_CONFIG> =  1;
+      }
     }
 
     if tags()<dump-task-code> {
