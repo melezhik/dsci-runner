@@ -180,8 +180,9 @@ does Sparky::JobApi::Role
 
         my @env;
 
-        if "{%*ENV<HOME>}/.secrets/{tags()<repo_full_name>}" {
+        if "{%*ENV<HOME>}/.secrets/{tags()<repo_full_name>}".IO ~~ :d {
           for dir("{%*ENV<HOME>}/.secrets/{tags()<repo_full_name>}") -> $file {
+            #say $file;
             next unless $file ~~ :f;
             push @env, "-e {$file.basename}=\"{$file.slurp.chomp}\"";
             say "push secret {$file.basename} to job container ...";
