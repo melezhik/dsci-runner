@@ -178,9 +178,19 @@ does Sparky::JobApi::Role
 
         bash "docker stop -t 1 dsci-agent || :";
 
+        my @env;
+
+        if "{%*ENV<HOME>}/.secrets/{tags()<repo_full_name>}" {
+          for dir("{%*ENV<HOME>}/.secrets/{tags()<repo_full_name>}") -> $file {
+            next unless $file ~~ :f;
+            push @env, "-e {$file.basename}=\"{$file.slurp.chomp}\"";
+            say "push secret {$file.basename} to job container ...";
+          }
+        }
+
         say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
 
-        bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
+        bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
 
         unless tags()<DsciAgentSkipBootstrap> {
           my $j = Sparky::JobApi.new(

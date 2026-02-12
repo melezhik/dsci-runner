@@ -24,6 +24,12 @@ docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
 
 docker stop -t 1 dsci-dispatch || :
 
+opts=""
+
+if test -d ~/.dsci/.secrets; then
+    echo "mount secrets from $HOME/.dsci/.secrets"
+    opts="-v $HOME/.dsci/.secrets:/home/worker/.secrets"
+fi
 
 docker run \
 -id \
@@ -32,6 +38,7 @@ docker run \
 -v /var/run/docker.sock:/var/run/docker.sock \
 -v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
 -e HOST_SSH_USER=$USER \
+$opts \
 dsci-dispatch || :
 
 docker cp dsci-dispatch:/home/worker/.ssh/id_rsa.pub /tmp/
