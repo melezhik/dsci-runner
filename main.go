@@ -27,6 +27,7 @@ import (
 	"time"
 	"flag"
 	"bufio"
+	"regexp"
 )
 
 //go:embed docker
@@ -518,14 +519,25 @@ func runCLI() {
 	if *adminPtr == true {
 		if *actPtr == "create-secret" {
 			reader := bufio.NewReader(os.Stdin)
-			fmt.Print("path: (demo/demo-php/password) ")
+			default_value := "demo/demo-php/password"
+			fmt.Printf("path: (%s) ",default_value)
 			input, err := reader.ReadString('\n')
 			if err != nil {
 				log.Fatalf("runCLI, error reading input:", err)
 			}
 			secret_path := strings.TrimSpace(input)
+			if secret_path == "" {
+				secret_path = default_value
+			}
+			pattern := `^[\w\-]+\/[\w\-]+\/[\w\-]+$`
+			if match, _ := regexp.MatchString(pattern, secret_path); match == false {
+				log.Fatalf("runCLI, secret_path should match: %s", pattern)
+			}
 
-			fmt.Print("value: (12345) ")
+			default_value = "12345"
+
+			fmt.Printf("value: (%s) ",default_value)
+
 			input, err = reader.ReadString('\n')
 
 			if err != nil {
@@ -533,6 +545,16 @@ func runCLI() {
 			}
 
 			secret_value := strings.TrimSpace(input)
+
+			if secret_value == "" {
+				secret_value = default_value
+			}
+
+			pattern = `^\S+$`
+
+			if match, _ := regexp.MatchString(pattern, secret_value); match == false {
+				log.Fatalf("runCLI, secret_value should match: %s", pattern)
+			}
 
 			dir := utils.DsciRootDir()
 
