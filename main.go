@@ -26,8 +26,7 @@ import (
 	"strings"
 	"time"
 	"flag"
-	"golang.org/x/crypto/bcrypt"
-	"math/rand"
+	"bufio"
 )
 
 //go:embed docker
@@ -509,7 +508,7 @@ func startJobDispatcher() {
 
 func runCLI() {
 
-	actPtr := flag.String("action", "generate-token", "a string")
+	actPtr := flag.String("action", "create-secret", "a string")
     //numbPtr := flag.Int("numb", 42, "an int")
     adminPtr := flag.Bool("admin", false, "a bool")	
 
@@ -517,22 +516,47 @@ func runCLI() {
 	//fmt.Printf("run cli: %s %s\n",*adminPtr,*actPtr)
 
 	if *adminPtr == true {
-		if *actPtr == "generate-token" {
-			length := 10
-			rand.Seed(time.Now().UnixNano())
-			b := make([]byte, length+2)
-			rand.Read(b)
-			password := fmt.Sprintf("%x", b)[2 : length+2]			
-			bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-			fname := utils.DsciAdminTokenFile()
-			err = os.WriteFile(fname, bytes, 0644)
+		if *actPtr == "create-secret" {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("path: (demo/demo-php/password) ")
+			input, err := reader.ReadString('\n')
 			if err != nil {
-				log.Fatalf("runCLI: error writting to %s: %s", fname, err)
-			}			
-			fmt.Printf(
-				"admin token generated:\n%s\ncopy this string into a repo web hook settings Secret\n",
-				password,
-			)
+				log.Fatalf("runCLI, error reading input:", err)
+			}
+			secret_path := strings.TrimSpace(input)
+
+			fmt.Print("value: (12345) ")
+			input, err = reader.ReadString('\n')
+
+			if err != nil {
+				log.Fatalf("runCLI, error reading input:", err)
+			}
+
+			secret_value := strings.TrimSpace(input)
+
+			dir := utils.DsciRootDir()
+
+			slice := strings.Split(secret_path,"/") 
+			secret_name := slice[len(slice)-1]
+			slice = slice[:len(slice) - 1]
+
+			repo  := strings.Join(slice,"/")
+
+			dir = fmt.Sprintf("%s/.secrets/%s",dir,repo)
+
+			err = os.MkdirAll(dir, 0755)
+
+			if err != nil {
+				log.Fatalf("Error creating directory %s: %s", dir, err)
+			}
+
+			fname := filepath.Join(dir, secret_name)
+
+			err = os.WriteFile(fname, []byte(secret_value), 0644)
+
+			if err != nil {
+				log.Fatalf("runCLI: error writting to file %s: %s", fname, err)
+			}
 		}
 	}
 }

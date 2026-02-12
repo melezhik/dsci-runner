@@ -6,19 +6,19 @@ import (
 	"os"
 )
 
+func DsciRootDir() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.dsci", hdir)
+
+}
+
 func SparkyDbFile() string {
 
 	hdir, _ := os.UserHomeDir()
 
 	return fmt.Sprintf("%s/.dsci/.sparky/projects/db.sqlite3", hdir)
-
-}
-
-func DsciAdminTokenFile() string {
-
-	hdir, _ := os.UserHomeDir()
-
-	return fmt.Sprintf("%s/.dsci.admin.token", hdir)
 
 }
 

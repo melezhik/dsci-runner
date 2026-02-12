@@ -7,7 +7,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/robert-nix/ansihtml v1.0.1
-	golang.org/x/crypto v0.47.0
 	golang.org/x/net v0.49.0
 )
 
