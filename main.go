@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"dsci_runner/job"
 	"dsci_runner/types"
 	"dsci_runner/utils"
 	"embed"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -19,15 +21,14 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"flag"
-	"bufio"
-	"regexp"
 )
 
 //go:embed docker
@@ -41,10 +42,10 @@ var AppConfig types.AppConfig
 func main() {
 
 	if len(os.Args) > 1 {
-        // Run CLI logic
-        runCLI()
-        return
-    }
+		// Run CLI logic
+		runCLI()
+		return
+	}
 	path := utils.DsciConfigFile()
 
 	dat, err := os.ReadFile(path)
@@ -182,6 +183,50 @@ func forgejo_hook(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	}
 
+	var host *url.URL
+
+	forgejo_host := "127.0.0.1"
+
+	if AppConfig.ForgejoHost != ""  {
+		host, err = url.Parse(AppConfig.ForgejoHost)
+		if err != nil {
+			log.Fatalf(
+				"forgejo_hook, error domain parsing AppConfig.ForgejoHost: %s, %s",
+				AppConfig.ForgejoHost,
+				err,
+			)
+		}
+		forgejo_host = host.Hostname()
+	} 
+
+	clone_host := "127.0.0.1"
+	host, err = url.Parse(r.Repository.CloneUrl)
+	if err != nil {
+		log.Fatalf(
+			"forgejo_hook, error domain parsing r.Repository.CloneUrl: %s, %s",
+			r.Repository.CloneUrl,
+			err,
+		)
+	} else {
+		clone_host = host.Hostname()
+	}
+
+	log.Printf(
+		"forgejo_hook Proccess request. clone_host: %s | forgejo_host: %s\n",
+		clone_host,
+		forgejo_host,
+	)
+
+	if clone_host != forgejo_host {
+		return echo.NewHTTPError(
+			http.StatusBadRequest,
+			fmt.Sprintf(
+				"forgejo_hook. Invalid request. clone_host: %s != forgejo_host: %s",
+				clone_host,
+				forgejo_host,
+			),
+		)
+	}
 	// job.PutJobStash(r.Config.Project,r.Config.JobId,r.Data)
 
 	var q types.JobRequest
@@ -190,13 +235,13 @@ func forgejo_hook(c *echo.Context) error {
 	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 	q.Config.Description = fmt.Sprintf("%s | %s", r.Sha, r.HeadCommit.Message)
 	skip_bootstrap := ""
-  allow_localhost_mode := ""
+	allow_localhost_mode := ""
 	if AppConfig.DsciAgentSkipBootstrap == true {
 		skip_bootstrap = ",DsciAgentSkipBootstrap"
 	}
-  if AppConfig.DsciAllowLocalhostMode == true {
-    allow_localhost_mode = ",DsciAllowLocalhostMode"
-  }
+	if AppConfig.DsciAllowLocalhostMode == true {
+		allow_localhost_mode = ",DsciAllowLocalhostMode"
+	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
 		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
 		r.Ref,
@@ -209,7 +254,7 @@ func forgejo_hook(c *echo.Context) error {
 		AppConfig.DsciFeedbackUrl,
 		AppConfig.DsciAgentImage,
 		skip_bootstrap,
-    allow_localhost_mode,
+		allow_localhost_mode,
 	)
 
 	q.Trigger.Sparrowdo.NoSudo = true
@@ -510,8 +555,8 @@ func startJobDispatcher() {
 func runCLI() {
 
 	actPtr := flag.String("action", "create-secret", "a string")
-    //numbPtr := flag.Int("numb", 42, "an int")
-    adminPtr := flag.Bool("admin", false, "a bool")	
+	//numbPtr := flag.Int("numb", 42, "an int")
+	adminPtr := flag.Bool("admin", false, "a bool")
 
 	flag.Parse()
 	//fmt.Printf("run cli: %s %s\n",*adminPtr,*actPtr)
@@ -520,7 +565,7 @@ func runCLI() {
 		if *actPtr == "create-secret" {
 			reader := bufio.NewReader(os.Stdin)
 			default_value := "demo/demo-php/password"
-			fmt.Printf("path: (%s) ",default_value)
+			fmt.Printf("path: (%s) ", default_value)
 			input, err := reader.ReadString('\n')
 			if err != nil {
 				log.Fatalf("runCLI, error reading input:", err)
@@ -536,7 +581,7 @@ func runCLI() {
 
 			default_value = "12345"
 
-			fmt.Printf("value: (%s) ",default_value)
+			fmt.Printf("value: (%s) ", default_value)
 
 			input, err = reader.ReadString('\n')
 
@@ -558,13 +603,13 @@ func runCLI() {
 
 			dir := utils.DsciRootDir()
 
-			slice := strings.Split(secret_path,"/") 
+			slice := strings.Split(secret_path, "/")
 			secret_name := slice[len(slice)-1]
-			slice = slice[:len(slice) - 1]
+			slice = slice[:len(slice)-1]
 
-			repo  := strings.Join(slice,"/")
+			repo := strings.Join(slice, "/")
 
-			dir = fmt.Sprintf("%s/.secrets/%s",dir,repo)
+			dir = fmt.Sprintf("%s/.secrets/%s", dir, repo)
 
 			err = os.MkdirAll(dir, 0755)
 

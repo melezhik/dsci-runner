@@ -6,7 +6,7 @@ type AppConfig struct {
 	DsciFeedbackUrl        string
 	DsciAgentSkipBootstrap bool
 	DsciAgentImage         string
-  DsciAllowLocalhostMode bool
+	DsciAllowLocalhostMode bool
 }
 
 type Config struct {
