@@ -263,6 +263,9 @@ does Sparky::JobApi::Role
             scm     => tags()<scm>,
             sha     => tags()<sha>,
             SPARKY_HOST => "127.0.0.1",
+            ref     => tags()<ref>,
+            repo_full_name  => tags()<repo_full_name>,
+            message => tags()<message>,
           );
 
           if $job<plugin> {
@@ -378,6 +381,9 @@ does Sparky::JobApi::Role
       $params<DSCI_SCM> = tags()<scm>;
       $params<DSCI_JOB_ID> = tags()<job_id>;
       $params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
+      $params<DSCI_REF> = tags()<ref>;
+      $params<DSCI_REPO_FULL_NAME> = tags()<repo_full_name>;
+      $params<DSCI_MESSAGE> = tags()<message>;
 
       my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
 
@@ -424,6 +430,9 @@ does Sparky::JobApi::Role
     %params<DSCI_SCM> = tags()<scm>;
     %params<DSCI_JOB_ID> = tags()<job_id>;
     %params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
+    %params<DSCI_REF> = tags()<ref>;
+    %params<DSCI_REPO_FULL_NAME> = tags()<repo_full_name>;
+    %params<DSCI_MESSAGE> = tags()<message>;
 
     my $s = task-run ".", %params;
 
