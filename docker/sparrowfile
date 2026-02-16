@@ -266,6 +266,7 @@ does Sparky::JobApi::Role
             ref     => tags()<ref>,
             repo_full_name  => tags()<repo_full_name>,
             message => tags()<message>,
+            ForgejoHost => tags()<ForgejoHost> || "http://127.0.0.1:3000",
           );
 
           if $job<plugin> {
