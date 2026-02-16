@@ -376,7 +376,8 @@ does Sparky::JobApi::Role
       
       $params<DSCI_COMMIT> = tags()<sha>;
       $params<DSCI_SCM> = tags()<scm>;
-      $params<DSCI_JOBID> = tags()<job_id>;
+      $params<DSCI_JOB_ID> = tags()<job_id>;
+      $params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
 
       my $s = task-run "plugin: {tags()<plugin>}", tags()<plugin>, $params;
 
@@ -421,7 +422,8 @@ does Sparky::JobApi::Role
       
     %params<DSCI_COMMIT> = tags()<sha>;
     %params<DSCI_SCM> = tags()<scm>;
-    %params<DSCI_JOBID> = tags()<job_id>;
+    %params<DSCI_JOB_ID> = tags()<job_id>;
+    %params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
 
     my $s = task-run ".", %params;
 
