@@ -107,10 +107,22 @@ does Sparky::JobApi::Role
 
     say "pipeline mode: {$localhost-mode ?? 'localhost' !! 'docker'}";
 
-    if $localhost-mode and ! tags()<DsciAllowLocalhostMode> {
-      warn "localhost is forbidden, enanle DsciAllowLocalhostMode to allow it";
+    if $localhost-mode and ! tags()<DsciAllowLocalhostModeRepos> {
+      warn "localhost is forbidden, DsciAllowLocalhostModeRepos is not set";
       $status = False;
       $cont = False; 
+    } elsif $localhost-mode and tags()<DsciAllowLocalhostModeRepos> {
+      my @repos = tags()<DsciAllowLocalhostModeRepos>.split(":");
+      $status = False;
+      for @repos -> $i {
+        if tags()<repo_full_name> eq $i {
+          $status = True;
+          last();
+        }
+      }
+      unless $status {
+        warn "localhost is forbidden, {tags()<repo_full_name>} should be listed in DsciAllowLocalhostModeRepos";
+      }
     }
 
     if $cont && $jobs<global> && $jobs<global><skip> {

@@ -239,8 +239,9 @@ func forgejo_hook(c *echo.Context) error {
 	if AppConfig.DsciAgentSkipBootstrap == true {
 		skip_bootstrap = ",DsciAgentSkipBootstrap"
 	}
-	if AppConfig.DsciAllowLocalhostMode == true {
-		allow_localhost_mode = ",DsciAllowLocalhostMode"
+	if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
+		repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
+		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
 	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
 		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
