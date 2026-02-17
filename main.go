@@ -575,7 +575,7 @@ func runCLI() {
 			if secret_path == "" {
 				secret_path = default_value
 			}
-			pattern := `^[\w\-]+\/[\w\-]+\/[\w\-]+$`
+			pattern := `^[\w\-]+\/[\w\-\_]+\/[\w\-\_]+$`
 			if match, _ := regexp.MatchString(pattern, secret_path); match == false {
 				log.Fatalf("runCLI, secret_path should match: %s", pattern)
 			}
