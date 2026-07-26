@@ -186,9 +186,7 @@ does Sparky::JobApi::Role
 
       } else {
 
-        bash "sudo chmod 666 /var/run/docker.sock";
-
-        bash "docker stop -t 1 dsci-agent || :";
+        bash "podman stop -t 1 dsci-agent || :";
 
         my @env;
 
@@ -203,7 +201,7 @@ does Sparky::JobApi::Role
 
         say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
 
-        bash "docker run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
+        bash "podman run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
 
         unless tags()<DsciAgentSkipBootstrap> {
           my $j = Sparky::JobApi.new(
