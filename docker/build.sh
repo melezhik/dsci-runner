@@ -14,34 +14,30 @@ chmod a+w ~/.dsci
 
 chmod a+w ~/.dsci/.sparky/
 
-if [[ $OSTYPE == darwin* ]]; then
-    gid=1001
-else
-    gid=$(id -g)
-fi
+podman build . -t dsci-dispatch
 
-docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
-
-docker stop -t 1 dsci-dispatch || :
+podman stop -t 1 dsci-dispatch || :
 
 opts=""
 
 if test -d ~/.dsci/.secrets; then
     echo "mount secrets from $HOME/.dsci/.secrets"
-    opts="-v $HOME/.dsci/.secrets:/home/worker/.secrets"
+    opts="-v $HOME/.dsci/.secrets:/root/.secrets"
 fi
 
-docker run \
+podman rm dsci-dispatch  || :
+
+podman run \
 -id \
 --rm --name dsci-dispatch \
 --network host \
--v /var/run/docker.sock:/var/run/docker.sock \
--v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
+--privileged \
+-v $HOME/.dsci/.sparky:/root/.sparky:rw \
 -e HOST_SSH_USER=$USER \
 $opts \
 dsci-dispatch || :
 
-docker cp dsci-dispatch:/home/worker/.ssh/id_rsa.pub /tmp/
+podman cp dsci-dispatch:/root/.ssh/id_rsa.pub /tmp/
 
 k=$(cat /tmp/id_rsa.pub)
 
@@ -52,4 +48,4 @@ else
     echo $k >> ~/.ssh/authorized_keys
 fi
 
-docker logs --tail 100 dsci-dispatch
+podman logs --tail 100 dsci-dispatch
