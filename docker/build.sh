@@ -32,7 +32,7 @@ podman run \
 --rm --name dsci-dispatch \
 --network host \
 --privileged \
--v $HOME/.dsci/.sparky:/root/.sparky:rw \
+-v $HOME/.dsci/.sparky:/root/.sparky:rw,Z,U \
 -e HOST_SSH_USER=$USER \
 $opts \
 dsci-dispatch || :
