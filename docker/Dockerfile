@@ -34,4 +34,6 @@ WORKDIR /root/projects
 
 ENV HOST_SSH_USER=root
 
-RUN echo "" > /etc/containers/mounts.conf
+ENV SPARROWDO_DOCKER_BIN=/usr/bin/podman
+
+#RUN echo "" > /etc/containers/mounts.conf
