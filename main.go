@@ -546,11 +546,50 @@ func startJobDispatcher() {
 	output, err := cmd.CombinedOutput() // Run the command and wait for completion
 
 	if err != nil {
-		log.Fatalf("startJobDispatcher: build.sh failed with: %s\n", err)
+		log.Fatalf("startJobDispatcher: build.sh failed with: %s\n", output)
 	}
 
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
+  cmd = exec.Command("podman", "exec", "-it", "dsci-dispatch", "sparkyd")
+
+	stdoutPipe, err := cmd.StdoutPipe()
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stdout pipe: %v", err)
+	}
+
+	stderrPipe, err := cmd.StderrPipe()
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stderr pipe: %v", err)
+	}
+
+	// Read stdout in a goroutine
+	go func() {
+		scanner := bufio.NewScanner(stdoutPipe)
+		for scanner.Scan() {
+			fmt.Println("sparkyd_stdout",scanner.Text())
+		}
+	}()
+
+	// Read stderr in a goroutine
+	go func() {
+		scanner := bufio.NewScanner(stderrPipe)
+		for scanner.Scan() {
+			fmt.Println("sparkyd_stderr",scanner.Text())
+		}
+	}()
+
+	// Start the infinite/long-running process
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to start command: %v", err)
+	}
+
+	// Wait for the command to finish (if it ever does)
+	if err := cmd.Wait(); err != nil {
+		log.Printf("startJobDispatcher(sparkyd): Command finished with error: %v", err)
+	}
 }
 
 func runCLI() {

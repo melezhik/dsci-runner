@@ -20,15 +20,19 @@ RUN zef install --/test JSON::Fast Sparrowdo YAMLish DBIish DBIish::Pool JSON::F
 
 RUN ssh-keygen -t ed25519 -f /root/.ssh/id_rsa -q -N ""
 
+RUN dnf -yq install procps-ng util-linux-script
+
 RUN echo OK8 && mkdir -p /root/projects && cd /root/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
 
-ENTRYPOINT cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; mkdir -p /root/.sparky/projects/dsci; cp /root/distro/sparrowfile /root/.sparky/projects/dsci/; cp /root/distro/sparky.yaml /root/sparky.yaml; sparkyd
+RUN mkdir -p /root/.sparky/projects/dsci
 
-COPY sparrowfile sparky.yaml /root/distro/
+COPY sparrowfile /root/.sparky/projects/dsci
+
+COPY sparky.yaml /root/
+
+ENTRYPOINT cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; /bin/bash
 
 RUN git config --global advice.detachedHead false
-
-RUN echo OK4 && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
 
 WORKDIR /root/projects
 
@@ -36,4 +40,3 @@ ENV HOST_SSH_USER=root
 
 ENV SPARROWDO_DOCKER_BIN=/usr/bin/podman
 
-RUN dnf -yq install procps-ng util-linux-script

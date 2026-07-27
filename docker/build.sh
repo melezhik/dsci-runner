@@ -22,20 +22,20 @@ opts="--restart=always"
 
 if test -d ~/.dsci/.secrets; then
     echo "mount secrets from $HOME/.dsci/.secrets"
-    opts="-v $HOME/.dsci/.secrets:/root/.secrets"
+    opts="$opts -v $HOME/.dsci/.secrets:/root/.secrets"
 fi
 
 podman rm dsci-dispatch  || :
 
 podman run \
 -id \
---rm --name dsci-dispatch \
+--name dsci-dispatch \
 --network host \
 --privileged \
 -v $HOME/.dsci/.sparky:/root/.sparky:rw,Z,U \
 -e HOST_SSH_USER=$USER \
 $opts \
-dsci-dispatch || :
+dsci-dispatch
 
 podman cp dsci-dispatch:/root/.ssh/id_rsa.pub /tmp/
 
@@ -48,4 +48,5 @@ else
     echo $k >> ~/.ssh/authorized_keys
 fi
 
-podman logs --tail 100 dsci-dispatch
+echo "run job scheduller ..."
+
