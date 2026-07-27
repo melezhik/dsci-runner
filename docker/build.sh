@@ -18,7 +18,7 @@ podman build . -t dsci-dispatch
 
 podman stop -t 1 dsci-dispatch || :
 
-opts=""
+opts="--restart=always"
 
 if test -d ~/.dsci/.secrets; then
     echo "mount secrets from $HOME/.dsci/.secrets"
