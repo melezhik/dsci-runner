@@ -60,7 +60,12 @@ func main() {
 		log.Fatalf("main: Error parsing toml config: %s : %s", path, err)
 	}
 
-	go startJobDispatcher()
+	go func() {
+    for {
+      startJobDispatcher()
+      log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
+    }
+  }()
 
 	// Echo instance
 	e := echo.New()
