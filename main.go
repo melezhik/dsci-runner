@@ -63,6 +63,7 @@ func main() {
 	go func() {
     for {
       startJobDispatcher()
+      time.Sleep(10 * time.Second)
       log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
     }
   }()
