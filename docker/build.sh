@@ -25,7 +25,9 @@ if test -d ~/.dsci/.secrets; then
     opts="$opts -v $HOME/.dsci/.secrets:/root/.secrets"
 fi
 
-podman rm dsci-dispatch  || :
+podman rm -f dsci-dispatch  || :
+
+podman container cleanup --all
 
 podman run \
 -id \
