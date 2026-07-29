@@ -552,7 +552,7 @@ func startJobDispatcher() {
 	output, err := cmd.CombinedOutput() // Run the command and wait for completion
 
 	if err != nil {
-		log.Fatalf("startJobDispatcher: build.sh failed with: %s\n", output)
+		log.Printf("startJobDispatcher: build.sh failed with: %s\n", output)
 	}
 
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
