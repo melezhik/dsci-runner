@@ -508,7 +508,7 @@ func startJobDispatcher() {
 		  log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s", err)
 	  }
   } else {
-    content, err = fs.ReadFile(staticFiles, "podman/build.sh")
+    content, err = fs.ReadFile(staticFiles11, "podman/build.sh")
     if err != nil {
       log.Fatalf("startJobDispatcher: error reading podman/build.sh: %s", err)
     }
