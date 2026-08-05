@@ -12,6 +12,10 @@ does Sparky::JobApi::Role
 
 {
 
+  method !version {
+      return "0.0.2"
+  }
+
   method !validate-cond-expression ($exp,$debug = False) {
     my @b; # bogus lines
     for $exp.split(/\s [ "and" || "or" || "&&" || "||" ]  \s/)
@@ -80,9 +84,13 @@ does Sparky::JobApi::Role
 
     directory "scm";
 
+    my $cr = tags()<cr> || "docker"; # container runtime: docker|podman
+
     say "scm: ",tags()<scm>;
     say "sha: ",tags()<sha>;
     say "message: ",tags()<message>.chomp;
+    say "container runtime: ", $cr;
+    say "runner version: {self!version()}";
     say "=======";
 
     bash "git config --global advice.detachedHead false";
@@ -186,7 +194,11 @@ does Sparky::JobApi::Role
 
       } else {
 
-        bash "podman stop -t 1 dsci-agent || :";
+        if $cr eq "docker" {
+          bash "sudo chmod 666 /var/run/docker.sock";
+        }
+
+        bash "$cr stop -t 1 dsci-agent || :";
 
         my @env;
 
@@ -201,7 +213,7 @@ does Sparky::JobApi::Role
 
         say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
 
-        bash "podman run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
+        bash "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
 
         unless tags()<DsciAgentSkipBootstrap> {
           my $j = Sparky::JobApi.new(

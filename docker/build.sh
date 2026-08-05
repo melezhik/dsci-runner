@@ -1,3 +1,4 @@
+
 set -e
 
 echo "start build ..."
@@ -14,32 +15,34 @@ chmod a+w ~/.dsci
 
 chmod a+w ~/.dsci/.sparky/
 
-podman build . -t dsci-dispatch
+if [[ $OSTYPE == darwin* ]]; then
+    gid=1001
+else
+    gid=$(id -g)
+fi
 
-podman stop -t 1 dsci-dispatch || :
+docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
+
+docker stop -t 1 dsci-dispatch || :
 
 opts=""
 
 if test -d ~/.dsci/.secrets; then
     echo "mount secrets from $HOME/.dsci/.secrets"
-    opts="$opts -v $HOME/.dsci/.secrets:/root/.secrets"
+    opts="-v $HOME/.dsci/.secrets:/home/worker/.secrets"
 fi
 
-podman rm -f dsci-dispatch  || :
-
-podman container cleanup --all
-
-podman run \
+docker run \
 -id \
---name dsci-dispatch \
+--rm --name dsci-dispatch \
 --network host \
---privileged \
--v $HOME/.dsci/.sparky:/root/.sparky:rw,Z,U \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
 -e HOST_SSH_USER=$USER \
 $opts \
-dsci-dispatch
+dsci-dispatch || :
 
-podman cp dsci-dispatch:/root/.ssh/id_rsa.pub /tmp/
+docker cp dsci-dispatch:/home/worker/.ssh/id_rsa.pub /tmp/
 
 k=$(cat /tmp/id_rsa.pub)
 
@@ -50,5 +53,4 @@ else
     echo $k >> ~/.ssh/authorized_keys
 fi
 
-echo "run job scheduller ..."
-
+docker logs --tail 100 dsci-dispatch

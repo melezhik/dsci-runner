@@ -82,8 +82,12 @@ func SparkyCacheDir(job_id string) string {
 	return fmt.Sprintf("%s/.dsci/.sparky/.cache/%s", hdir, job_id)
 }
 
-func SparkyCacheDirDocker(job_id string) string {
-	return fmt.Sprintf("/root/.sparky/.cache/%s", job_id)
+func SparkyCacheDirDocker(job_id string, cr string) string {
+  if cr == "podman" {
+	  return fmt.Sprintf("/root/.sparky/.cache/%s", job_id)
+  } else {
+	  return fmt.Sprintf("/home/worker/.sparky/.cache/%s", job_id)
+  }
 }
 
 func CreateSparkyCacheDir(job_id string) string {
