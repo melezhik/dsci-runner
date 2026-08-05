@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-func JobQueueFs(r types.JobRequest) {
+func JobQueueFs(r types.JobRequest, cr string) {
 
 	project := r.Config.Project
 
@@ -41,7 +41,7 @@ func JobQueueFs(r types.JobRequest) {
 		log.Fatal(err)
 	}
 
-	r.Trigger.Cwd = utils.SparkyCacheDirDocker(r.Config.JobId)
+	r.Trigger.Cwd = utils.SparkyCacheDirDocker(r.Config.JobId, cr)
 
 	if r.Config.Sparrowdo.Localhost {
 		r.Trigger.Sparrowdo.Docker = ""

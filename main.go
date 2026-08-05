@@ -34,6 +34,12 @@ import (
 //go:embed docker
 var staticFiles embed.FS
 
+//go:embed podman
+var staticFiles11 embed.FS
+
+//go:embed common
+var staticFiles12 embed.FS
+
 //go:embed public
 var staticFiles2 embed.FS
 
@@ -60,7 +66,17 @@ func main() {
 		log.Fatalf("main: Error parsing toml config: %s : %s", path, err)
 	}
 
-	go startJobDispatcher()
+  if AppConfig.DsciContainerRuntime == "" {
+    AppConfig.DsciContainerRuntime = "docker"
+  }
+
+	go func() {
+    for {
+      startJobDispatcher()
+      time.Sleep(10 * time.Second)
+      log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
+    }
+  }()
 
 	// Echo instance
 	e := echo.New()
@@ -113,7 +129,7 @@ func queue_job(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
 	}
 
-	job.JobQueueFs(r)
+	job.JobQueueFs(r,AppConfig.DsciContainerRuntime)
 
 	return c.String(http.StatusOK, "job queued")
 
@@ -244,7 +260,8 @@ func forgejo_hook(c *echo.Context) error {
 		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
 	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
+		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
+    AppConfig.DsciContainerRuntime,
 		r.Ref,
 		r.Repository.FullName,
 		r.Sha,
@@ -276,7 +293,7 @@ func forgejo_hook(c *echo.Context) error {
 
 	// log.Printf("dsci job: %s",jsonData)
 
-	job.JobQueueFs(q)
+	job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
 
 	return c.String(http.StatusOK, fmt.Sprintf("job quedued: %s", q.Config.JobId))
 
@@ -411,7 +428,7 @@ func startJobDispatcher() {
 
 	log.Printf("startJobDispatcher: start")
 
-	dname, err := os.MkdirTemp("", "dsci_docker")
+	dname, err := os.MkdirTemp("", "dsci_container")
 
 	defer os.RemoveAll(dname)
 
@@ -425,11 +442,17 @@ func startJobDispatcher() {
 
 	var content []byte
 
-	content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/Dockerfile: %s", err)
-	}
+  if AppConfig.DsciContainerRuntime == "docker" {
+	  content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
+    if err != nil {
+      log.Fatalf("startJobDispatcher: error reading docker/Dockerfile: %s", err)
+    }
+  } else {
+	  content, err = fs.ReadFile(staticFiles11, "podman/Dockerfile")
+    if err != nil {
+      log.Fatalf("startJobDispatcher: error reading podman/Dockerfile: %s", err)
+    }
+  }
 
 	fname := filepath.Join(dname, "Dockerfile")
 
@@ -443,25 +466,11 @@ func startJobDispatcher() {
 
 	// sparrowfile
 
-	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s", err)
-	}
+  content, err = fs.ReadFile(staticFiles12, "common/sparrowfile")
 
-	fname = filepath.Join(dname, "sparrowfile")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/sparrowfile OK", dname)
-
-	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s", err)
-	}
+  if err != nil {
+		  log.Fatalf("startJobDispatcher: error reading common/sparrowfile: %s", err)
+  }
 
 	fname = filepath.Join(dname, "sparrowfile")
 
@@ -475,24 +484,10 @@ func startJobDispatcher() {
 
 	// sparky.yaml
 
-	content, err = fs.ReadFile(staticFiles, "docker/sparrowfile")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/sparrowfile: %s", err)
-	}
-
-	fname = filepath.Join(dname, "sparrowfile")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
+	content, err = fs.ReadFile(staticFiles12, "common/sparky.yaml")
 
 	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/sparrowfile OK", dname)
-
-	content, err = fs.ReadFile(staticFiles, "docker/sparky.yaml")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/sparky.yaml: %s", err)
+		log.Fatalf("startJobDispatcher: error reading common/sparky.yaml: %s", err)
 	}
 
 	fname = filepath.Join(dname, "sparky.yaml")
@@ -507,10 +502,17 @@ func startJobDispatcher() {
 
 	// build.sh
 
-	content, err = fs.ReadFile(staticFiles, "docker/build.sh")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s", err)
-	}
+  if AppConfig.DsciContainerRuntime == "docker" {
+	  content, err = fs.ReadFile(staticFiles, "docker/build.sh")
+	  if err != nil {
+		  log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s", err)
+	  }
+  } else {
+    content, err = fs.ReadFile(staticFiles11, "podman/build.sh")
+    if err != nil {
+      log.Fatalf("startJobDispatcher: error reading podman/build.sh: %s", err)
+    }
+  }
 
 	fname = filepath.Join(dname, "build.sh")
 
@@ -522,22 +524,7 @@ func startJobDispatcher() {
 
 	log.Printf("startJobDispatcher: writting %s/build.sh OK", dname)
 
-	content, err = fs.ReadFile(staticFiles, "docker/build.sh")
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s", err)
-	}
-
-	fname = filepath.Join(dname, "build.sh")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/build.sh OK", dname)
-
-	// run docker build
+	// run container build
 
 	cmd := exec.Command("sh", "build.sh")
 
@@ -546,11 +533,56 @@ func startJobDispatcher() {
 	output, err := cmd.CombinedOutput() // Run the command and wait for completion
 
 	if err != nil {
-		log.Fatalf("startJobDispatcher: build.sh failed with: %s\n", err)
+		log.Printf("startJobDispatcher: build.sh failed with: %s\n", output)
 	}
 
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
+  cmd = exec.Command(
+    AppConfig.DsciContainerRuntime,
+    "exec",
+    "-it",
+    "dsci-dispatch",
+    "sparkyd",
+  )
+
+	stdoutPipe, err := cmd.StdoutPipe()
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stdout pipe: %v", err)
+	}
+
+	stderrPipe, err := cmd.StderrPipe()
+
+	if err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stderr pipe: %v", err)
+	}
+
+	// Read stdout in a goroutine
+	go func() {
+		scanner := bufio.NewScanner(stdoutPipe)
+		for scanner.Scan() {
+			fmt.Println("sparkyd_stdout",scanner.Text())
+		}
+	}()
+
+	// Read stderr in a goroutine
+	go func() {
+		scanner := bufio.NewScanner(stderrPipe)
+		for scanner.Scan() {
+			fmt.Println("sparkyd_stderr",scanner.Text())
+		}
+	}()
+
+	// Start the infinite/long-running process
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("startJobDispatcher(sparkyd): Failed to start command: %v", err)
+	}
+
+	// Wait for the command to finish (if it ever does)
+	if err := cmd.Wait(); err != nil {
+		log.Printf("startJobDispatcher(sparkyd): Command finished with error: %v", err)
+	}
 }
 
 func runCLI() {
@@ -575,7 +607,7 @@ func runCLI() {
 			if secret_path == "" {
 				secret_path = default_value
 			}
-			pattern := `^[\w\-]+\/[\w\-]+\/[\w\-]+$`
+			pattern := `^[\w\-]+\/[\w\-\_]+\/[\w\-\_]+$`
 			if match, _ := regexp.MatchString(pattern, secret_path); match == false {
 				log.Fatalf("runCLI, secret_path should match: %s", pattern)
 			}

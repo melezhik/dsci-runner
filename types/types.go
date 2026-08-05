@@ -7,6 +7,7 @@ type AppConfig struct {
 	DsciAgentSkipBootstrap 			bool
 	DsciAgentImage         			string
 	DsciAllowLocalhostModeRepos 	[]string
+  DsciContainerRuntime          string
 }
 
 type Config struct {
