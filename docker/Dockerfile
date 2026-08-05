@@ -1,56 +1,58 @@
 
-set -e
+FROM alpine:latest
 
-echo "start build ..."
+ENV PATH="/home/worker/.raku/bin:${PATH}"
 
-pwd
+ENV SP6_DUMP_TASK_CODE=0
 
-ls -l
+ENV SP6_FORMAT_COLOR=1
 
-2>&1
+RUN apk update && apk add openssl bash curl wget perl openssl-dev sudo git docker-cli
 
-mkdir -p ~/.dsci/.sparky
+RUN apk add --no-cache bash
 
-chmod a+w ~/.dsci
+RUN apk add rakudo zef
 
-chmod a+w ~/.dsci/.sparky/
+RUN sudo echo
 
-if [[ $OSTYPE == darwin* ]]; then
-    gid=1001
-else
-    gid=$(id -g)
-fi
+ARG UID=1000
+ARG GID=1000
 
-docker build . --build-arg UID=$(id -u) --build-arg GID=$gid -t dsci-dispatch
+RUN addgroup -g $GID -S worker && \
+    adduser -u $UID -S worker -G worker -h /home/worker -s /bin/bash
 
-docker stop -t 1 dsci-dispatch || :
+RUN chown -R worker:worker /home/worker
 
-opts=""
+RUN addgroup worker wheel 
 
-if test -d ~/.dsci/.secrets; then
-    echo "mount secrets from $HOME/.dsci/.secrets"
-    opts="-v $HOME/.dsci/.secrets:/home/worker/.secrets"
-fi
+RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-docker run \
--id \
---rm --name dsci-dispatch \
---network host \
--v /var/run/docker.sock:/var/run/docker.sock \
--v $HOME/.dsci/.sparky:/home/worker/.sparky:rw \
--e HOST_SSH_USER=$USER \
-$opts \
-dsci-dispatch || :
+USER worker
 
-docker cp dsci-dispatch:/home/worker/.ssh/id_rsa.pub /tmp/
+RUN sudo apk add build-base sqlite-libs openssh-keygen util-linux openssh-client python3
 
-k=$(cat /tmp/id_rsa.pub)
+RUN echo OK4 && zef install --/test https://github.com/melezhik/Sparrow6.git
 
-if grep -q "$k"  ~/.ssh/authorized_keys; then
-    echo "dsci orchestartor public key exists at host ~/.ssh/authorized_keys"
-else
-    echo "insert dsci orchestartor public key to host ~/.ssh/authorized_keys"
-    echo $k >> ~/.ssh/authorized_keys
-fi
+RUN echo OK7 && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
 
-docker logs --tail 100 dsci-dispatch
+RUN sudo apk add go --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+
+RUN zef install --/test JSON::Fast Sparrowdo YAMLish DBIish DBIish::Pool JSON::Fast  Time::Crontab File::Directory::Tree Data::Dump
+
+RUN ssh-keygen -t ed25519 -f ~/.ssh/id_rsa -q -N ""
+
+RUN echo OK8 && mkdir -p /home/worker/projects && cd /home/worker/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
+
+ENTRYPOINT cd /home/worker/projects/sparky; if test -f ~/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; mkdir -p ~/.sparky/projects/dsci; cp /home/worker/distro/sparrowfile ~/.sparky/projects/dsci/; cp /home/worker/distro/sparky.yaml ~/sparky.yaml; /bin/bash
+
+COPY sparrowfile sparky.yaml /home/worker/distro/
+
+RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro 
+
+RUN git config --global advice.detachedHead false
+
+RUN echo OK4 && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
+
+WORKDIR /home/worker/projects
+
+ENV HOST_SSH_USER=root
