@@ -24,13 +24,13 @@ RUN dnf -yq install procps-ng util-linux-script
 
 RUN echo OK8 && mkdir -p /root/projects && cd /root/projects && git clone https://github.com/melezhik/sparky.git && cd sparky && zef install --/test --/depends --force-install . 
 
-RUN mkdir -p /root/.sparky/projects/dsci
+RUN mkdir -p /root/.sparky/projects/dsci/ /root/distro
 
-COPY sparrowfile /root/.sparky/projects/dsci
+COPY sparrowfile /root/distro/
 
 COPY sparky.yaml /root/
 
-ENTRYPOINT cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; /bin/bash
+ENTRYPOINT cp /root/distro/sparrowfile /root/.sparky/projects/dsci/ &&  cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; /bin/bash
 
 RUN git config --global advice.detachedHead false
 
