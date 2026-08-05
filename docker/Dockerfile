@@ -34,6 +34,8 @@ ENTRYPOINT cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite
 
 RUN git config --global advice.detachedHead false
 
+RUN cd /root/projects && git clone https://github.com/melezhik/sparrowdo.git && cd sparrowdo && zef install --/test --force-install .
+
 WORKDIR /root/projects
 
 ENV HOST_SSH_USER=root
