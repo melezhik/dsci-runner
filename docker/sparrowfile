@@ -353,6 +353,8 @@ does Sparky::JobApi::Role
 
   method stage-bootstrap {
 
+    package-install "git";
+
     bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
 
     package-install "python3";
