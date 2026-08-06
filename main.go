@@ -33,13 +33,14 @@ import (
 	"strings"
 	"time"
 
+	"net/http/cgi"
 )
 
 // Git related constants
 // TODO: move to ~/.dsci.toml
 
 const (
-	repoRoot     = "./repositories"
+	repoRoot     = ".repositories"
 	sshAddr      = ":2222"
 )
 
@@ -114,7 +115,7 @@ func main() {
 	// Хендлер для Git Clone / Push / Fetch поверх HTTP
 	// =========================================================================
 	// Захватываем любые эндпоинты, заканчивающиеся на .git или содержащие его в пути
-	e.Any("/*", echo.WrapHandler(http.HandlerFunc(gitHTTPBackendHandler)))
+	e.Any("/*", gitHTTPBackendHandler())
 
 
 	// Start server
@@ -127,70 +128,23 @@ func main() {
 
 // Git related handlers
 
-func gitHTTPBackendHandler(w http.ResponseWriter, r *http.Request) {
-	gitPath, err := exec.LookPath("git")
-	if err != nil {
-		http.Error(w, "Git binary not found on host", http.StatusInternalServerError)
-		return
+func gitHTTPBackendHandler() echo.HandlerFunc {
+
+	gitBackendPath := "/Users/alex/homebrew/Cellar/git/2.33.0/libexec/git-core/git-http-backend" // Adjust path if needed
+
+	gitRoot, _ := filepath.Abs(repoRoot)
+
+	cgiHandler := &cgi.Handler{
+	    Path: gitBackendPath,
+	    Env: []string{
+	        "GIT_PROJECT_ROOT=" + gitRoot,
+	        "GIT_HTTP_EXPORT_ALL=1",
+	        "REMOTE_USER=foobar",
+	    },
+	    Dir: gitRoot,
 	}
 
-	// Создаем команду вызова git http-backend напрямую
-	cmd := exec.Command(gitPath, "http-backend")
-
-	// Передаем переменные окружения, которые раньше формировал CGI-сервер
-	cmd.Env = append(os.Environ(),"GIT_PROJECT_ROOT=" + repoRoot)
-	cmd.Env = append(os.Environ(),"GIT_HTTP_EXPORT_ALL=1")
-
-	// Передаем системные CGI-переменные для корректной работы Git-протокола
-	cmd.Env = append(os.Environ(),"REQUEST_METHOD=" + r.Method)
-	cmd.Env = append(os.Environ(),"PATH_INFO=" + r.URL.Path)
-	cmd.Env = append(os.Environ(),"QUERY_STRING=" + r.URL.RawQuery)
-	cmd.Env = append(os.Environ(),"CONTENT_TYPE=" + r.Header.Get("Content-Type"))
-	cmd.Env = append(os.Environ(),"CLIENT_IP=" + r.RemoteAddr)
-
-	// Связываем стандартный ввод процесса с телом HTTP-запроса
-	cmd.Stdin = r.Body
-
-	// Перехватываем вывод git http-backend (заголовки + тело)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Start(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Читаем заголовки, сгенерированные Git, и переносим их в HTTP-ответ Go
-	// (git http-backend возвращает данные в формате "Ключ: Значение\r\n\r\nТело")
-	bufReader := bufio.NewReader(stdout)
-	for {
-		line, err := bufReader.ReadString('\n')
-		if err != nil || line == "\r\n" || line == "\n" {
-			break
-		}
-		line = strings.TrimSpace(line)
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) == 2 {
-			w.Header().Set(strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]))
-		}
-	}
-
-	// Отправляем HTTP-статус (по умолчанию 200, если Git не вернул Status заголовок)
-	if w.Header().Get("Status") != "" {
-		var code int
-		_, _ = fmt.Sscanf(w.Header().Get("Status"), "%d", &code)
-		if code > 0 {
-			w.WriteHeader(code)
-		}
-	}
-
-	// Стрим остаток данных (тело коммита/файлов) напрямую клиенту
-	_, _ = io.Copy(w, bufReader)
-	_ = cmd.Wait()
+	return echo.WrapHandler(cgiHandler)
 }
 
 // DSCI CI related handlers
