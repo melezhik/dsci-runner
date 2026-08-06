@@ -83,6 +83,10 @@ func main() {
     AppConfig.DsciContainerRuntime = "docker"
   }
 
+  if AppConfig.GitPathToHttpBackend == "" {
+    AppConfig.GitPathToHttpBackend = "/usr/libexec/git-core/git-http-backend"
+  }
+
 	go func() {
     for {
       startJobDispatcher()
@@ -130,7 +134,7 @@ func main() {
 
 func gitHTTPBackendHandler() echo.HandlerFunc {
 
-	gitBackendPath := "/Users/alex/homebrew/Cellar/git/2.33.0/libexec/git-core/git-http-backend" // Adjust path if needed
+	gitBackendPath := AppConfig.GitPathToHttpBackend
 
 	gitRoot, _ := filepath.Abs(repoRoot)
 

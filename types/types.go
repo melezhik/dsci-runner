@@ -8,6 +8,7 @@ type AppConfig struct {
 	DsciAgentImage         			string
 	DsciAllowLocalhostModeRepos 	[]string
   DsciContainerRuntime          string
+  GitPathToHttpBackend          string
 }
 
 type Config struct {
