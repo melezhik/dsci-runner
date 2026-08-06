@@ -119,20 +119,7 @@ func main() {
 	// Хендлер для Git Clone / Push / Fetch поверх HTTP
 	// =========================================================================
 	// Захватываем любые эндпоинты, заканчивающиеся на .git или содержащие его в пути
-	e.Any("/*", gitHTTPBackendHandler())
 
-
-	// Start server
-	if err := e.Start("0.0.0.0:8080"); err != nil {
-		slog.Error("failed to start server", "error", err)
-	}
-}
-
-// Handlers
-
-// Git related handlers
-
-func gitHTTPBackendHandler() echo.HandlerFunc {
 
 	gitBackendPath := AppConfig.GitPathToHttpBackend
 
@@ -148,8 +135,21 @@ func gitHTTPBackendHandler() echo.HandlerFunc {
 	    Dir: gitRoot,
 	}
 
-	return echo.WrapHandler(cgiHandler)
+	e.Any("/*", func(c *echo.Context) error {
+		log.Printf("KKKKKK\n")
+		cgiHandler.ServeHTTP(c.Response(), c.Request())
+		return nil
+	})
+
+
+	// Start server
+	if err := e.Start("0.0.0.0:8080"); err != nil {
+		slog.Error("failed to start server", "error", err)
+	}
 }
+
+// Handlers
+
 
 // DSCI CI related handlers
 
