@@ -9,6 +9,7 @@ import (
 	"dsci_runner/job"
 	"dsci_runner/types"
 	"dsci_runner/utils"
+	"dsci_runner/git"
 	"embed"
 	"encoding/json"
 	"flag"
@@ -57,17 +58,6 @@ var staticFiles12 embed.FS
 var staticFiles2 embed.FS
 
 var AppConfig types.AppConfig
-
-// statusWriter intercepts and records the written HTTP status
-type statusWriter struct {
-	http.ResponseWriter
-	status int
-}
-
-func (w *statusWriter) WriteHeader(statusCode int) {
-	w.status = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
-}
 
 func main() {
 
@@ -153,7 +143,7 @@ func main() {
 		originalWriter := c.Response()
 
 		// 2. Wrap it with our status interceptor
-		sw := &statusWriter{ResponseWriter: originalWriter, status: 200}
+		sw := &git.StatusWriter{ResponseWriter: originalWriter, Status: 200}
 
 		// 3. Re-wrap the interceptor using Echo v5's layout wrapper
 		// Note: Echo v5's NewResponse expects (http.ResponseWriter, *slog.Logger) 
@@ -163,10 +153,10 @@ func main() {
 		cgiHandler.ServeHTTP(newEchoResponse, c.Request())
 
 		// 5. Evaluate the captured status code
-		if sw.status >= 200 && sw.status < 300 {
-			log.Printf("CGI Request Succeeded with status: %d", sw.status)
+		if sw.Status >= 200 && sw.Status < 300 {
+			log.Printf("CGI Request Succeeded with status: %d", sw.Status)
 		} else {
-			log.Printf("CGI Request Failed with status: %d", sw.status)
+			log.Printf("CGI Request Failed with status: %d", sw.Status)
 		}		
 		return nil
 	})
