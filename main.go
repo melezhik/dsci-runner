@@ -155,6 +155,16 @@ func main() {
 		// 5. Evaluate the captured status code
 		if sw.Status >= 200 && sw.Status < 300 {
 			log.Printf("CGI Request Succeeded with status: %d", sw.Status)
+			req := c.Request()
+			if req.Method == http.MethodPost {
+				// Check path suffix for receive-pack (push operation)
+				isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
+				// Check specific Smart HTTP content type for pushes
+				isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
+				if isReceivePath && isCorrectType {
+					log.Printf("this is git push: \n")
+				}
+			}
 		} else {
 			log.Printf("CGI Request Failed with status: %d", sw.Status)
 		}		
