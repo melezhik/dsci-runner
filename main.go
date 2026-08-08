@@ -24,7 +24,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -180,6 +179,50 @@ func main() {
 					repoName := strings.TrimSuffix(repoPath, ".git") // Returns "company/
 
 					log.Printf("git push to %s, data: %s\n", repoName, data)
+
+					var q types.JobRequest
+					now := time.Now()
+					q.Config.Project = "dsci"
+					q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+					msg := "dummy"
+					q.Config.Description = fmt.Sprintf("%s | %s", data[0].NewCommit, msg)
+					skip_bootstrap := ""
+					allow_localhost_mode := ""
+					if AppConfig.DsciAgentSkipBootstrap == true {
+						skip_bootstrap = ",DsciAgentSkipBootstrap"
+					}
+					if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
+						repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
+						allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
+					}
+					q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
+						"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
+					AppConfig.DsciContainerRuntime,
+						data[0].RefName,
+						repoName,
+						data[0].NewCommit,
+						fmt.Sprintf("http://localhost:8080/%s.git",repoName),
+						msg,
+						AppConfig.ForgejoApiToken,
+						AppConfig.ForgejoHost,
+						AppConfig.DsciFeedbackUrl,
+						AppConfig.DsciAgentImage,
+						skip_bootstrap,
+						allow_localhost_mode,
+					)
+				
+					q.Trigger.Sparrowdo.NoSudo = true
+				
+					q.Trigger.Sparrowdo.Localhost = true
+				
+					dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
+				
+					q.Sparrowfile = dat
+				
+					job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
+				
+					log.Printf("job quedued: %s\n", q.Config.JobId)
+
 				}
 			}
 		} else {
@@ -271,125 +314,6 @@ func get_job_stash(c *echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, p)
-
-}
-
-func forgejo_hook(c *echo.Context) error {
-
-	var r types.ForgejoHook
-
-	bodyBytes, err := io.ReadAll(c.Request().Body)
-	if err != nil {
-		return err
-	}
-	defer c.Request().Body.Close()
-
-	log.Printf("Request Body: %s\n", string(bodyBytes))
-
-	err = json.Unmarshal(bodyBytes, &r)
-
-	if err != nil {
-		log.Printf("forgejo_hook: error unmarshaling JSON: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid JSON body")
-	}
-
-	var host *url.URL
-
-	forgejo_host := "127.0.0.1"
-
-	if AppConfig.ForgejoHost != ""  {
-		host, err = url.Parse(AppConfig.ForgejoHost)
-		if err != nil {
-			log.Fatalf(
-				"forgejo_hook, error domain parsing AppConfig.ForgejoHost: %s, %s",
-				AppConfig.ForgejoHost,
-				err,
-			)
-		}
-		forgejo_host = host.Hostname()
-	} 
-
-	clone_host := "127.0.0.1"
-	host, err = url.Parse(r.Repository.CloneUrl)
-	if err != nil {
-		log.Fatalf(
-			"forgejo_hook, error domain parsing r.Repository.CloneUrl: %s, %s",
-			r.Repository.CloneUrl,
-			err,
-		)
-	} else {
-		clone_host = host.Hostname()
-	}
-
-	log.Printf(
-		"forgejo_hook Proccess request. clone_host: %s | forgejo_host: %s\n",
-		clone_host,
-		forgejo_host,
-	)
-
-	if clone_host != forgejo_host {
-		return echo.NewHTTPError(
-			http.StatusBadRequest,
-			fmt.Sprintf(
-				"forgejo_hook. Invalid request. clone_host: %s != forgejo_host: %s",
-				clone_host,
-				forgejo_host,
-			),
-		)
-	}
-	// job.PutJobStash(r.Config.Project,r.Config.JobId,r.Data)
-
-	var q types.JobRequest
-	now := time.Now()
-	q.Config.Project = "dsci"
-	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
-	q.Config.Description = fmt.Sprintf("%s | %s", r.Sha, r.HeadCommit.Message)
-	skip_bootstrap := ""
-	allow_localhost_mode := ""
-	if AppConfig.DsciAgentSkipBootstrap == true {
-		skip_bootstrap = ",DsciAgentSkipBootstrap"
-	}
-	if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
-		repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
-		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
-	}
-	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ForgejoApiToken=%s,ForgejoHost=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
-    AppConfig.DsciContainerRuntime,
-		r.Ref,
-		r.Repository.FullName,
-		r.Sha,
-		r.Repository.CloneUrl,
-		r.HeadCommit.Message,
-		AppConfig.ForgejoApiToken,
-		AppConfig.ForgejoHost,
-		AppConfig.DsciFeedbackUrl,
-		AppConfig.DsciAgentImage,
-		skip_bootstrap,
-		allow_localhost_mode,
-	)
-
-	q.Trigger.Sparrowdo.NoSudo = true
-
-	q.Trigger.Sparrowdo.Localhost = true
-
-	dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
-
-	q.Sparrowfile = dat
-
-	// jsonData, err := json.MarshalIndent(q, "", "  ")
-
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println(string(jsonData))
-
-	// log.Printf("dsci job: %s",jsonData)
-
-	job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
-
-	return c.String(http.StatusOK, fmt.Sprintf("job quedued: %s", q.Config.JobId))
 
 }
 
