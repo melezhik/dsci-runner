@@ -37,18 +37,7 @@ func HandleGitPush(c []byte) ([]GitUpdate)  {
 
 	var updates []GitUpdate
 
-	// // 1. Ensure the request is coming from a git push client
-	// if c.Header.Get("Content-Type") != "application/x-git-receive-pack-request" {
-	// 	//return c.String(http.StatusBadRequest, "Invalid Git Content-Type")
-	// 	return updates
-	// }
-
-	// 2. Read the body using a buffered reader to parse pkt-line format
-	//reader := bufio.NewReader(c)
 	reader := bufio.NewReader(bytes.NewReader(c))
-	// defer c.Body.Close()
-
-	// log.Printf("KKKK: %s",c.Body);
 
 	for {
 		log.Printf("uuuu");
@@ -119,7 +108,6 @@ func HandleGitPush(c []byte) ([]GitUpdate)  {
 			update.BranchName, update.OldCommit, update.NewCommit)
 	}
 
-	log.Printf("KKKK3");
 	log.Printf("result: %s",updates)
 
 	return updates

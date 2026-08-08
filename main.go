@@ -156,7 +156,7 @@ func main() {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}	
 		git.HandleGitPush(bodyBytes)
-		log.Printf("HHHHH")
+		// log.Printf("HHHHH")
 		// 2. Restore the body for both Echo and the CGI handler
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		cgiHandler.ServeHTTP(newEchoResponse, c.Request())
