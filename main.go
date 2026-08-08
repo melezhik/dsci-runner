@@ -64,6 +64,7 @@ func main() {
 		runCLI()
 		return
 	}
+
 	path := utils.DsciConfigFile()
 
 	dat, err := os.ReadFile(path)
@@ -102,7 +103,8 @@ func main() {
 	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
 	// Routes
-	e.GET("/", builds)
+	e.GET("/", list_repos)
+	e.GET("/builds", builds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)
@@ -111,7 +113,6 @@ func main() {
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
 	e.GET("/livebuilds", livebuilds)
-	e.GET("/builds", builds)
 
 	// =========================================================================
 	// Хендлер для Git Clone / Push / Fetch поверх HTTP
@@ -240,12 +241,92 @@ func main() {
 
 // Handlers
 
+// Main handlers
+
+func list_repos(c *echo.Context) error {
+	// Read the current directory contents
+	dir, _ := filepath.Abs(repoRoot)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatalf("list_repos ReadDir error: %s", err)
+	}
+
+	data := ""
+
+	for _, entry := range entries {
+		// Output the name and whether it is a directory
+		if entry.IsDir() {
+			data += fmt.Sprintf(
+				"<a href=\"/repo/%s\">%s</a>\n",
+				entry.Name(),
+				entry.Name(),
+			)
+		}
+	}
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`<html data-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
+    <title>DSCI Repos</title>
+  </head>
+  <body>
+    <section class="hero">
+
+
+	<nav class="navbar" role="navigation" aria-label="main navigation">
+		<div class="navbar-brand">
+
+			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			<span aria-hidden="true"></span>
+			</a>
+		</div>
+
+		<div id="navbarBasicExample" class="navbar-menu">
+			<div class="navbar-start">
+
+			<a href="https://github.com/melezhik/DSCI" class="navbar-item">
+				Documentation
+			</a>
+
+			<div class="navbar-end">
+				<div class="navbar-item">
+					<div class="buttons">
+					<a href="/builds" class="button is-primary">
+						<strong>Pipelines</strong>
+					</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>	
+
+
+	<div class="hero-body">
+        <p class="title">DSCI Git Repos</p>
+        <hr>
+        <pre>%s</pre>
+      </div>
+    </section>
+</body>
+</html>`,
+			data,
+		),
+	)
+}
+
 // DSCI CI related handlers
 
 func hello(c *echo.Context) error {
 	return c.String(http.StatusOK, "Hello from DSCI runner!")
 }
-
 
 func queue_job(c *echo.Context) error {
 
