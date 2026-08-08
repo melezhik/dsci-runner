@@ -3,13 +3,12 @@ package main
 import (
 
 	// dsci related deps
-
-	"bufio"
 	"database/sql"
 	"dsci_runner/job"
 	"dsci_runner/types"
 	"dsci_runner/utils"
 	"dsci_runner/git"
+	"bufio"
 	"embed"
 	"encoding/json"
 	"flag"
@@ -33,8 +32,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"net/http/cgi"
+	"bytes"
 )
 
 // Git related constants
@@ -148,8 +147,18 @@ func main() {
 		// 3. Re-wrap the interceptor using Echo v5's layout wrapper
 		// Note: Echo v5's NewResponse expects (http.ResponseWriter, *slog.Logger) 
 		// If using an older v5 beta, it might expect (http.ResponseWriter, *echo.Echo)
-		newEchoResponse := echo.NewResponse(sw, e.Logger) 
+		newEchoResponse := echo.NewResponse(sw, e.Logger)
 
+		// 1. Read the body bytes safely
+		req := c.Request()
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}	
+		git.HandleGitPush(bodyBytes)
+		log.Printf("HHHHH")
+		// 2. Restore the body for both Echo and the CGI handler
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		cgiHandler.ServeHTTP(newEchoResponse, c.Request())
 
 		// 5. Evaluate the captured status code
@@ -179,7 +188,6 @@ func main() {
 }
 
 // Handlers
-
 
 // DSCI CI related handlers
 
