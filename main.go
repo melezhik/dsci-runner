@@ -107,7 +107,6 @@ func main() {
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
 	e.GET("/stash/:project/:key", get_job_stash)
-	e.POST("/forgejo_hook", forgejo_hook)
 	e.GET("/status/:project/:key", status)
 	e.GET("/report/ui/:project/:key", report_ui)
 	e.GET("/report/raw/:project/:key", report)
@@ -155,7 +154,7 @@ func main() {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}	
-		git.HandleGitPush(bodyBytes)
+		data := git.HandleGitPush(bodyBytes)
 		// log.Printf("HHHHH")
 		// 2. Restore the body for both Echo and the CGI handler
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -171,7 +170,16 @@ func main() {
 				// Check specific Smart HTTP content type for pushes
 				isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
 				if isReceivePath && isCorrectType {
-					log.Printf("this is git push: \n")
+					// 2. Get the full wildcard path matches
+					wildcardPath := c.Param("*") // Returns "company/team/project.git/git-receive-pack"
+
+					// 3. Strip the git-receive-pack suffix
+					repoPath := strings.TrimSuffix(wildcardPath, "/git-receive-pack")
+
+					// 4. Strip the trailing .git extension to get the clean repository path identifier
+					repoName := strings.TrimSuffix(repoPath, ".git") // Returns "company/
+
+					log.Printf("git push to %s, data: %s\n", repoName, data)
 				}
 			}
 		} else {
