@@ -8,6 +8,7 @@ import (
 	"dsci_runner/types"
 	"dsci_runner/utils"
 	"dsci_runner/git"
+	"dsci_runner/html"
 	"bufio"
 	"embed"
 	"encoding/json"
@@ -276,49 +277,17 @@ func list_repos(c *echo.Context) error {
     <title>DSCI Repos</title>
   </head>
   <body>
-    <section class="hero">
-
-
-	<nav class="navbar" role="navigation" aria-label="main navigation">
-		<div class="navbar-brand">
-
-			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			</a>
-		</div>
-
-		<div id="navbarBasicExample" class="navbar-menu">
-			<div class="navbar-start">
-
-			<a href="https://github.com/melezhik/DSCI" class="navbar-item">
-				Documentation
-			</a>
-
-			<div class="navbar-end">
-				<div class="navbar-item">
-					<div class="buttons">
-					<a href="/builds" class="button is-primary">
-						<strong>Pipelines</strong>
-					</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</nav>	
-
-
-	<div class="hero-body">
+		%s
+    <div class="container">
+	 <div>
         <p class="title">DSCI Git Repos</p>
-        <hr>
+         <hr>
         <pre>%s</pre>
       </div>
-    </section>
-</body>
+    </div>
+ </body>
 </html>`,
-			data,
+			html.NavBar(""), data,
 		),
 	)
 }
@@ -368,52 +337,17 @@ func list_files(c *echo.Context) error {
     <title>DSCI Repos</title>
   </head>
   <body>
-    <section class="hero">
-
-
-	<nav class="navbar" role="navigation" aria-label="main navigation">
-		<div class="navbar-brand">
-
-			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			<span aria-hidden="true"></span>
-			</a>
-		</div>
-
-		<div id="navbarBasicExample" class="navbar-menu">
-			<div class="navbar-start">
-
-			<a href="https://github.com/melezhik/DSCI" class="navbar-item">
-				Documentation
-			</a>
-
-			<div class="navbar-end">
-				<div class="navbar-item">
-					<div class="buttons">
-					<a href="/" class="button is-primary">
-						<strong>Home</strong>
-					</a>
-					<a href="/builds" class="button is-primary">
-						<strong>Pipelines</strong>
-					</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</nav>	
-
-
-	<div class="hero-body">
+	%s
+    <div class="container">
+	  <div>
         <p class="title">DSCI Git Repos</p>
-        <hr>
+         <hr>
         <pre>%s</pre>
       </div>
-    </section>
-</body>
+    </div>
+ </body>
 </html>`,
-			data,
+			html.NavBar(""), data,
 		),
 	)
 }
@@ -540,13 +474,13 @@ func report_ui(c *echo.Context) error {
     <title>DSCI Jobs</title>
   </head>
   <body>
-    <section class="hero">
-      <div class="hero-body">
+    <div class="container">
+      <div>
         <p class="title">DSCI Report: %s@%s</p>
         <hr>
         <pre>%s</pre>
       </div>
-    </section>
+    </div>
 </body>
 </html>`,
 			project,
