@@ -43,7 +43,7 @@ return `
         Home
       </a>
 
-      <a class="navbar-item">
+      <a href="https://github.com/melezhik/DSCI" class="navbar-item">
         Documentation
       </a>
 
