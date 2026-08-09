@@ -103,6 +103,7 @@ func main() {
 	// Routes
 	e.GET("/", list_repos)
 	e.GET("/repo/:repo", list_files)
+	//e.GET("/repo/:repo/file/:name", dump_file)
 	e.GET("/builds", builds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
@@ -279,14 +280,46 @@ func list_repos(c *echo.Context) error {
 }
 
 func list_files(c *echo.Context) error {
-	// Read the root directory contents
-	dir, _ := filepath.Abs(
+	
+	dname, err := os.MkdirTemp("", "dsci_")
+
+	defer os.RemoveAll(dname)
+
+	if err != nil {
+		log.Fatalf("list_files: error creating temp dir: %s", err)
+	}
+
+	log.Printf("list_files: creating temp dir: %s OK", dname)
+
+	// extract files from git bare bones
+
+	path, _ := filepath.Abs(
 		fmt.Sprintf("%s/%s",
 			repoRoot,
 			c.Param("repo"),
 		),
 	)
-	entries, err := os.ReadDir(dir)
+
+	cmd := exec.Command(
+		"git",
+		("--git-dir=" + path),
+		 "--work-tree=.",
+		"checkout",
+		"-f", 
+		"HEAD",
+	)
+
+	cmd.Dir = dname
+
+	output, err := cmd.CombinedOutput() // Run the command and wait for completion
+
+	if err != nil {
+		log.Printf("list_files: extract files failed with: %s\n", output)
+	}
+
+	log.Printf("list_files: extract files OK: %s", output)
+
+	entries, err := os.ReadDir(dname)
 	if err != nil {
 		log.Fatalf("list_files ReadDir error: %s", err)
 	}
@@ -626,12 +659,12 @@ func startJobDispatcher() {
 
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
-  cmd = exec.Command(
-    AppConfig.DsciContainerRuntime,
-    "exec",
-    "dsci-dispatch",
-    "sparkyd",
-  )
+    cmd = exec.Command(
+      AppConfig.DsciContainerRuntime,
+      "exec",
+      "dsci-dispatch",
+      "sparkyd",
+    )
 
 	stdoutPipe, err := cmd.StdoutPipe()
 
