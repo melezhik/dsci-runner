@@ -53,9 +53,6 @@ var staticFiles11 embed.FS
 //go:embed common
 var staticFiles12 embed.FS
 
-//go:embed public
-var staticFiles2 embed.FS
-
 var AppConfig types.AppConfig
 
 func main() {
@@ -269,27 +266,16 @@ func list_repos(c *echo.Context) error {
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
-			`<html data-theme="dark">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
-    <title>DSCI Repos</title>
-  </head>
-  <body>
-		%s
-    <div class="container">
-	 <div>
+			`%s %s
+	<div class="container">			
+	  <div>
         <p class="title">DSCI Git Repos</p>
          <hr>
         <pre>%s</pre>
       </div>
     </div>
  </body>
-</html>`,
-			html.NavBar(""), data,
-		),
-	)
+</html>`, html.Header(), html.NavBar(""), data))
 }
 
 func list_files(c *echo.Context) error {
@@ -329,15 +315,7 @@ func list_files(c *echo.Context) error {
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
-			`<html data-theme="dark">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
-    <title>DSCI Repos</title>
-  </head>
-  <body>
-	%s
+			`%s %s
     <div class="container">
 	  <div>
         <p class="title">DSCI Git Repos</p>
@@ -346,10 +324,7 @@ func list_files(c *echo.Context) error {
       </div>
     </div>
  </body>
-</html>`,
-			html.NavBar(""), data,
-		),
-	)
+</html>`, html.Header(), html.NavBar(""), data))
 }
 // DSCI CI related handlers
 
@@ -466,14 +441,7 @@ func report_ui(c *echo.Context) error {
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
-			`<html data-theme="dark">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.0/dist/katex.min.css">
-    <title>DSCI Jobs</title>
-  </head>
-  <body>
+			`%s %s
     <div class="container">
       <div>
         <p class="title">DSCI Report: %s@%s</p>
@@ -482,13 +450,7 @@ func report_ui(c *echo.Context) error {
       </div>
     </div>
 </body>
-</html>`,
-			project,
-			job_id,
-			string(htmlOutput),
-		),
-	)
-
+</html>`, html.Header(), html.NavBar(""), project, job_id, string(htmlOutput)))
 }
 
 func trigger(c *echo.Context) error {
@@ -544,12 +506,10 @@ func livebuilds(c *echo.Context) error {
 }
 
 func builds(c *echo.Context) error {
-
-	content, err := fs.ReadFile(staticFiles2, "public/builds.html")
-	if err != nil {
-		log.Fatalf("builds: error reading public/builds.html: %s", err)
-	}
-	return c.HTML(http.StatusOK, string(content))
+	return c.HTML(
+		http.StatusOK, 
+		fmt.Sprintf(html.LiveBuilds(), html.Header(), html.NavBar("")),
+	)
 }
 
 func startJobDispatcher() {
