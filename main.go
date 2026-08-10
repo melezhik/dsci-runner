@@ -355,19 +355,49 @@ func list_files(c *echo.Context) error {
 		}
 	}
 
+	parts := strings.Split(c.Param("dir"), "/")
+	cdir := parts[len(parts)-1]
+
+	// 2. Remove the last element by re-slicing
+	if len(parts) > 0 {
+		parts = parts[:len(parts)-1]
+	}
+	upper_dir := strings.Join(parts, "/")
+	uplink :=""
+	if upper_dir == "" {
+		uplink = fmt.Sprintf(
+			`<a href="/repo/%s">%s</a>`,
+			c.Param("repo"),
+			"/",
+		)
+	} else {
+		uplink = fmt.Sprintf(
+			`<a href="/repo/%s/dir/%s">%s</a>`,
+			c.Param("repo"),
+			upper_dir,
+			upper_dir,
+		)
+	}
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">DSCI Git Repos</p>
+        <p class="title">DSCI Git Repo Files | %s | %s | %s </p>
          <hr>
         <pre>%s</pre>
       </div>
     </div>
  </body>
-</html>`, html.Header(), html.NavBar(""), data))
+</html>`, 
+html.Header(), 
+html.NavBar(""),
+c.Param("repo"),
+uplink,
+cdir, 
+data,
+))
 }
 
 
@@ -392,19 +422,41 @@ func dump_file (c *echo.Context)  error {
     }
 	code := html.CodeToHtml(string(content))
 
+	parts := strings.Split(file, "/")
+
+	file_short_name := parts[len(parts)-1]
+
+	// 2. Remove the last element by re-slicing
+	if len(parts) > 0 {
+		parts = parts[:len(parts)-1]
+	}
+	
+	localdir := strings.Join(parts, "/")
+
+	if localdir == "" {
+		localdir = "/"
+	}
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">%s&gt; %s</p>
+        <p class="title">%s | <a href="/repo/%s/dir/%s">%s</a> | %s</p>
          <hr>
         %s
       </div>
     </div>
  </body>
-</html>`, html.Header(), html.NavBar(""), repo, file, code))
+</html>`, 
+	html.Header(), 
+	html.NavBar(""),
+	repo, repo, localdir,
+	localdir, 
+	file_short_name, 
+	code,
+	),
+)
 
 }
 
