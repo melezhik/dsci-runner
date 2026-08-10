@@ -103,7 +103,8 @@ func main() {
 	// Routes
 	e.GET("/", list_repos)
 	e.GET("/repo/:repo", list_files)
-	//e.GET("/repo/:repo/file/:name", dump_file)
+	e.GET("/repo/:repo/file/:file", dump_file)
+	e.GET("/repo/:repo/dir/:dir", list_files)
 	e.GET("/builds", builds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
@@ -319,7 +320,13 @@ func list_files(c *echo.Context) error {
 
 	log.Printf("list_files: extract files OK: %s", output)
 
+	prefix := ""
+	if c.Param("dir") != "" {
+		dname = dname + "/" + c.Param("dir")
+		prefix = c.Param("dir") + "/"
+	}
 	entries, err := os.ReadDir(dname)
+
 	if err != nil {
 		log.Fatalf("list_files ReadDir error: %s", err)
 	}
@@ -330,15 +337,17 @@ func list_files(c *echo.Context) error {
 		// Output the name and whether it is a directory
 		if entry.IsDir() {
 			data += fmt.Sprintf(
-				"<a href=\"/repo/%s/dir/%s\">[%s]</a>\n",
+				"<a href=\"/repo/%s/dir/%s%s\">[%s]</a>\n",
 				c.Param("repo"),
+				prefix,
 				entry.Name(),
 				entry.Name(),
 			)
 		} else {
 			data += fmt.Sprintf(
-				"<a href=\"/repo/%s/file/%s\">%s</a>\n",
+				"<a href=\"/repo/%s/file/%s%s\">%s</a>\n",
 				c.Param("repo"),
+				prefix,
 				entry.Name(),
 				entry.Name(),
 			)
@@ -359,6 +368,18 @@ func list_files(c *echo.Context) error {
  </body>
 </html>`, html.Header(), html.NavBar(""), data))
 }
+
+
+func dump_file (c *echo.Context)  error {
+
+	file := c.Param("file")
+
+	repo := c.Param("repo")
+
+	return c.String(http.StatusOK, fmt.Sprintf("dump file, repo: %s, file: %s", repo, file))
+
+}
+
 // DSCI CI related handlers
 
 func hello(c *echo.Context) error {
