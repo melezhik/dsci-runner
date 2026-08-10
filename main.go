@@ -282,15 +282,16 @@ func list_repos(c *echo.Context) error {
 
 func list_files(c *echo.Context) error {
 	
-	dname, err := os.MkdirTemp("", "dsci_")
 
-	defer os.RemoveAll(dname)
+	dname := utils.GitCacheRootDir() + "/" + c.Param("repo")
+
+	err := os.MkdirAll(dname, 0755)
 
 	if err != nil {
-		log.Fatalf("list_files: error creating temp dir: %s", err)
+		log.Fatalf("list_files: error creating directory %s: %s", dname, err)
 	}
 
-	log.Printf("list_files: creating temp dir: %s OK", dname)
+	log.Printf("list_files: creating git chache dir: %s OK", dname)
 
 	// extract files from git bare bones
 
@@ -372,11 +373,38 @@ func list_files(c *echo.Context) error {
 
 func dump_file (c *echo.Context)  error {
 
-	file := c.Param("file")
-
 	repo := c.Param("repo")
 
-	return c.String(http.StatusOK, fmt.Sprintf("dump file, repo: %s, file: %s", repo, file))
+	dname := utils.GitCacheRootDir() + "/" + repo
+
+	file := c.Param("file")
+
+	content, err := os.ReadFile(dname + "/" + file)
+
+	if err != nil {
+		return c.String(
+			http.StatusNotFound, 
+			fmt.Sprintf(
+				"dump file error, repo: %s, file: %s, error: %s", 
+				repo, file, err,
+			),
+		)
+    }
+	code := html.CodeToHtml(string(content))
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  <div>
+        <p class="title">%s&gt; %s</p>
+         <hr>
+        %s
+      </div>
+    </div>
+ </body>
+</html>`, html.Header(), html.NavBar(""), repo, file, code))
 
 }
 
@@ -585,12 +613,12 @@ func startJobDispatcher() {
 	var content []byte
 
   if AppConfig.DsciContainerRuntime == "docker" {
-	  content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
+	content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
     if err != nil {
       log.Fatalf("startJobDispatcher: error reading docker/Dockerfile: %s", err)
     }
   } else {
-	  content, err = fs.ReadFile(staticFiles11, "podman/Dockerfile")
+	content, err = fs.ReadFile(staticFiles11, "podman/Dockerfile")
     if err != nil {
       log.Fatalf("startJobDispatcher: error reading podman/Dockerfile: %s", err)
     }
