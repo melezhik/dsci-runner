@@ -46,17 +46,24 @@ return `
       <a href="https://github.com/melezhik/DSCI" class="navbar-item">
         Documentation
       </a>
-
+    </div>  
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+          <a href="/builds" class="button is-primary">
+            <strong>Pipelines</strong>
+          </a>
+        </div>
+      </div>
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link">
           More
         </a>
-
         <div class="navbar-dropdown">
           <a href="https://github.com/melezhik/DSCI" class="navbar-item">
             GitHub
           </a>
-          <a href="https://discord.gg/KSMRTZ9F" class="navbar-item is-selected">
+          <a href="https://discord.gg/KSMRTZ9F" class="navbar-item">
             Dsicord
           </a>
           <a href="https://discord.gg/KSMRTZ9F" class="navbar-item">
@@ -65,16 +72,6 @@ return `
           <hr class="navbar-divider">
           <a href="https://github.com/melezhik/DSCI/issues" class="navbar-item">
             Report an issue
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="navbar-end">
-      <div class="navbar-item">
-        <div class="buttons">
-          <a href="/builds" class="button is-primary">
-            <strong>Pipelines</strong>
           </a>
         </div>
       </div>
