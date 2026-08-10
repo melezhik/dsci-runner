@@ -366,16 +366,18 @@ func list_files(c *echo.Context) error {
 	uplink :=""
 	if upper_dir == "" {
 		uplink = fmt.Sprintf(
-			`<a href="/repo/%s">%s</a>`,
+			`<a href="/repo/%s">%s</a>%s`,
 			c.Param("repo"),
 			"/",
+			cdir,
 		)
 	} else {
 		uplink = fmt.Sprintf(
-			`<a href="/repo/%s/dir/%s">%s</a>`,
+			`<a href="/repo/%s/dir/%s">%s</a>/%s`,
 			c.Param("repo"),
 			upper_dir,
 			upper_dir,
+			cdir,
 		)
 	}
 	return c.HTML(
@@ -384,7 +386,7 @@ func list_files(c *echo.Context) error {
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">DSCI Git Repo Files | %s | %s | %s </p>
+        <p class="title">DSCI Git Repo Files | %s | %s</p>
          <hr>
         <pre>%s</pre>
       </div>
@@ -395,7 +397,6 @@ html.Header(),
 html.NavBar(""),
 c.Param("repo"),
 uplink,
-cdir, 
 data,
 ))
 }
@@ -432,17 +433,29 @@ func dump_file (c *echo.Context)  error {
 	}
 	
 	localdir := strings.Join(parts, "/")
-
+	link := ""
 	if localdir == "" {
-		localdir = "/"
+		link = fmt.Sprintf(
+			`<a href="/repo/%s">/</a>`,
+			repo,
+		)
+	} else {
+		link = fmt.Sprintf(
+			`<a href="/repo/%s/dir/%s">%s/</a>`,
+			repo,
+			localdir,
+			localdir,
+		)
 	}
+
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">%s | <a href="/repo/%s/dir/%s">%s</a> | %s</p>
+        <p class="title">%s | %s%s</p>
          <hr>
         %s
       </div>
@@ -451,8 +464,8 @@ func dump_file (c *echo.Context)  error {
 </html>`, 
 	html.Header(), 
 	html.NavBar(""),
-	repo, repo, localdir,
-	localdir, 
+	repo, 
+	link, 
 	file_short_name, 
 	code,
 	),
