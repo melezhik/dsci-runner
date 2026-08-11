@@ -64,6 +64,12 @@ func main() {
 		return
 	}
 
+  err := os.MkdirAll(repoRoot, 0755)
+
+  if err != nil {
+    log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
+  }
+
 	path := utils.DsciConfigFile()
 
 	dat, err := os.ReadFile(path)
