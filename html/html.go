@@ -47,19 +47,12 @@ return `
       <a href="/" class="navbar-item">
         Repos
       </a>
-
+      <a href="/builds" class="navbar-item">
+        Builds
+      </a>
       <a href="https://github.com/melezhik/DSCI" class="navbar-item">
         Documentation
       </a>
-    </div>  
-    <div class="navbar-end">
-      <div class="navbar-item">
-        <div class="buttons">
-          <a href="/builds" class="button is-primary">
-            <strong>Pipelines</strong>
-          </a>
-        </div>
-      </div>
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link">
           More
@@ -80,7 +73,7 @@ return `
           </a>
         </div>
       </div>
-    </div>
+    </div>  
   </div>
 </nav>
 </div>
