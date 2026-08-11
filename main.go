@@ -280,7 +280,6 @@ func list_repos(c *echo.Context) error {
 
 func list_files(c *echo.Context) error {
 	
-
 	dname := utils.GitCacheRootDir() + "/" + c.Param("repo")
 
 	err := os.MkdirAll(dname, 0755)
@@ -353,38 +352,56 @@ func list_files(c *echo.Context) error {
 		}
 	}
 
-	parts := strings.Split(c.Param("dir"), "/")
-	cdir := parts[len(parts)-1]
+	uplink := ""
 
-	// 2. Remove the last element by re-slicing
-	if len(parts) > 0 {
-		parts = parts[:len(parts)-1]
-	}
-	upper_dir := strings.Join(parts, "/")
-	uplink :=""
-	if upper_dir == "" {
+	if c.Param("dir") == "" {
+
 		uplink = fmt.Sprintf(
-			`<a href="/repo/%s">%s</a>%s`,
+			`%s`,
 			c.Param("repo"),
-			"/",
-			cdir,
 		)
+
 	} else {
-		uplink = fmt.Sprintf(
-			`<a href="/repo/%s/dir/%s">%s</a>/%s`,
-			c.Param("repo"),
-			upper_dir,
-			upper_dir,
-			cdir,
-		)
+
+		parts := strings.Split(c.Param("dir"), "/")
+		cdir := parts[len(parts)-1]
+	
+		if len(parts) > 0 {
+			parts = parts[:len(parts)-1]
+		}
+
+		upper_dir := strings.Join(parts, "/")
+
+		if upper_dir == "" {
+			uplink = fmt.Sprintf(
+				`<a href="/repo/%s">%s</a> | %s`,
+				c.Param("repo"),
+				c.Param("repo"),
+				cdir,
+			)
+		} else {
+
+			uplink = fmt.Sprintf(
+				`<a href="/repo/%s">%s</a> | <a href="/repo/%s/dir/%s">%s</a>/%s`,
+				c.Param("repo"),
+				c.Param("repo"),
+				c.Param("repo"),
+				upper_dir,
+				upper_dir,
+				cdir,
+			)
+		}
+	
 	}
+
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">DSCI Git Repo Files | %s | %s</p>
+        <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
 		<div class="control is-expanded">
 			<input class="input" type="text" id="copyInput" value="git clone http://localhost:8080/%s" readonly>
@@ -409,7 +426,6 @@ func list_files(c *echo.Context) error {
 </html>`, 
 html.Header(), 
 html.NavBar(""),
-c.Param("repo"),
 uplink,
 c.Param("repo"),
 data,
