@@ -62,7 +62,7 @@ return `
             GitHub
           </a>
           <a href="https://discord.gg/KSMRTZ9F" class="navbar-item">
-            Dsicord
+            Discord
           </a>
           <a href="https://discord.gg/KSMRTZ9F" class="navbar-item">
             Contact
