@@ -91,6 +91,10 @@ func main() {
   if AppConfig.GitPathToHttpBackend == "" {
     AppConfig.GitPathToHttpBackend = "/usr/lib/git-core/git-http-backend"
   }
+  
+  if AppConfig.GitServerAddress == "" {
+    AppConfig.GitServerAddress = "http://localhost:8080"
+  }
 
 	go func() {
     for {
@@ -431,7 +435,7 @@ func list_files(c *echo.Context) error {
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
 		<div class="control is-expanded">
-			<input class="input" type="text" id="copyInput" value="git clone http://localhost:8080/%s" readonly>
+			<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
 		</div>
 		<div class="control">
 			<button class="button is-info" onclick="copyText()">Copy</button>
@@ -454,6 +458,7 @@ func list_files(c *echo.Context) error {
 html.Header(), 
 html.NavBar(""),
 uplink,
+AppConfig.GitServerAddress,
 c.Param("repo"),
 data,
 ))
