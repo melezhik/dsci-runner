@@ -481,12 +481,15 @@ func dump_file (c *echo.Context)  error {
 	link := ""
 	if localdir == "" {
 		link = fmt.Sprintf(
-			`<a href="/repo/%s">/</a>`,
+			`<a href="/repo/%s">%s</a>`,
+			repo,
 			repo,
 		)
 	} else {
 		link = fmt.Sprintf(
-			`<a href="/repo/%s/dir/%s">%s/</a>`,
+			`<a href="/repo/%s">%s</a> | <a href="/repo/%s/dir/%s">%s/</a>`,
+			repo,
+			repo,
 			repo,
 			localdir,
 			localdir,
@@ -500,7 +503,7 @@ func dump_file (c *echo.Context)  error {
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">%s | %s%s</p>
+        <p class="title">%s | %s</p>
          <hr>
         %s
       </div>
@@ -509,7 +512,6 @@ func dump_file (c *echo.Context)  error {
 </html>`, 
 	html.Header(), 
 	html.NavBar(""),
-	repo, 
 	link, 
 	file_short_name, 
 	code,
