@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
   "fmt"
+  "html"
 )
 
 // html helpers
@@ -22,7 +23,7 @@ func Header () (string ) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
     <script>hljs.highlightAll();</script>
-    <title>DSCI Jobs</title>
+    <title>DSCI</title>
   </head>
   <body>
   `
@@ -100,6 +101,9 @@ func LiveBuilds () (string) {
 }
 
 
-func CodeToHtml ( code string ) string {
-  return fmt.Sprintf("<pre><code>%s</code></pre>", code)
+func CodeToHtml (code string) string {
+
+  safe := html.EscapeString(code)
+
+  return fmt.Sprintf("<pre><code>%s</code></pre>", safe)
 }
