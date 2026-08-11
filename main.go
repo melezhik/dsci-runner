@@ -34,6 +34,7 @@ import (
 	"time"
 	"net/http/cgi"
 	"bytes"
+	"sort"
 )
 
 // Git related constants
@@ -328,6 +329,19 @@ func list_files(c *echo.Context) error {
 	if err != nil {
 		log.Fatalf("list_files ReadDir error: %s", err)
 	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		isDirI := entries[i].IsDir()
+		isDirJ := entries[j].IsDir()
+
+		// If one is a directory and the other is not
+		if isDirI != isDirJ {
+			return isDirI // puts true (directories) first
+		}
+
+		// Otherwise, sort alphabetically by name
+		return entries[i].Name() < entries[j].Name()
+	})
 
 	data := ""
 
