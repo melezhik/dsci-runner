@@ -387,6 +387,22 @@ func list_files(c *echo.Context) error {
     <div class="container">
 	  <div>
         <p class="title">DSCI Git Repo Files | %s | %s</p>
+		<div class="field has-addons">
+		<div class="control is-expanded">
+			<input class="input" type="text" id="copyInput" value="git clone http://localhost:8080/%s" readonly>
+		</div>
+		<div class="control">
+			<button class="button is-info" onclick="copyText()">Copy</button>
+		</div>
+		</div>
+
+		<script>
+		function copyText() {
+			var copyText = document.getElementById("copyInput");
+			copyText.select();
+			navigator.clipboard.writeText(copyText.value);
+		}
+		</script>
          <hr>
         <pre>%s</pre>
       </div>
@@ -397,6 +413,7 @@ html.Header(),
 html.NavBar(""),
 c.Param("repo"),
 uplink,
+c.Param("repo"),
 data,
 ))
 }
