@@ -89,7 +89,7 @@ func main() {
   }
 
   if AppConfig.GitPathToHttpBackend == "" {
-    AppConfig.GitPathToHttpBackend = "/usr/libexec/git-core/git-http-backend"
+    AppConfig.GitPathToHttpBackend = "/usr/lib/git-core/git-http-backend"
   }
 
 	go func() {
