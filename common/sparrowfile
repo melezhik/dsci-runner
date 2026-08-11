@@ -62,17 +62,15 @@ does Sparky::JobApi::Role
 
   method !update-commit-status ($s) {
     
-    my $url = "{tags()<DsciFeedbackUrl> || 'http://127.0.0.1:8080'}/report/ui/dsci/{tags()<SPARKY_JOB_ID>}";
+    my $data = qq['\{ "state": "{$s}" \}, \{ "job_id" : "{tags()<SPARKY_JOB_ID>}"  \} '];
 
-    my $data = qq['\{ "state": "{$s}", "target_url": "{$url}", "description": "The build status: {$s}", "context": "dsci" \}'];
+    my $params = "--data $data -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
 
-    my $params = "--data $data -H \"Authorization: token {tags()<ForgejoApiToken>}\" -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
+    my $url = "http://127.0.0.1:8080/repo/{tags()<repo_full_name>}/status/{tags()<sha>}";
 
-    my $ext-url = "{tags()<ForgejoHost> || 'http://127.0.0.1:3000'}/api/v1/repos/{tags()<repo_full_name>}/statuses/{tags()<sha>}";
+    say "send update to CI ... url: $url";
 
-    say "send update to CI ... ext-url: $ext-url";
-
-    say qqx[curl $params $ext-url].split("\n").head.chomp;
+    say qqx[curl $params $url].split("\n").head.chomp;
 
     say "done";
 
@@ -288,7 +286,6 @@ does Sparky::JobApi::Role
             ref     => tags()<ref>,
             repo_full_name  => tags()<repo_full_name>,
             message => tags()<message>,
-            ForgejoHost => tags()<ForgejoHost> || "http://127.0.0.1:3000",
           );
 
           if $job<plugin> {
@@ -405,7 +402,6 @@ does Sparky::JobApi::Role
       $params<DSCI_COMMIT> = tags()<sha>;
       $params<DSCI_SCM> = tags()<scm>;
       $params<DSCI_JOB_ID> = tags()<job_id>;
-      $params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
       $params<DSCI_REF> = tags()<ref>;
       $params<DSCI_REPO_FULL_NAME> = tags()<repo_full_name>;
       $params<DSCI_MESSAGE> = tags()<message>;
@@ -454,7 +450,6 @@ does Sparky::JobApi::Role
     %params<DSCI_COMMIT> = tags()<sha>;
     %params<DSCI_SCM> = tags()<scm>;
     %params<DSCI_JOB_ID> = tags()<job_id>;
-    %params<DSCI_FORGEJO_HOST> = tags()<ForgejoHost>;
     %params<DSCI_REF> = tags()<ref>;
     %params<DSCI_REPO_FULL_NAME> = tags()<repo_full_name>;
     %params<DSCI_MESSAGE> = tags()<message>;

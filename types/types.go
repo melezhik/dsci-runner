@@ -1,8 +1,6 @@
 package types
 
 type AppConfig struct {
-	ForgejoApiToken        			string
-	ForgejoHost            			string
 	DsciFeedbackUrl        			string
 	DsciAgentSkipBootstrap 			bool
 	DsciAgentImage         			string
@@ -57,22 +55,6 @@ type JobStash struct {
 type StashRequest struct {
 	Config Config      `json:"config"`
 	Data   interface{} `json:"data"`
-}
-
-type ForgejoHookRepository struct {
-	FullName string `json:"full_name"`
-	CloneUrl string `json:"clone_url"`
-}
-
-type ForgejoHookRepositoryHeadCommit struct {
-	Message string `json:"message"`
-}
-
-type ForgejoHook struct {
-	Ref        string                          `json:"ref"`
-	Sha        string                          `json:"after"`
-	Repository ForgejoHookRepository           `json:"repository"`
-	HeadCommit ForgejoHookRepositoryHeadCommit `json:"head_commit"`
 }
 
 type JobBuild struct {
