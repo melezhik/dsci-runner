@@ -161,8 +161,16 @@ func main() {
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}	
-		data := git.HandleGitPush(bodyBytes)
+		}
+    data := []git.GitUpdate{}
+    if req.Method == http.MethodPost {
+      // Check path suffix for receive-pack (push operation)
+      isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
+      isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
+        if isReceivePath && isCorrectType {
+  		    data = git.HandleGitPush(bodyBytes)
+        }
+    }
 		// log.Printf("HHHHH")
 		// 2. Restore the body for both Echo and the CGI handler
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -171,7 +179,6 @@ func main() {
 		// 5. Evaluate the captured status code
 		if sw.Status >= 200 && sw.Status < 300 {
 			log.Printf("CGI Request Succeeded with status: %d", sw.Status)
-			req := c.Request()
 			if req.Method == http.MethodPost {
 				// Check path suffix for receive-pack (push operation)
 				isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
