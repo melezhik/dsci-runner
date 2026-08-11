@@ -44,7 +44,7 @@ return `
   <div id="navbarBasicExample" class="navbar-menu">
     <div class="navbar-start">
       <a href="/" class="navbar-item">
-        Home
+        Repos
       </a>
 
       <a href="https://github.com/melezhik/DSCI" class="navbar-item">
