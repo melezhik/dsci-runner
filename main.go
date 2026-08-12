@@ -435,21 +435,23 @@ func list_files(c *echo.Context) error {
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
 		<div class="control is-expanded">
-			<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
+			<input class="input" type="text" id="my-text" value="git clone %s/%s" readonly>
 		</div>
 		<div class="control">
-			<button class="button is-info" onclick="copyText()">Copy</button>
+			<button id="copy-btn" class="button is-info" onclick="copyText()">Copy</button>
 		</div>
 		</div>
-
 		<script>
-		function copyText() {
-			var copyText = document.getElementById("copyInput");
-			copyText.select();
-			navigator.clipboard.writeText(copyText.value);
-		}
-		</script>
-         <hr>
+		document.getElementById('copy-btn').addEventListener('click', () => {
+			const textToCopy = document.getElementById('my-text').value;
+			navigator.clipboard.writeText(textToCopy).then(() => {
+			alert('Copied to clipboard!');
+			}).catch(err => {
+			console.error('Failed to copy text: ', err);
+			});
+		});
+ 		</script>
+        <hr>
         <pre>%s</pre>
       </div>
     </div>
