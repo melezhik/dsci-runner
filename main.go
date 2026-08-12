@@ -35,6 +35,9 @@ import (
 	"net/http/cgi"
 	"bytes"
 	"sort"
+
+	go_git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
 )
 
 // Git related constants
@@ -166,15 +169,15 @@ func main() {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-    data := []git.GitUpdate{}
-    if req.Method == http.MethodPost {
-      // Check path suffix for receive-pack (push operation)
-      isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
-      isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
-        if isReceivePath && isCorrectType {
-  		    data = git.HandleGitPush(bodyBytes)
-        }
-    }
+		data := []git.GitUpdate{}
+		if req.Method == http.MethodPost {
+		// Check path suffix for receive-pack (push operation)
+		isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
+		isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
+			if isReceivePath && isCorrectType {
+				data = git.HandleGitPush(bodyBytes)
+			}
+		}
 		// log.Printf("HHHHH")
 		// 2. Restore the body for both Echo and the CGI handler
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -200,12 +203,42 @@ func main() {
 
 					log.Printf("git push to %s, data: %s\n", repoName, data)
 
+					repo_dir := gitRoot + "/" + repoName + ".git"
+					repo, err := go_git.PlainOpen(repo_dir)
+
+					if err != nil {
+						log.Fatalf("Failed to open repository: %v", err)
+					}
+				
+					// 3. Parse the string SHA into a plumbing.Hash object
+					hash := plumbing.NewHash(data[0].NewCommit)
+				
+					// 4. Retrieve the commit object from the repository
+					commit, err := repo.CommitObject(hash)
+					if err != nil {
+						log.Fatalf("Failed to find commit %s: %v", data[0].NewCommit, err)
+					}
+				
+					// 5. Print the full commit message
+					fmt.Println("--- Commit Message ---")
+					fmt.Println(commit.Message)
+					fmt.Println("----------------------")
+					
+					// Bonus: You can also easily access metadata
+					fmt.Printf("Author: %s <%s>\n", commit.Author.Name, commit.Author.Email)
+					fmt.Printf("Date:   %s\n", commit.Author.When)
+
 					var q types.JobRequest
 					now := time.Now()
 					q.Config.Project = "dsci"
 					q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
-					msg := "ci"
-					q.Config.Description = fmt.Sprintf("%s | %s", data[0].NewCommit, msg)
+					msg := fmt.Sprintf(
+						"%s %s",
+						commit.Message,
+						commit.Author.Email,
+					)
+					shortSHA := data[0].NewCommit[:7]
+					q.Config.Description = fmt.Sprintf("%s | %s", shortSHA, msg)
 					skip_bootstrap := ""
 					allow_localhost_mode := ""
 					if AppConfig.DsciAgentSkipBootstrap == true {
@@ -220,7 +253,7 @@ func main() {
 					AppConfig.DsciContainerRuntime,
 						data[0].RefName,
 						repoName,
-						data[0].NewCommit,
+						shortSHA,
 						fmt.Sprintf("http://localhost:8080/%s.git",repoName),
 						msg,
 						AppConfig.DsciFeedbackUrl,
