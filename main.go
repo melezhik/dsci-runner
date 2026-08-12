@@ -438,7 +438,7 @@ func list_files(c *echo.Context) error {
 				<input class="input" type="text" id="my-text" value="git clone %s/%s" readonly>
 			</div>
 			<div class="control">
-				<button id="copy-btn" class="button is-info" onclick="copyText()">Copy</button>
+				<button id="copy-btn" class="button is-info">Copy</button>
 			</div>
 		</div>
 		<p id="copy-toast" class="notification is-success is-dark is-hidden is-small py-2 px-2">
