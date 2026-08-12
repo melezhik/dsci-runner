@@ -435,7 +435,7 @@ func list_files(c *echo.Context) error {
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
 			<div class="control is-expanded">
-				<input class="input" type="text" id="my-text" value="git clone %s/%s" readonly>
+				<input class="input" type="text" id="ext-target" value="git clone %s/%s" readonly>
 			</div>
 			<div class="control">
 				<button id="copy-btn" class="button is-info">Copy</button>
@@ -445,21 +445,61 @@ func list_files(c *echo.Context) error {
 		Copied!
 		</p>
 		<script>
-			const copyBtn = document.getElementById('copy-btn');
-			const copyToast = document.getElementById('copy-toast');
+			// 1. Универсальная функция копирования с фолбеком для HTTP
+			async function copyToClipboard(text) {
+			if (navigator.clipboard && window.isSecureContext) {
+				try {
+					await navigator.clipboard.writeText(text);
+					return true;
+				} catch (err) {
+					console.error("Clipboard API failed:", err);
+				}
+			}
 
-			copyBtn.addEventListener('click', () => {
-				const textToCopy = document.getElementById('my-text').value;
+			// Фолбек для HTTP и старых браузеров
+			const textArea = document.createElement("textarea");
+			textArea.value = text;
+			textArea.style.position = "fixed";
+			textArea.style.left = "-9999px";
+			document.body.appendChild(textArea);
+			textArea.focus();
+			textArea.select();
+
+			try {
+				const successful = document.execCommand('copy');
+				document.body.removeChild(textArea);
+				return successful;
+			} catch (err) {
+				console.error("Fallback failed:", err);
+				document.body.removeChild(textArea);
+				return false;
+			}
+			}
+
+			// 2. Логика управления UI и всплывающим уведомлением
+			const copyBtn = document.getElementById('copy-btn');
+			const textTarget = document.getElementById('text-target');
+			const notification = document.getElementById('toast-notification');
+			let timeoutId = null;
+
+			copyBtn.addEventListener('click', async () => {
+			const textToCopy = textTarget.innerText;
+			const success = await copyToClipboard(textToCopy);
+
+			if (success) {
+				// Сбрасываем таймер, если кнопка была нажата повторно до исчезновения
+				clearTimeout(timeoutId);
 				
-				navigator.clipboard.writeText(textToCopy).then(() => {
-				// Show notification by removing Bulma's 'is-hidden' class
-				copyToast.classList.remove('is-hidden');
-				
-				// Automatically hide it after 2 seconds
-				setTimeout(() => {
-					copyToast.classList.add('is-hidden');
-				}, 2000);
-				});
+				// Показываем уведомление
+				notification.classList.add('show');
+
+				// Скрываем через 2.5 секунды
+				timeoutId = setTimeout(() => {
+				notification.classList.remove('show');
+				}, 2500);
+			} else {
+				alert('Не удалось скопировать текст');
+			}
 			});
 		</script>
 		<hr>
