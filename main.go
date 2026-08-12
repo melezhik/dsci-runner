@@ -434,24 +434,35 @@ func list_files(c *echo.Context) error {
 	  <div>
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
-		<div class="control is-expanded">
-			<input class="input" type="text" id="my-text" value="git clone %s/%s" readonly>
+			<div class="control is-expanded">
+				<input class="input" type="text" id="my-text" value="git clone %s/%s" readonly>
+			</div>
+			<div class="control">
+				<button id="copy-btn" class="button is-info" onclick="copyText()">Copy</button>
+			</div>
 		</div>
-		<div class="control">
-			<button id="copy-btn" class="button is-info" onclick="copyText()">Copy</button>
-		</div>
-		</div>
+		<p id="copy-toast" class="notification is-success is-dark is-hidden is-small py-2 px-2">
+		Copied!
+		</p>
 		<script>
-		document.getElementById('copy-btn').addEventListener('click', () => {
-			const textToCopy = document.getElementById('my-text').value;
-			navigator.clipboard.writeText(textToCopy).then(() => {
-			alert('Copied to clipboard!');
-			}).catch(err => {
-			console.error('Failed to copy text: ', err);
+			const copyBtn = document.getElementById('copy-btn');
+			const copyToast = document.getElementById('copy-toast');
+
+			copyBtn.addEventListener('click', () => {
+				const textToCopy = document.getElementById('my-text').value;
+				
+				navigator.clipboard.writeText(textToCopy).then(() => {
+				// Show notification by removing Bulma's 'is-hidden' class
+				copyToast.classList.remove('is-hidden');
+				
+				// Automatically hide it after 2 seconds
+				setTimeout(() => {
+					copyToast.classList.add('is-hidden');
+				}, 2000);
+				});
 			});
-		});
- 		</script>
-        <hr>
+		</script>
+		<hr>
         <pre>%s</pre>
       </div>
     </div>
