@@ -434,73 +434,34 @@ func list_files(c *echo.Context) error {
 	  <div>
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
-			<div class="control is-expanded">
-				<input class="input" type="text" id="ext-target" value="git clone %s/%s" readonly>
-			</div>
-			<div class="control">
-				<button id="copy-btn" class="button is-info">Copy</button>
-			</div>
+		<div class="control">
+			<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
 		</div>
-		<p id="copy-toast" class="notification is-success is-dark is-hidden is-small py-2 px-2">
-		Copied!
-		</p>
-		<script>
-			// 1. Универсальная функция копирования с фолбеком для HTTP
-			async function copyToClipboard(text) {
-			if (navigator.clipboard && window.isSecureContext) {
-				try {
-					await navigator.clipboard.writeText(text);
-					return true;
-				} catch (err) {
-					console.error("Clipboard API failed:", err);
-				}
-			}
-
-			// Фолбек для HTTP и старых браузеров
-			const textArea = document.createElement("textarea");
-			textArea.value = text;
-			textArea.style.position = "fixed";
-			textArea.style.left = "-9999px";
-			document.body.appendChild(textArea);
-			textArea.focus();
-			textArea.select();
-
-			try {
-				const successful = document.execCommand('copy');
-				document.body.removeChild(textArea);
-				return successful;
-			} catch (err) {
-				console.error("Fallback failed:", err);
-				document.body.removeChild(textArea);
-				return false;
-			}
-			}
-
-			// 2. Логика управления UI и всплывающим уведомлением
-			const copyBtn = document.getElementById('copy-btn');
-			const textTarget = document.getElementById('text-target');
-			const notification = document.getElementById('toast-notification');
-			let timeoutId = null;
-
-			copyBtn.addEventListener('click', async () => {
-			const textToCopy = textTarget.innerText;
-			const success = await copyToClipboard(textToCopy);
-
-			if (success) {
-				// Сбрасываем таймер, если кнопка была нажата повторно до исчезновения
-				clearTimeout(timeoutId);
-				
-				// Показываем уведомление
-				notification.classList.add('show');
-
-				// Скрываем через 2.5 секунды
-				timeoutId = setTimeout(() => {
-				notification.classList.remove('show');
-				}, 2500);
-			} else {
-				alert('Не удалось скопировать текст');
-			}
-			});
+		<div class="control">
+			<button class="button is-info" id="copyBtn">Copy</button>
+		</div>
+		</div>
+		<script>	
+document.getElementById('copyBtn').addEventListener('click', function() {
+  var input = document.getElementById('copyInput');
+  
+  // Select the text field
+  input.select();
+  input.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    // Legacy command works on non-TLS/HTTP sites
+    var successful = document.execCommand('copy');
+    if (successful) {
+      this.textContent = 'Copied!';
+      setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+    } else {
+      alert('Failed to copy');
+    }
+  } catch (err) {
+    alert('Browser not supported');
+  }
+});
 		</script>
 		<hr>
         <pre>%s</pre>
