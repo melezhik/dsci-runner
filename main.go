@@ -233,7 +233,7 @@ func main() {
 					q.Config.Project = "dsci"
 					q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 					msg := fmt.Sprintf(
-						"%s %s",
+						"%s by %s",
 						commit.Message,
 						commit.Author.Email,
 					)
@@ -458,22 +458,42 @@ func list_files(c *echo.Context) error {
 	
 	}
 
+	gitRoot, _ := filepath.Abs(repoRoot)
 
+	repo_dir := gitRoot + "/" + c.Param("repo")
+
+	repo, err := go_git.PlainOpen(repo_dir)
+
+	if err != nil {
+		log.Fatalf("Failed to open repository: %v", err)
+	}
+
+	ref, _ := repo.Head()
+
+	// 3. Parse the string SHA into a plumbing.Hash object
+	hash := ref.Hash()
+
+	// 4. Retrieve the commit object from the repository
+	commit, err := repo.CommitObject(hash)
+	if err != nil {
+		log.Fatalf("Failed to find commit %s: %v", "HEAD", err)
+	}
+	shortSHA := commit.Hash.String()[:7]
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
-	  <div>
-        <p class="title">DSCI Git Repo Files | %s</p>
-		<div class="field has-addons">
-		<div class="control is-expanded">
-			<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
-		</div>
-		<div class="control">
-			<button class="button is-info" id="copyBtn">Copy</button>
-		</div>
-		</div>
+	  	<div>
+			<p class="title">DSCI Git Repo Files | %s</p>
+			<div class="field has-addons">
+				<div class="control is-expanded">
+					<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
+				</div>
+				<div class="control">
+					<button class="button is-info" id="copyBtn">Copy</button>
+				</div>
+	    	</div>
 		<script>	
 document.getElementById('copyBtn').addEventListener('click', function() {
   var input = document.getElementById('copyInput');
@@ -496,9 +516,10 @@ document.getElementById('copyBtn').addEventListener('click', function() {
   }
 });
 		</script>
-		<hr>
+		<span class="tag is-dark is-medium">%s | %s by %s</span>
+		<hr>	
         <pre>%s</pre>
-      </div>
+    	</div>
     </div>
  </body>
 </html>`, 
@@ -507,6 +528,7 @@ html.NavBar(""),
 uplink,
 AppConfig.GitServerAddress,
 c.Param("repo"),
+shortSHA, commit.Message,commit.Author.Email,
 data,
 ))
 }
