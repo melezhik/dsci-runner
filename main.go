@@ -434,7 +434,7 @@ func list_files(c *echo.Context) error {
 	  <div>
         <p class="title">DSCI Git Repo Files | %s</p>
 		<div class="field has-addons">
-		<div class="control">
+		<div class="control is-expanded">
 			<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
 		</div>
 		<div class="control">
