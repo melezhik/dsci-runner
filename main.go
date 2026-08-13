@@ -123,6 +123,7 @@ func main() {
 	e.GET("/builds", builds)
 	e.POST("/queue", queue_job)
 	e.POST("/stash", put_job_stash)
+	e.POST("/repo/:repo/build",manual_build)
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.GET("/status/:project/:key", status)
 	e.GET("/report/ui/:project/:key", report_ui)
@@ -629,6 +630,98 @@ func dump_file (c *echo.Context)  error {
 	code,
 	),
 )
+
+}
+
+func manual_build(c *echo.Context) error {
+
+	gitRoot, _ := filepath.Abs(repoRoot)
+
+	repo_dir := gitRoot + "/" + c.Param("repo")
+
+	repo, err := go_git.PlainOpen(repo_dir)
+
+	if err != nil {
+		log.Fatalf("manual_build: Failed to open repository: %v", err)
+	}
+
+	ref, _ := repo.Head()
+
+	// 3. Parse the string SHA into a plumbing.Hash object
+	hash := ref.Hash()
+
+	// 4. Retrieve the commit object from the repository
+	commit, err := repo.CommitObject(hash)
+	if err != nil {
+		log.Fatalf("manual_build: Failed to find commit %s: %v", "HEAD", err)
+	}
+	shortSHA := commit.Hash.String()[:7]
+
+	var q types.JobRequest
+	now := time.Now()
+	q.Config.Project = "dsci"
+	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+	msg := fmt.Sprintf(
+		"%s by %s  - manual run",
+		commit.Message,
+		commit.Author.Email,
+	)
+	q.Config.Description = fmt.Sprintf("%s | %s", shortSHA, msg)
+	skip_bootstrap := ""
+	allow_localhost_mode := ""
+	if AppConfig.DsciAgentSkipBootstrap == true {
+		skip_bootstrap = ",DsciAgentSkipBootstrap"
+	}
+	if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
+		repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
+		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
+	}
+	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
+		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
+	AppConfig.DsciContainerRuntime,
+		ref.Name(),
+		c.Param("repo"),
+		commit.Hash.String(),
+		fmt.Sprintf("http://localhost:8080/%s.git",c.Param("repo")),
+		msg,
+		AppConfig.DsciFeedbackUrl,
+		AppConfig.DsciAgentImage,
+		skip_bootstrap,
+		allow_localhost_mode,
+	)
+
+	q.Trigger.Sparrowdo.NoSudo = true
+
+	q.Trigger.Sparrowdo.Localhost = true
+
+	dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
+
+	q.Sparrowfile = dat
+
+	job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
+
+	log.Printf("job quedued: %s\n", q.Config.JobId)
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  <div>
+        <p class="title"><a href="/repo/%s">%s</a></p>
+         <hr>
+        job quedued: %s
+      </div>
+    </div>
+ </body>
+</html>`, 
+	html.Header(), 
+	html.NavBar(""),
+	c.Param("repo"),
+	c.Param("repo"),
+	q.Config.JobId, 
+	),
+	)
 
 }
 
