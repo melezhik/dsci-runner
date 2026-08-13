@@ -682,7 +682,7 @@ func manual_build(c *echo.Context) error {
 		ref.Name(),
 		c.Param("repo"),
 		commit.Hash.String(),
-		fmt.Sprintf("http://localhost:8080/%s.git",c.Param("repo")),
+		fmt.Sprintf("http://localhost:8080/%s",c.Param("repo")),
 		msg,
 		AppConfig.DsciFeedbackUrl,
 		AppConfig.DsciAgentImage,
