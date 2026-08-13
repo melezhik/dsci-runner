@@ -35,6 +35,7 @@ import (
 	"net/http/cgi"
 	"bytes"
 	"sort"
+	"errors"
 
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
@@ -468,6 +469,40 @@ func list_files(c *echo.Context) error {
 		log.Fatalf("Failed to open repository: %v", err)
 	}
 
+	_, err = repo.Head()
+
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
+		// No references mean it's an empty repo
+		return c.HTML(
+			http.StatusOK,
+			fmt.Sprintf(
+				`%s %s
+		<div class="container">
+			  <div>
+				<p class="title">DSCI Git Repo Files</p>
+				<div class="field has-addons">
+					<div class="control is-expanded">
+						<input class="input" type="text" id="copyInput" value="git clone %s/%s" readonly>
+					</div>
+					<div class="control">
+						<button class="button is-info" id="copyBtn">Copy</button>
+					</div>
+				</div>
+			<hr>	
+			<pre>no files - empty repository</pre>
+			</div>
+		</div>
+	 %s
+	 </body>
+	</html>`, 
+		html.Header(), 
+		html.NavBar(""),
+		AppConfig.GitServerAddress,
+		c.Param("repo"),
+		html.CopyPasteButtonScript(),
+	))		
+	}
+
 	ref, _ := repo.Head()
 
 	// 3. Parse the string SHA into a plumbing.Hash object
@@ -479,6 +514,7 @@ func list_files(c *echo.Context) error {
 		log.Fatalf("Failed to find commit %s: %v", "HEAD", err)
 	}
 	shortSHA := commit.Hash.String()[:7]
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -494,31 +530,19 @@ func list_files(c *echo.Context) error {
 					<button class="button is-info" id="copyBtn">Copy</button>
 				</div>
 	    	</div>
-		<script>	
-document.getElementById('copyBtn').addEventListener('click', function() {
-  var input = document.getElementById('copyInput');
-  
-  // Select the text field
-  input.select();
-  input.setSelectionRange(0, 99999); // For mobile devices
-  
-  try {
-    // Legacy command works on non-TLS/HTTP sites
-    var successful = document.execCommand('copy');
-    if (successful) {
-      this.textContent = 'Copied!';
-      setTimeout(() => { this.textContent = 'Copy'; }, 2000);
-    } else {
-      alert('Failed to copy');
-    }
-  } catch (err) {
-    alert('Browser not supported');
-  }
-});
-		</script>
+		<form action="/repo/%s/build" method="POST">
+		<!-- Website URL Input -->
+		<!-- Submit Button -->
+		<div class="field is-grouped">
+			<div class="control">
+				<button class="button is-primary" type="submit">Build</button>
+			</div>
+		</div>
+		</form>
 		<span class="tag is-dark is-medium">%s | %s by %s</span>
 		<hr>	
         <pre>%s</pre>
+		%s
     	</div>
     </div>
  </body>
@@ -527,9 +551,10 @@ html.Header(),
 html.NavBar(""),
 uplink,
 AppConfig.GitServerAddress,
-c.Param("repo"),
-shortSHA, commit.Message,commit.Author.Email,
+c.Param("repo"), c.Param("repo"),
+shortSHA, commit.Message, commit.Author.Email,
 data,
+html.CopyPasteButtonScript(),
 ))
 }
 

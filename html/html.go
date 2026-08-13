@@ -119,3 +119,30 @@ func CodeToHtml (code string) string {
 
   return fmt.Sprintf("<pre><code>%s</code></pre>", safe)
 }
+
+
+func CopyPasteButtonScript() string {
+
+return `<script>	
+  document.getElementById('copyBtn').addEventListener('click', function() {
+    var input = document.getElementById('copyInput');
+    
+    // Select the text field
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+      // Legacy command works on non-TLS/HTTP sites
+      var successful = document.execCommand('copy');
+      if (successful) {
+        this.textContent = 'Copied!';
+        setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+      } else {
+        alert('Failed to copy');
+      }
+    } catch (err) {
+      alert('Browser not supported');
+    }
+  });
+</script>`
+}
