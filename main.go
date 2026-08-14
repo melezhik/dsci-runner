@@ -29,7 +29,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
+	//"strconv"
 	"strings"
 	"time"
 	"net/http/cgi"
@@ -127,6 +127,7 @@ func main() {
 	e.GET("/stash/:project/:key", get_job_stash)
 	e.GET("/status/:project/:key", status)
 	e.GET("/report/ui/:project/:key", report_ui)
+	e.GET("/report/ui2/:project/:build_id", report_ui2)
 	e.GET("/report/raw/:project/:key", report)
 	e.GET("/trigger/:project/:key", trigger)
 	e.GET("/livebuilds", livebuilds)
@@ -231,15 +232,16 @@ func main() {
 					fmt.Printf("Date:   %s\n", commit.Author.When)
 
 					var q types.JobRequest
-					now := time.Now()
+					//now := time.Now()
 					q.Config.Project = "dsci"
-					q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+					//q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 					msg := fmt.Sprintf(
 						"%s by %s",
 						commit.Message,
 						commit.Author.Email,
 					)
 					shortSHA := data[0].NewCommit[:7]
+					q.Config.JobId = shortSHA
 					q.Config.Description = fmt.Sprintf("%s | %s", shortSHA, msg)
 					skip_bootstrap := ""
 					allow_localhost_mode := ""
@@ -514,7 +516,34 @@ func list_files(c *echo.Context) error {
 	if err != nil {
 		log.Fatalf("Failed to find commit %s: %v", "HEAD", err)
 	}
+
 	shortSHA := commit.Hash.String()[:7]
+
+	state := job.JobState("dsci", shortSHA)
+
+	state_badge := `<span class="tag is-white is-medium">Unknown</span>`
+
+	if state == "0" {
+		state_badge = fmt.Sprintf(
+			`<span class="tag is-warning is-medium"><a href="/report/ui/dsci/%s">Running</a></span>`,
+			shortSHA,
+		)
+	}
+	if state == "1" {
+		state_badge = fmt.Sprintf(
+			`<span class="tag is-success is-medium"><a href="/report/ui/dsci/%s">Pass</a></span>`,
+			shortSHA,
+		)
+	}
+	if state == "-1" {
+		state_badge = fmt.Sprintf(
+			`<span class="tag is-danger" is-medium><a href="/report/ui/dsci/%s">Fail</a></span>`,
+			shortSHA,
+		)
+	}
+	if state == "-3" {
+		state_badge = `<span class="tag is-dark is-medium">Queued</span>`
+	}
 
 	return c.HTML(
 		http.StatusOK,
@@ -540,7 +569,7 @@ func list_files(c *echo.Context) error {
 			</div>
 		</div>
 		</form>
-		<span class="tag is-dark is-medium">%s | %s by %s</span>
+		<span class="tag is-dark is-medium">%s | %s by %s </span> %s
 		<hr>	
         <pre>%s</pre>
 		%s
@@ -553,7 +582,7 @@ html.NavBar(""),
 uplink,
 AppConfig.GitServerAddress,
 c.Param("repo"), c.Param("repo"),
-shortSHA, commit.Message, commit.Author.Email,
+shortSHA, commit.Message, commit.Author.Email, state_badge,
 data,
 html.CopyPasteButtonScript(),
 ))
@@ -658,9 +687,10 @@ func manual_build(c *echo.Context) error {
 	shortSHA := commit.Hash.String()[:7]
 
 	var q types.JobRequest
-	now := time.Now()
+	//now := time.Now()
 	q.Config.Project = "dsci"
-	q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+	//q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+	q.Config.JobId = shortSHA
 	msg := fmt.Sprintf(
 		"%s by %s  - manual run",
 		commit.Message,
@@ -850,6 +880,33 @@ func report_ui(c *echo.Context) error {
     </div>
 </body>
 </html>`, html.Header(), html.NavBar(""), project, job_id, string(htmlOutput)))
+}
+
+func report_ui2(c *echo.Context) error {
+
+	project := c.Param("project")
+
+	build_id := c.Param("build_id")
+
+	data := job.ReportByBuildId(project, build_id)
+
+	data = strings.ReplaceAll(data, "\r\n", "\n")
+
+	htmlOutput := ansihtml.ConvertToHTML([]byte(data))
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+      <div>
+        <p class="title">DSCI Report: %s@%s</p>
+        <hr>
+        <pre>%s</pre>
+      </div>
+    </div>
+</body>
+</html>`, html.Header(), html.NavBar(""), project, build_id, string(htmlOutput)))
 }
 
 func trigger(c *echo.Context) error {

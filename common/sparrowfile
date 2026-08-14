@@ -60,25 +60,7 @@ does Sparky::JobApi::Role
     return @b.elems == 0;
   }
 
-  method !update-commit-status ($s) {
-    
-    my $data = qq['\{ "state": "{$s}" \}, \{ "job_id" : "{tags()<SPARKY_JOB_ID>}"  \} '];
-
-    my $params = "--data $data -H \"Content-Type: application/json\" -D - -fsL -s /dev/null",
-
-    my $url = "http://127.0.0.1:8080/repo/{tags()<repo_full_name>}/status/{tags()<sha>}";
-
-    say "send update to CI ... url: $url";
-
-    say qqx[curl $params $url].split("\n").head.chomp;
-
-    say "done";
-
-  }
-
   method stage-main {
-
-    self!update-commit-status("pending");
 
     directory "scm";
 
@@ -356,8 +338,10 @@ does Sparky::JobApi::Role
         }
       }
 
+      if $status == False {
+        die "some child jobs failed"
+      }
     }
-    self!update-commit-status($status ?? "success" !! "failure");
   }
 
   method stage-bootstrap {

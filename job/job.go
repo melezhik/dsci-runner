@@ -237,49 +237,101 @@ func GetSparrowdoConfig(p string, filename string) interface{} {
 
 func JobState(p string, job_id string) string {
 
-	path := filepath.Join(utils.SparkyTriggersDir(p), job_id)
+	// default state - unknown
+
+	state := "-2"
+
+	active_state := ""
+
+	path := filepath.Join(utils.ProjectStateDir(p), job_id)
 
 	_, err := os.Stat(path)
 
+	if err == nil {
+
+		// job either finished or running
+		// set active_state
+
+		dat, err := os.ReadFile(path)
+
+		if err != nil {
+			log.Fatalf("Error reading file:", err)
+		}
+
+		switch st := string(dat); st {
+		case "0":
+			log.Printf("JobState: project: %s job_id: %s, state: running ", p, job_id)
+		case "1":
+			log.Printf("JobState: project: %s job_id: %s, state: success ", p, job_id)
+		case "-1":
+			log.Printf("JobState: project: %s job_id: %s, state: failed ", p, job_id)
+		}
+
+		// set active state
+		active_state = string(dat)
+
+	} 
+
+	// try to see if there is job in queue
+	path = filepath.Join(utils.SparkyTriggersDir(p), job_id)
+
+	_, err = os.Stat(path)
+
 	if errors.Is(err, os.ErrNotExist) {
 
-		path := filepath.Join(utils.ProjectStateDir(p), job_id)
-
-		_, err := os.Stat(path)
-
-		if errors.Is(err, os.ErrNotExist) {
-			log.Printf("JobState: project: %s job_id: %s, state: unknown 1 (state file does not exist)", p, job_id)
-			return "-2" // unknown state, state file does not exist
-		} else if err == nil {
-
-			dat, err := os.ReadFile(path)
-
-			if err != nil {
-				log.Fatalf("Error reading file:", err)
-			}
-
-			switch st := string(dat); st {
-			case "0":
-				log.Printf("JobState: project: %s job_id: %s, state: running ", p, job_id)
-			case "1":
-				log.Printf("JobState: project: %s job_id: %s, state: success ", p, job_id)
-			case "-1":
-				log.Printf("JobState: project: %s job_id: %s, state: failed ", p, job_id)
-			}
-			return string(dat)
-
+		// trigger file does not exist
+		log.Printf("JobState: project: %s job_id: %s, trigger file does not exist", p, job_id)
+		if active_state != "" {
+			return active_state
 		} else {
-			log.Fatalf("JobState: error accessing state file: %s", err)
+			// return default state (unknown) if trigger file
+			// does not exist and there is no active_state
+			return state
 		}
 
 	} else if err == nil {
 		log.Printf("JobState: project: %s job_id: %s, state: in queue", p, job_id)
-		return "-2" // trigger exists, job in queue
+		if active_state == "0" {
+			return active_state
+		} else {
+			// return state "in queue"
+			// if trigger file exists
+			// and there active state is finshed
+			return "-3"
+		}
 	} else {
-		log.Fatalf("JobState: error accessing trigger file: %s", err)
+		log.Printf("JobState: error accessing trigger file: %s", err)
+		if active_state != "" {
+			return active_state
+		} else {
+			// return default state (unknown) if 
+			// there is error accessing trigger file
+			// and there is no active_state
+			return state
+		}
 	}
-	log.Printf("JobState: project: %s job_id: %s, state: unknown 2", p, job_id)
-	return "-2"
+}
+
+func ReportByBuildId(p string, build_id string) string {
+
+	log.Printf("Report request project: %s, build id: %s", p, build_id)
+
+	path := fmt.Sprintf(
+		"%s/%s/build-%s.txt",
+		utils.SparkyReportsDir(),
+		p,
+		build_id,
+	)
+
+	dat, err := os.ReadFile(path)
+
+	if err != nil {
+		log.Fatalf("JobReport: error reading file %s %s:", path, err)
+	}
+
+	log.Printf("Report return: path: %s", path)
+	return string(dat)
+
 }
 
 func Report(p string, job_id string) string {
@@ -294,7 +346,7 @@ func Report(p string, job_id string) string {
 		log.Fatalf("JobReport: error opening db file: %s", err)
 	}
 
-	sqlQuery := `SELECT id FROM builds WHERE job_id = ? LIMIT 1`
+	sqlQuery := `SELECT id FROM builds WHERE job_id = ? order by id desc LIMIT 1`
 
 	// QueryRow returns a *sql.Row
 	row := db.QueryRow(sqlQuery, job_id)
