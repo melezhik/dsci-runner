@@ -13,6 +13,9 @@ import (
 //go:embed builds.html
 var staticFiles embed.FS
 
+//go:embed ace.js
+var staticFiles2 embed.FS
+
 func Header () (string ) {
 	return `
 <html data-theme="dark">
@@ -42,6 +45,19 @@ func Header () (string ) {
       });
     });
     </script>
+		<style type="text/css" media="screen">
+				body {
+					overflow: hidden;
+				}
+				#editor {
+					margin: 0;
+					position: absolute;
+					top: 0;
+					bottom: 0;
+					left: 0;
+					right: 0;
+				}
+		</style>
     <title>DSCI</title>
   </head>
   <body>
@@ -105,7 +121,7 @@ func LiveBuilds () (string) {
 	content, err := fs.ReadFile(staticFiles, "builds.html")
 
 	if err != nil {
-			log.Fatalf("startJobDispatcher: error reading common/sparrowfile: %s", err)
+			log.Fatalf("LiveBuilds: error reading common/sparrowfile: %s", err)
 	}
 
 	return string(content)
@@ -145,4 +161,16 @@ return `<script>
     }
   });
 </script>`
+}
+
+func AceJsLib () (string) {
+
+	content, err := fs.ReadFile(staticFiles2, "ace.js")
+
+	if err != nil {
+			log.Fatalf("AceJsLib: error reading common/sparrowfile: %s", err)
+	}
+
+	return string(content)
+
 }

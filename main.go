@@ -119,6 +119,7 @@ func main() {
 	e.GET("/", list_repos)
 	e.GET("/repo/:repo", list_files)
 	e.GET("/repo/:repo/file/:file", dump_file)
+	e.GET("/repo/:repo/file_edit/:file", edit_file)
 	e.GET("/repo/:repo/dir/:dir", list_files)
 	e.GET("/builds", builds)
 	e.POST("/queue", queue_job)
@@ -603,7 +604,7 @@ func dump_file (c *echo.Context)  error {
 		return c.String(
 			http.StatusNotFound, 
 			fmt.Sprintf(
-				"dump file error, repo: %s, file: %s, error: %s", 
+				"dump_file error, repo: %s, file: %s, error: %s", 
 				repo, file, err,
 			),
 		)
@@ -638,14 +639,14 @@ func dump_file (c *echo.Context)  error {
 		)
 	}
 
-
+	edit_link := fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`,repo,c.Param("file"))
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
     <div class="container">
 	  <div>
-        <p class="title">%s | %s</p>
+        <p class="title">%s | %s %s</p>
          <hr>
         %s
       </div>
@@ -655,8 +656,90 @@ func dump_file (c *echo.Context)  error {
 	html.Header(), 
 	html.NavBar(""),
 	link, 
+	file_short_name,
+	edit_link,
+	code,
+	),
+)
+
+}
+
+func edit_file (c *echo.Context)  error {
+
+	repo := c.Param("repo")
+
+	dname := utils.GitCacheRootDir() + "/" + repo
+
+	file := c.Param("file")
+
+	content, err := os.ReadFile(dname + "/" + file)
+
+	if err != nil {
+		return c.String(
+			http.StatusNotFound, 
+			fmt.Sprintf(
+				"edit_file error, repo: %s, file: %s, error: %s", 
+				repo, file, err,
+			),
+		)
+    }
+	code := string(content)
+
+	parts := strings.Split(file, "/")
+
+	file_short_name := parts[len(parts)-1]
+
+	// 2. Remove the last element by re-slicing
+	if len(parts) > 0 {
+		parts = parts[:len(parts)-1]
+	}
+	
+	localdir := strings.Join(parts, "/")
+	link := ""
+	if localdir == "" {
+		link = fmt.Sprintf(
+			`<a href="/repo/%s">%s</a>`,
+			repo,
+			repo,
+		)
+	} else {
+		link = fmt.Sprintf(
+			`<a href="/repo/%s">%s</a> | <a href="/repo/%s/dir/%s">%s/</a>`,
+			repo,
+			repo,
+			repo,
+			localdir,
+			localdir,
+		)
+	}
+
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+	<div class="container">
+	  <div>
+        <p class="title">%s | %s</p>
+	  </div>
+	</div>
+	<div class="container">		
+	<div id="editor" style="height: 400px;">%s</div>
+	</div>
+<script>%s</script>
+<script>
+    var editor = ace.edit("editor");
+    //editor.setTheme("ace/theme/monokai");
+    //editor.session.setMode("ace/mode/yaml");
+</script>
+ </body>
+</html>`, 
+	html.Header(), 
+	html.NavBar(""),
+	link, 
 	file_short_name, 
 	code,
+	html.AceJsLib(),
 	),
 )
 
