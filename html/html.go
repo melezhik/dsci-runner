@@ -85,7 +85,7 @@ return `
       <a href="/builds" class="navbar-item">
         Builds
       </a>
-      <a href="https://github.com/melezhik/DSCI" class="navbar-item">
+      <a href="http://deadsimpleci.sparrowhub.io" class="navbar-item">
         Documentation
       </a>
       <div class="navbar-item has-dropdown is-hoverable">
