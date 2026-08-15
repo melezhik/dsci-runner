@@ -691,6 +691,7 @@ func edit_file (c *echo.Context)  error {
 			),
 		)
     }
+
 	code := string(content)
 
 	parts := strings.Split(file, "/")
@@ -794,7 +795,8 @@ func change_file(c *echo.Context) error {
 		URL: bareRepoURL,
 	})
 	if err != nil {
-		log.Fatalf("change_file: Failed to initialize memory repo: %v", err)
+		log.Printf("change_file: Failed to initialize memory repo: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to initialize memory repo")
 	}
 
 	
@@ -803,12 +805,14 @@ func change_file(c *echo.Context) error {
 	file, err := fs.Create(filePath)
 
 	if err != nil {
-		log.Fatalf("change_file: failed to create file: %v", err)
+		log.Printf("change_file: failed to create file: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create file")
 	}
 
 	_, err = file.Write([]byte(u.Code))
 	if err != nil {
-		log.Fatalf("change_file: Failed writing to file: %v", err)
+		log.Printf("change_file: failed writing to file: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")		
 	}
 
 	file.Close()
@@ -816,12 +820,16 @@ func change_file(c *echo.Context) error {
 	worktree, err := repo.Worktree()
 
 	if err != nil {
-		log.Fatalf("change_file: failed to get worktree: %v", err)
+		log.Printf("change_file: failed to get worktree: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get worktree")		
 	}
 
 	_, err = worktree.Add(filePath)
+
 	if err != nil {
-		log.Fatalf("change_file: failed to add file: %v", err)
+		log.Printf("change_file: failed to add file: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add file")
+
 	}
 
 	fmt.Printf("change_file: staged file: %s\n", filePath)
@@ -836,7 +844,8 @@ func change_file(c *echo.Context) error {
 		},
 	})
 	if err != nil {
-		log.Fatalf("change_file: failed to commit: %v", err)
+		log.Printf("change_file: failed to commit: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit")
 	}
 
 	fmt.Printf("change_file: committed successfully. Hash: %s\n", commitHash)
@@ -847,13 +856,64 @@ func change_file(c *echo.Context) error {
 	})
 
 	if err != nil {
-		log.Fatalf("Failed pushing to bare repository: %v", err)
+		log.Printf("Failed pushing to bare repository: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed pushing to bare repository")
 	}
 
 	fmt.Println("Successfully committed and pushed file to bare repository!")
 
+	parts := strings.Split(c.Param("file"), "/")
 
-	return c.String(http.StatusOK, "OK")	
+	file_short_name := parts[len(parts)-1]
+
+	// 2. Remove the last element by re-slicing
+	if len(parts) > 0 {
+		parts = parts[:len(parts)-1]
+	}
+	
+	localdir := strings.Join(parts, "/")
+	link := ""
+	if localdir == "" {
+		link = fmt.Sprintf(
+			`<a href="/repo/%s">%s</a>`,
+			c.Param("repo"),
+			c.Param("repo"),
+		)
+	} else {
+		link = fmt.Sprintf(
+			`<a href="/repo/%s">%s</a> | <a href="/repo/%s/dir/%s">%s/</a>`,
+			c.Param("repo"),
+			c.Param("repo"),
+			c.Param("repo"),
+			localdir,
+			localdir,
+		)
+	}
+
+	//edit_link := fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`,c.Param("repo"),c.Param("file"))
+
+	shortSHA := commitHash.String()[:7]
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  <div>
+        <p class="title">%s | %s </p>
+         <hr>
+        Successfully committed and pushed: %s
+      </div>
+    </div>
+ </body>
+</html>`, 
+	html.Header(), 
+	html.NavBar(""),
+	link, 
+	file_short_name,
+	shortSHA,
+	),
+)
 }
 
 
