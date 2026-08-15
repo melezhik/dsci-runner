@@ -39,6 +39,9 @@ import (
 
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/storage/memory"
+	"github.com/go-git/go-billy/v6/memfs"
 )
 
 // Git related constants
@@ -59,6 +62,10 @@ var staticFiles11 embed.FS
 var staticFiles12 embed.FS
 
 var AppConfig types.AppConfig
+
+type ChangeFilePayload struct {
+	Code  string `form:"code"`
+}
 
 func main() {
 
@@ -119,6 +126,7 @@ func main() {
 	e.GET("/", list_repos)
 	e.GET("/repo/:repo", list_files)
 	e.GET("/repo/:repo/file/:file", dump_file)
+	e.POST("/repo/:repo/file/:file", change_file)
 	e.GET("/repo/:repo/file_edit/:file", edit_file)
 	e.GET("/repo/:repo/dir/:dir", list_files)
 	e.GET("/builds", builds)
@@ -721,29 +729,133 @@ func edit_file (c *echo.Context)  error {
 	<div class="container">
 	  <div>
         <p class="title">%s | %s</p>
+		<form id="code-form" action="/repo/%s/file/%s" method="POST">
+			<textarea name="code" id="hidden-textarea" style="display: none;"></textarea>
+			<button id="submit-code-btn" class="button is-primary" type="submit">Save</button>
+		</form>
+		<hr>
+  	    <div id="notification-box" style="display: none; margin-top: 15px; padding: 12px; border-radius: 4px; font-size: 14px; transition: all 0.3s ease;"></div>
 	  </div>
 	</div>
 	<div class="container">		
-	<div id="editor" style="height: 400px;">%s</div>
+		<div id="editor" style="height: 400px;">%s</div>
 	</div>
-<script>%s</script>
-<script>
-    var editor = ace.edit("editor");
-    //editor.setTheme("ace/theme/monokai");
-    //editor.session.setMode("ace/mode/yaml");
-</script>
+	<script>%s</script>
+	<script>
+		var editor = ace.edit("editor");
+		//editor.setTheme("ace/theme/monokai");
+		//editor.session.setMode("ace/mode/yaml");
+		const codeForm = document.getElementById("code-form");
+        const hiddenTextarea = document.getElementById("hidden-textarea");
+        const submitBtn = document.getElementById("submit-code-btn");		
+		codeForm.addEventListener("submit", function(event) {
+		const editorCode = editor.getValue().trim();
+		hiddenTextarea.value = editorCode;
+        });
+	</script>
  </body>
 </html>`, 
 	html.Header(), 
 	html.NavBar(""),
 	link, 
 	file_short_name, 
+	c.Param("repo"),
+	c.Param("file"),
 	code,
 	html.AceJsLib(),
 	),
 )
 
 }
+
+func change_file(c *echo.Context) error {
+
+	u := new(ChangeFilePayload)
+		
+	// Функция Bind автоматически распарсит форму и заполнит структуру
+	if err := c.Bind(u); err != nil {
+		return c.String(http.StatusBadRequest, "Wrong input data")
+	}
+
+	gitRoot, _ := filepath.Abs(repoRoot)
+
+	repo_dir := gitRoot + "/" + c.Param("repo")
+
+	bareRepoURL := fmt.Sprintf("file://%s",repo_dir)
+
+	fmt.Printf("change_file: bareRepoURL: %s\n", bareRepoURL)
+
+	fmt.Println("change_file: cloning repository into memory...")
+
+	storage := memory.NewStorage()
+	fs := memfs.New()
+
+	repo, err := go_git.Clone(storage, fs, &go_git.CloneOptions{
+		URL: bareRepoURL,
+	})
+	if err != nil {
+		log.Fatalf("change_file: Failed to initialize memory repo: %v", err)
+	}
+
+	
+	filePath := c.Param("file")
+
+	file, err := fs.Create(filePath)
+
+	if err != nil {
+		log.Fatalf("change_file: failed to create file: %v", err)
+	}
+
+	_, err = file.Write([]byte(u.Code))
+	if err != nil {
+		log.Fatalf("change_file: Failed writing to file: %v", err)
+	}
+
+	file.Close()
+
+	worktree, err := repo.Worktree()
+
+	if err != nil {
+		log.Fatalf("change_file: failed to get worktree: %v", err)
+	}
+
+	_, err = worktree.Add(filePath)
+	if err != nil {
+		log.Fatalf("change_file: failed to add file: %v", err)
+	}
+
+	fmt.Printf("change_file: staged file: %s\n", filePath)
+
+	
+	commitMessage := "feat: add or update file via dsci web"
+	commitHash, err := worktree.Commit(commitMessage, &go_git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "DSCI Web",
+			Email: "dsci@sparrowhub.io",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		log.Fatalf("change_file: failed to commit: %v", err)
+	}
+
+	fmt.Printf("change_file: committed successfully. Hash: %s\n", commitHash)
+
+	err = repo.Push(&go_git.PushOptions{
+		RemoteName: "origin",
+		//Auth:       nil, 
+	})
+
+	if err != nil {
+		log.Fatalf("Failed pushing to bare repository: %v", err)
+	}
+
+	fmt.Println("Successfully committed and pushed file to bare repository!")
+
+
+	return c.String(http.StatusOK, "OK")	
+}
+
 
 func manual_build(c *echo.Context) error {
 

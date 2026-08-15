@@ -9,6 +9,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/robert-nix/ansihtml v1.0.1
 	golang.org/x/net v0.57.0
+	gomodules.xyz/memfs v0.0.1
 )
 
 require (
