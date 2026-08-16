@@ -746,9 +746,10 @@ func edit_file (c *echo.Context)  error {
 		var editor = ace.edit("editor");
 		//editor.setTheme("ace/theme/monokai");
 		//editor.session.setMode("ace/mode/yaml");
+    editor.session.setNewLineMode("unix");
 		const codeForm = document.getElementById("code-form");
         const hiddenTextarea = document.getElementById("hidden-textarea");
-        const submitBtn = document.getElementById("submit-code-btn");		
+        const submitBtn = document.getElementById("submit-code-btn");
 		codeForm.addEventListener("submit", function(event) {
 		const editorCode = editor.getValue().trim();
 		hiddenTextarea.value = editorCode;
