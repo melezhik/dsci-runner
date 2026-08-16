@@ -818,18 +818,20 @@ func change_file(c *echo.Context) error {
 
   fullPath := filepath.Join(dname, filePath)
 
-	err = os.WriteFile(fullPath,[]byte(u.Code),0644)
+  output := strings.ReplaceAll(u.Code, "\r\n", "\n")
+
+	err = os.WriteFile(fullPath,[]byte(output),0644)
 
 	if err != nil {
 		log.Printf("change_file: failed writing to file: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")		
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")
 	}
 
 	worktree, err := repo.Worktree()
 
 	if err != nil {
 		log.Printf("change_file: failed to get worktree: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get worktree")		
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get worktree")
 	}
 
 	_, err = worktree.Add(filePath)
