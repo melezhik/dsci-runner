@@ -14,6 +14,14 @@ func GitCacheRootDir() string {
 
 }
 
+func GitCloneCacheRootDir() string {
+
+  hdir, _ := os.UserHomeDir()
+
+  return fmt.Sprintf("%s/.dsci/gitclonecache", hdir)
+
+}
+
 func DsciRootDir() string {
 
 	hdir, _ := os.UserHomeDir()

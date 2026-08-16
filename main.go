@@ -40,8 +40,8 @@ import (
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/object"
-	"github.com/go-git/go-git/v6/storage/memory"
-	"github.com/go-git/go-billy/v6/memfs"
+	//"github.com/go-git/go-git/v6/storage/memory"
+	//"github.com/go-git/go-billy/v6/memfs"
 )
 
 // Git related constants
@@ -772,50 +772,57 @@ func edit_file (c *echo.Context)  error {
 func change_file(c *echo.Context) error {
 
 	u := new(ChangeFilePayload)
-		
+
 	// Функция Bind автоматически распарсит форму и заполнит структуру
 	if err := c.Bind(u); err != nil {
 		return c.String(http.StatusBadRequest, "Wrong input data")
 	}
 
-	gitRoot, _ := filepath.Abs(repoRoot)
+  dname := utils.GitCloneCacheRootDir() + "/" + c.Param("repo")
 
-	repo_dir := gitRoot + "/" + c.Param("repo")
-
-	bareRepoURL := fmt.Sprintf("file://%s",repo_dir)
-
-	fmt.Printf("change_file: bareRepoURL: %s\n", bareRepoURL)
-
-	fmt.Println("change_file: cloning repository into memory...")
-
-	storage := memory.NewStorage()
-	fs := memfs.New()
-
-	repo, err := go_git.Clone(storage, fs, &go_git.CloneOptions{
-		URL: bareRepoURL,
-	})
+  // Удаляет директорию рекурсивно. Если её нет — ошибки не будет.
+	err := os.RemoveAll(dname)
 	if err != nil {
-		log.Printf("change_file: Failed to initialize memory repo: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to initialize memory repo")
+		fmt.Printf("change_file: can't remove directory %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
 	}
 
-	
+	fmt.Println("change_file: remove directory: %s", dname)
+
+  err = os.MkdirAll(dname, 0755)
+
+  if err != nil {
+    log.Printf("change_file: error creating directory %s: %s", dname, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating directory")
+  }
+
+  log.Printf("change_file: creating git clone chache dir: %s OK", dname)
+
+	RepoURL := fmt.Sprintf("http://localhost:8080/%s",c.Param("repo"))
+
+	fmt.Printf("change_file: RepoURL: %s\n", RepoURL)
+
+	fmt.Println("change_file: cloning repository ...")
+
+	repo, err := go_git.PlainClone(dname, &go_git.CloneOptions{
+		URL: RepoURL,
+	})
+
+	if err != nil {
+		log.Printf("change_file: Failed to clone repo: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone repo")
+	}
+
 	filePath := c.Param("file")
 
-	file, err := fs.Create(filePath)
+  fullPath := filepath.Join(dname, filePath)
 
-	if err != nil {
-		log.Printf("change_file: failed to create file: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create file")
-	}
+	err = os.WriteFile(fullPath,[]byte(u.Code),0644)
 
-	_, err = file.Write([]byte(u.Code))
 	if err != nil {
 		log.Printf("change_file: failed writing to file: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")		
 	}
-
-	file.Close()
 
 	worktree, err := repo.Worktree()
 
