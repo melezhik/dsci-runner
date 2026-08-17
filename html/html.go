@@ -13,9 +13,6 @@ import (
 //go:embed builds.html
 var staticFiles embed.FS
 
-//go:embed ace.js
-var staticFiles2 embed.FS
-
 func Header () (string ) {
 	return `
 <html data-theme="dark">
@@ -163,14 +160,3 @@ return `<script>
 </script>`
 }
 
-func AceJsLib () (string) {
-
-	content, err := fs.ReadFile(staticFiles2, "ace.js")
-
-	if err != nil {
-			log.Fatalf("AceJsLib: error reading common/sparrowfile: %s", err)
-	}
-
-	return string(content)
-
-}

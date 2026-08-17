@@ -65,6 +65,7 @@ var AppConfig types.AppConfig
 
 type ChangeFilePayload struct {
 	Code  string `form:"code"`
+	Message  string `form:"message"`
 }
 
 func main() {
@@ -733,6 +734,14 @@ func edit_file (c *echo.Context)  error {
 		<form id="code-form" action="/repo/%s/file/%s" method="POST">
 			<textarea name="code" id="hidden-textarea" style="display: none;"></textarea>
 			<button id="submit-code-btn" class="button is-primary" type="submit">Save</button>
+      <hr>
+      <div class="field">
+        <label class="label">Message</label>
+          <div class="control">
+            <input name="message" class="input" type="text" placeholder="bug fix">
+          </div>
+          <p class="help">Commit message</p>
+      </div>
 		</form>
 		<hr>
   	    <div id="notification-box" style="display: none; margin-top: 15px; padding: 12px; border-radius: 4px; font-size: 14px; transition: all 0.3s ease;"></div>
@@ -741,15 +750,15 @@ func edit_file (c *echo.Context)  error {
 	<div class="container">		
 		<div id="editor" style="height: 400px;">%s</div>
 	</div>
-	<script>%s</script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.44.0/ace.js"></script>
 	<script>
 		var editor = ace.edit("editor");
 		//editor.setTheme("ace/theme/monokai");
 		//editor.session.setMode("ace/mode/yaml");
     editor.session.setNewLineMode("unix");
 		const codeForm = document.getElementById("code-form");
-        const hiddenTextarea = document.getElementById("hidden-textarea");
-        const submitBtn = document.getElementById("submit-code-btn");
+    const hiddenTextarea = document.getElementById("hidden-textarea");
+    const submitBtn = document.getElementById("submit-code-btn");
 		codeForm.addEventListener("submit", function(event) {
 		const editorCode = editor.getValue().trim();
 		hiddenTextarea.value = editorCode;
@@ -764,7 +773,6 @@ func edit_file (c *echo.Context)  error {
 	c.Param("repo"),
 	c.Param("file"),
 	code,
-	html.AceJsLib(),
 	),
 )
 
@@ -846,6 +854,11 @@ func change_file(c *echo.Context) error {
 
 	
 	commitMessage := "feat: add or update file via dsci web"
+
+  if u.Message != "" {
+    commitMessage = u.Message
+  }
+
 	commitHash, err := worktree.Commit(commitMessage, &go_git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "DSCI Web",
