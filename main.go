@@ -251,7 +251,7 @@ func main() {
 					)
 					shortSHA := data[0].NewCommit[:7]
 					q.Config.JobId = shortSHA
-					q.Config.Description = fmt.Sprintf("%s | %s", shortSHA, msg)
+					q.Config.Description = fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
 					skip_bootstrap := ""
 					allow_localhost_mode := ""
 					if AppConfig.DsciAgentSkipBootstrap == true {
@@ -973,7 +973,7 @@ func manual_build(c *echo.Context) error {
 		commit.Message,
 		commit.Author.Email,
 	)
-	q.Config.Description = fmt.Sprintf("%s | %s", shortSHA, msg)
+	q.Config.Description = fmt.Sprintf("%s: %s | %s", c.Param("repo"), shortSHA, msg)
 	skip_bootstrap := ""
 	allow_localhost_mode := ""
 	if AppConfig.DsciAgentSkipBootstrap == true {
