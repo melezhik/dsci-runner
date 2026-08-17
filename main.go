@@ -204,13 +204,13 @@ func main() {
 				// Check specific Smart HTTP content type for pushes
 				isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
 				if isReceivePath && isCorrectType {
-					// 2. Get the full wildcard path matches
+					// Get the full wildcard path matches
 					wildcardPath := c.Param("*") // Returns "company/team/project.git/git-receive-pack"
 
-					// 3. Strip the git-receive-pack suffix
+					// Strip the git-receive-pack suffix
 					repoPath := strings.TrimSuffix(wildcardPath, "/git-receive-pack")
 
-					// 4. Strip the trailing .git extension to get the clean repository path identifier
+					// Strip the trailing .git extension to get the clean repository path identifier
 					repoName := strings.TrimSuffix(repoPath, ".git") // Returns "company/
 
 					log.Printf("git push to %s, data: %s\n", repoName, data)
@@ -221,21 +221,21 @@ func main() {
 					if err != nil {
 						log.Fatalf("Failed to open repository: %v", err)
 					}
-				
-					// 3. Parse the string SHA into a plumbing.Hash object
+
+					// Parse the string SHA into a plumbing.Hash object
 					hash := plumbing.NewHash(data[0].NewCommit)
-				
-					// 4. Retrieve the commit object from the repository
+
+					// Retrieve the commit object from the repository
 					commit, err := repo.CommitObject(hash)
 					if err != nil {
 						log.Fatalf("Failed to find commit %s: %v", data[0].NewCommit, err)
 					}
-				
-					// 5. Print the full commit message
+
+					// Print the full commit message
 					fmt.Println("--- Commit Message ---")
 					fmt.Println(commit.Message)
 					fmt.Println("----------------------")
-					
+
 					// Bonus: You can also easily access metadata
 					fmt.Printf("Author: %s <%s>\n", commit.Author.Name, commit.Author.Email)
 					fmt.Printf("Date:   %s\n", commit.Author.When)
@@ -274,24 +274,24 @@ func main() {
 						skip_bootstrap,
 						allow_localhost_mode,
 					)
-				
+
 					q.Trigger.Sparrowdo.NoSudo = true
-				
+
 					q.Trigger.Sparrowdo.Localhost = true
-				
+
 					dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
-				
+
 					q.Sparrowfile = dat
-				
+
 					job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
-				
+
 					log.Printf("job quedued: %s\n", q.Config.JobId)
 
 				}
 			}
 		} else {
 			log.Printf("CGI Request Failed with status: %d", sw.Status)
-		}		
+		}
 		return nil
 	})
 
@@ -331,7 +331,7 @@ func list_repos(c *echo.Context) error {
 		http.StatusOK,
 		fmt.Sprintf(
 			`%s %s
-	<div class="container">			
+	<div class="container">
 	  <div>
         <p class="title">DSCI Git Repos</p>
          <hr>
@@ -343,7 +343,7 @@ func list_repos(c *echo.Context) error {
 }
 
 func list_files(c *echo.Context) error {
-	
+
 	dname := utils.GitCacheRootDir() + "/" + c.Param("repo")
 
 	err := os.MkdirAll(dname, 0755)
@@ -368,7 +368,7 @@ func list_files(c *echo.Context) error {
 		("--git-dir=" + path),
 		 "--work-tree=.",
 		"checkout",
-		"-f", 
+		"-f",
 		"HEAD",
 	)
 
