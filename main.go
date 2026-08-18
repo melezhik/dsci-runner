@@ -1469,7 +1469,7 @@ func login_form(c *echo.Context) error {
       		<div class="field">
         		<label class="label">Password</label>
           			<div class="control">
-            			<input name="password" class="input" type="text" placeholder="password">
+            			<input name="password" class="input" type="password" placeholder="password">
           			</div>
 		          <p class="help">Password/Token</p>
       		</div>
