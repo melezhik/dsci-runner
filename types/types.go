@@ -8,6 +8,8 @@ type AppConfig struct {
  	DsciContainerRuntime            string
  	GitPathToHttpBackend            string
 	GitServerAddress			    string	
+	GitAuthUser						string
+	GitAuthPassword					string
 }
 
 type Config struct {

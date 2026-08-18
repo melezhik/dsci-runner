@@ -42,6 +42,9 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/object"
 	//"github.com/go-git/go-git/v6/storage/memory"
 	//"github.com/go-git/go-billy/v6/memfs"
+	go_git_http "github.com/go-git/go-git/v6/plumbing/transport/http"
+	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
+
 )
 
 // Git related constants
@@ -96,17 +99,26 @@ func main() {
 		log.Fatalf("main: Error parsing toml config: %s : %s", path, err)
 	}
 
-  if AppConfig.DsciContainerRuntime == "" {
-    AppConfig.DsciContainerRuntime = "docker"
-  }
+	// set configuration defaults
+	if AppConfig.DsciContainerRuntime == "" {
+		AppConfig.DsciContainerRuntime = "docker"
+	}
 
-  if AppConfig.GitPathToHttpBackend == "" {
-    AppConfig.GitPathToHttpBackend = "/usr/lib/git-core/git-http-backend"
-  }
-  
-  if AppConfig.GitServerAddress == "" {
-    AppConfig.GitServerAddress = "http://localhost:8080"
-  }
+	if AppConfig.GitPathToHttpBackend == "" {
+		AppConfig.GitPathToHttpBackend = "/usr/lib/git-core/git-http-backend"
+	}
+	
+	if AppConfig.GitServerAddress == "" {
+		AppConfig.GitServerAddress = "http://localhost:8080"
+	}
+
+	if AppConfig.GitAuthUser == "" {
+		AppConfig.GitAuthUser = "dsci"
+	}
+
+	if AppConfig.GitAuthPassword == "" {
+		AppConfig.GitAuthPassword = "dsci"
+	}
 
 	go func() {
     for {
@@ -184,10 +196,22 @@ func main() {
 		}
 		data := []git.GitUpdate{}
 		if req.Method == http.MethodPost {
-		// Check path suffix for receive-pack (push operation)
-		isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
-		isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
+			// Check path suffix for receive-pack (push operation)
+			isReceivePath := strings.HasSuffix(req.URL.Path, "/git-receive-pack")
+			isCorrectType := req.Header.Get("Content-Type") == "application/x-git-receive-pack-request"
+
 			if isReceivePath && isCorrectType {
+				// 1. Extract the credentials from the request headers
+				username, password, ok := c.Request().BasicAuth()
+
+				// 2. Validate existence and match your expected credentials
+				if !ok || username != AppConfig.GitAuthUser || password != AppConfig.GitAuthPassword {
+					// 3. Set the WWW-Authenticate header so the browser/client prompts for credentials
+					c.Response().Header().Set("WWW-Authenticate", `Basic realm="DSCI Git Subscribed Area"`)
+					
+					// 4. Return 401 Unauthorized error
+					return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
+				}
 				data = git.HandleGitPush(bodyBytes)
 			}
 		}
@@ -872,13 +896,20 @@ func change_file(c *echo.Context) error {
 
 	fmt.Printf("change_file: committed successfully. Hash: %s\n", commitHash)
 
+	auth := &go_git_http.BasicAuth{
+		Username: AppConfig.GitAuthUser,           
+		Password: AppConfig.GitAuthPassword, 
+	}
+
 	err = repo.Push(&go_git.PushOptions{
 		RemoteName: "origin",
-		//Auth:       nil, 
+		ClientOptions: []go_git_client.Option{
+			go_git_client.WithHTTPAuth(auth),
+		},
 	})
 
 	if err != nil {
-		log.Printf("Failed pushing to bare repository: %v", err)
+		log.Printf("Failed pushing to git repository: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed pushing to bare repository")
 	}
 
