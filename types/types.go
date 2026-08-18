@@ -68,3 +68,9 @@ type JobBuild struct {
 	Dt          string
 	State       int
 }
+
+
+type Session struct {
+	Login   	string `form:"login"`
+	Password    string `form:"password"`
+}

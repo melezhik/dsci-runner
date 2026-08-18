@@ -61,8 +61,21 @@ func Header () (string ) {
   `
 }
 
-func NavBar ( activer string ) (string) {
-return `
+func NavBar ( logged bool ) (string) {
+
+  login_or_logout_ref := `
+    <a href="/login" class="navbar-item">
+        Login
+    </a>`
+
+  if logged == true {
+      login_or_logout_ref = `
+      <a href="/logout" class="navbar-item">
+        Logout
+      </a>
+      `
+  }
+return fmt.Sprintf(`
 <div class="container">
 <nav class="navbar" role="navigation" aria-label="main navigation">
   <div class="navbar-brand">
@@ -82,6 +95,7 @@ return `
       <a href="/builds" class="navbar-item">
         Builds
       </a>
+      %s
       <a href="http://deadsimpleci.sparrowhub.io" class="navbar-item">
         Documentation
       </a>
@@ -109,7 +123,7 @@ return `
   </div>
 </nav>
 </div>
-`
+`,login_or_logout_ref)
 }
 
 

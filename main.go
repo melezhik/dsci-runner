@@ -36,6 +36,7 @@ import (
 	"bytes"
 	"sort"
 	"errors"
+	"math/rand/v2"
 
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
@@ -136,6 +137,9 @@ func main() {
 	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
 	// Routes
+	e.GET("/login", login_form)
+	e.POST("/login", create_session)
+	e.GET("/logout", drop_session)
 	e.GET("/", list_repos)
 	e.GET("/repo/:repo", list_files)
 	e.GET("/repo/:repo/file/:file", dump_file)
@@ -363,7 +367,7 @@ func list_repos(c *echo.Context) error {
       </div>
     </div>
  </body>
-</html>`, html.Header(), html.NavBar(""), data))
+</html>`, html.Header(), html.NavBar(user_is_logged(c)), data))
 }
 
 func list_files(c *echo.Context) error {
@@ -532,7 +536,7 @@ func list_files(c *echo.Context) error {
 	 </body>
 	</html>`, 
 		html.Header(), 
-		html.NavBar(""),
+		html.NavBar(user_is_logged(c)),
 		AppConfig.GitServerAddress,
 		c.Param("repo"),
 		html.CopyPasteButtonScript(),
@@ -611,7 +615,7 @@ func list_files(c *echo.Context) error {
  </body>
 </html>`, 
 html.Header(), 
-html.NavBar(""),
+html.NavBar(user_is_logged(c)),
 uplink,
 AppConfig.GitServerAddress,
 c.Param("repo"), c.Param("repo"),
@@ -671,7 +675,12 @@ func dump_file (c *echo.Context)  error {
 		)
 	}
 
-	edit_link := fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`,repo,c.Param("file"))
+	edit_link := ""
+	
+	if user_is_logged(c) {
+		edit_link = fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`,repo,c.Param("file"))
+	}
+	
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -686,7 +695,7 @@ func dump_file (c *echo.Context)  error {
  </body>
 </html>`, 
 	html.Header(), 
-	html.NavBar(""),
+	html.NavBar(user_is_logged(c)),
 	link, 
 	file_short_name,
 	edit_link,
@@ -778,10 +787,10 @@ func edit_file (c *echo.Context)  error {
 		var editor = ace.edit("editor");
 		//editor.setTheme("ace/theme/monokai");
 		//editor.session.setMode("ace/mode/yaml");
-    editor.session.setNewLineMode("unix");
+    	editor.session.setNewLineMode("unix");
 		const codeForm = document.getElementById("code-form");
-    const hiddenTextarea = document.getElementById("hidden-textarea");
-    const submitBtn = document.getElementById("submit-code-btn");
+    	const hiddenTextarea = document.getElementById("hidden-textarea");
+    	const submitBtn = document.getElementById("submit-code-btn");
 		codeForm.addEventListener("submit", function(event) {
 		const editorCode = editor.getValue().trim();
 		hiddenTextarea.value = editorCode;
@@ -790,7 +799,7 @@ func edit_file (c *echo.Context)  error {
  </body>
 </html>`, 
 	html.Header(), 
-	html.NavBar(""),
+	html.NavBar(user_is_logged(c)),
 	link, 
 	file_short_name, 
 	c.Param("repo"),
@@ -802,6 +811,10 @@ func edit_file (c *echo.Context)  error {
 }
 
 func change_file(c *echo.Context) error {
+
+	if ! user_is_logged(c) {
+		return c.Redirect(http.StatusMovedPermanently, "/login") 
+	}
 
 	u := new(ChangeFilePayload)
 
@@ -819,7 +832,7 @@ func change_file(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
 	}
 
-	fmt.Println("change_file: remove directory: %s", dname)
+  fmt.Println("change_file: remove directory: %s", dname)
 
   err = os.MkdirAll(dname, 0755)
 
@@ -961,7 +974,7 @@ func change_file(c *echo.Context) error {
  </body>
 </html>`, 
 	html.Header(), 
-	html.NavBar(""),
+	html.NavBar(user_is_logged(c)),
 	link, 
 	file_short_name,
 	shortSHA,
@@ -1054,7 +1067,7 @@ func manual_build(c *echo.Context) error {
  </body>
 </html>`, 
 	html.Header(), 
-	html.NavBar(""),
+	html.NavBar(user_is_logged(c)),
 	c.Param("repo"),
 	c.Param("repo"),
 	q.Config.JobId, 
@@ -1187,7 +1200,7 @@ func report_ui(c *echo.Context) error {
       </div>
     </div>
 </body>
-</html>`, html.Header(), html.NavBar(""), project, job_id, string(htmlOutput)))
+</html>`, html.Header(), html.NavBar(user_is_logged(c)), project, job_id, string(htmlOutput)))
 }
 
 func report_ui2(c *echo.Context) error {
@@ -1214,7 +1227,7 @@ func report_ui2(c *echo.Context) error {
       </div>
     </div>
 </body>
-</html>`, html.Header(), html.NavBar(""), project, build_id, string(htmlOutput)))
+</html>`, html.Header(), html.NavBar(user_is_logged(c)), project, build_id, string(htmlOutput)))
 }
 
 func trigger(c *echo.Context) error {
@@ -1272,7 +1285,7 @@ func livebuilds(c *echo.Context) error {
 func builds(c *echo.Context) error {
 	return c.HTML(
 		http.StatusOK, 
-		fmt.Sprintf(html.LiveBuilds(), html.Header(), html.NavBar("")),
+		fmt.Sprintf(html.LiveBuilds(), html.Header(), html.NavBar(user_is_logged(c))),
 	)
 }
 
@@ -1434,6 +1447,257 @@ func startJobDispatcher() {
 	if err := cmd.Wait(); err != nil {
 		log.Printf("startJobDispatcher(sparkyd): Command finished with error: %v", err)
 	}
+}
+
+func login_form(c *echo.Context) error {
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  	<div>
+			<p class="title">DSCI Login</p>
+    	</div>
+		<form id="login-form" action="/login" method="POST">
+      		<div class="field">
+        		<label class="label">Login</label>
+          			<div class="control">
+            			<input name="login" class="input" type="text" placeholder="username">
+          			</div>
+		          <p class="help">Login/Username</p>
+      		</div>
+      		<div class="field">
+        		<label class="label">Password</label>
+          			<div class="control">
+            			<input name="password" class="input" type="text" placeholder="password">
+          			</div>
+		          <p class="help">Password/Token</p>
+      		</div>
+			<button id="submit-btn" class="button is-primary" type="submit">Submit</button>
+		</form>
+	</div>
+ </body>
+</html>`, 
+html.Header(), 
+html.NavBar(user_is_logged(c)),
+))
+}
+
+
+func create_session ( c *echo.Context ) error {
+
+	user := new(types.Session)
+
+	if err := c.Bind(user); err != nil {
+		return c.String(http.StatusBadRequest, "Wrong input data")
+	}
+
+	//log.Printf("create_session: %s %s", user.Login, user.Password)
+
+	if ! (user.Login == AppConfig.GitAuthUser && user.Password == AppConfig.GitAuthPassword) {
+		return c.HTML(
+			http.StatusOK,
+			fmt.Sprintf(
+				`%s %s
+		<div class="container">
+		    <div>
+			  <p class="title">	
+			    <div class="help is-danger">Bad credentials</div>
+			  </p>
+      		</div>
+		</div>
+	 </body>
+	</html>`, 
+		html.Header(), 
+		html.NavBar(user_is_logged(c)),
+		),
+		)		
+	}
+
+	dname := utils.SessionCacheRootDir()
+
+	err := os.MkdirAll(dname, 0755)
+
+	if err != nil {
+	log.Printf("create_session: error creating directory %s: %s", dname, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating directory")
+	}
+
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	var sb strings.Builder
+	length := 10
+	sb.Grow(length)
+	for i := 0; i < length; i++ {
+		// rand.IntN picks a random index from the charset
+		sb.WriteByte(charset[rand.IntN(len(charset))])
+	}	
+	cookie := new(http.Cookie)
+	session_id := sb.String()
+
+	// Configure mandatory and security attributes
+	cookie.Name = "user_session"
+	cookie.Value = session_id
+	cookie.Path = "/" // Accessible across the entire domain
+	cookie.Expires = time.Now().Add(48 * time.Hour) // Valid for 2 days
+
+	// Security Configurations (Highly Recommended)
+	cookie.HttpOnly = true  // Prevents JavaScript/XSS attacks from reading the cookie
+	//cookie.Secure = true    // Forces cookie transport only over HTTPS
+	cookie.SameSite = http.SameSiteLaxMode // Protection against CSRF attacks
+
+	// Send the cookie to the browser using Echo's Context
+	c.SetCookie(cookie)  
+
+	// Create the file (or truncate it if it already exists)
+
+	path := dname + "/" + session_id + ".json"
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("create_session: error creating file: %s", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating file")
+	}
+	defer file.Close()
+
+	// Create a JSON encoder and write directly to the file
+	encoder := json.NewEncoder(file)
+
+	// Optional: Make the JSON file human-readable (pretty-printed)
+	encoder.SetIndent("", "    ") 
+
+	user.Password = "<censored>"
+
+	err = encoder.Encode(user)
+
+	if err != nil {
+		log.Printf("create_session: error encoding session into json: %s", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error encoding session into json")
+	}
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	    <div>
+        <p class="title">User session</p>
+         <hr>
+			  Successfully logged in
+      </div>
+    </div>
+ </body>
+</html>`, 
+	html.Header(), 
+	html.NavBar(true),
+	),
+	)	
+}
+
+func drop_session ( c *echo.Context ) error {
+
+	cookie, err := c.Cookie("user_session")
+	
+	if err == nil {
+
+		session := cookie.Value
+
+		if session != "" {
+
+			cookie := new(http.Cookie)
+			cookie.Name = "user_session"
+			cookie.Value = session
+			cookie.Path = "/" 
+			cookie.MaxAge = -1
+			cookie.HttpOnly = true
+			c.SetCookie(cookie)  
+		
+			path := fmt.Sprintf("%s/%s.json",utils.SessionCacheRootDir(),session)
+
+			_, err = os.Stat(path);
+				
+			if err == nil {
+				fmt.Printf("drop_session: delete session file: %s\n", path)
+				err := os.Remove(path)
+				if err != nil {
+					fmt.Printf("drop_session: can't remove session file %v\n", err)
+				} else {
+					fmt.Printf("drop_session: delete session file OK\n")
+				}			
+			}
+		
+		}
+	
+	}
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	    <div>
+        <p class="title">User session</p>
+        <hr>
+		Successfully logged out
+      </div>
+    </div>
+ </body>
+</html>`, 
+	html.Header(), 
+	html.NavBar(user_is_logged(c)),
+	),
+	)	
+}
+
+func user_is_logged ( c *echo.Context ) bool {
+
+	cookie, err := c.Cookie("user_session")
+	
+	if err != nil {
+		return false
+	}
+
+	session := cookie.Value
+
+	if session == "" {
+		return false
+	}
+
+	//fmt.Printf("user_is_logged: session: %s\n", session)
+
+	path := fmt.Sprintf("%s/%s.json",utils.SessionCacheRootDir(),session)
+
+	_, err = os.Stat(path);
+
+	//fmt.Printf("user_is_logged: session file: %s\n", path)
+
+	if errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("user_is_logged: session file: %s does not exist\n", path)
+		return false
+	}
+
+	file, err := os.Open(path)
+
+	if err != nil {
+		fmt.Printf("user_is_logged: Error opening file: %v\n", err)
+		return false
+	}
+
+	defer file.Close() // Ensure the file is closed later
+
+	// 3. Create an instance of your struct
+	var user types.Session
+
+	// 4. Decode the file content directly into the struct
+	decoder := json.NewDecoder(file)
+
+	if err := decoder.Decode(&user); err != nil {
+		fmt.Printf("user_is_logged: Error decoding JSON: %v\n", err)
+		return false
+	}
+
+	//fmt.Printf("user_is_logged:  true\n")
+
+	return true
 }
 
 func runCLI() {

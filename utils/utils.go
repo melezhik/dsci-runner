@@ -6,6 +6,14 @@ import (
 	"os"
 )
 
+func SessionCacheRootDir() string {
+
+	hdir, _ := os.UserHomeDir()
+
+	return fmt.Sprintf("%s/.dsci/sessions", hdir)
+
+}
+
 func GitCacheRootDir() string {
 
 	hdir, _ := os.UserHomeDir()
