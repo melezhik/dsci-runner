@@ -30,7 +30,7 @@ COPY sparrowfile /root/distro/
 
 COPY sparky.yaml /root/
 
-ENTRYPOINT cp /root/distro/sparrowfile /root/.sparky/projects/dsci/ &&  cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; /bin/bash
+ENTRYPOINT mkdir -p  /root/.sparky/projects/dsci/ && cp /root/distro/sparrowfile /root/.sparky/projects/dsci/ &&  cd /root/projects/sparky; if test -f /root/.sparky/projects/db.sqlite3; then echo "db exist"; else raku db-init.raku; fi; /bin/bash
 
 RUN git config --global advice.detachedHead false
 
