@@ -51,9 +51,7 @@ RUN sudo chown -R worker /home/worker/projects/ /home/worker/distro
 
 RUN git config --global advice.detachedHead false
 
-RUN echo OK4 && zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git
-
-RUN echo OKK && zef install --/test --force-install https://github.com/melezhik/sparrowdo.git
+#RUN echo OKK && zef install --/test --force-install https://github.com/melezhik/sparrowdo.git
 
 WORKDIR /home/worker/projects
 

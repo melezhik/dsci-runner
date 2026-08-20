@@ -34,7 +34,7 @@ ENTRYPOINT mkdir -p  /root/.sparky/projects/dsci/ && cp /root/distro/sparrowfile
 
 RUN git config --global advice.detachedHead false
 
-RUN echo OK && cd /root/projects && git clone https://github.com/melezhik/sparrowdo.git && cd sparrowdo && zef install --/test --force-install .
+#RUN echo OK && cd /root/projects && git clone https://github.com/melezhik/sparrowdo.git && cd sparrowdo && zef install --/test --force-install .
 
 WORKDIR /root/projects
 

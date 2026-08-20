@@ -268,6 +268,7 @@ does Sparky::JobApi::Role
             ref     => tags()<ref>,
             repo_full_name  => tags()<repo_full_name>,
             message => tags()<message>,
+            dispatcher_job_id => tags()<SPARKY_JOB_ID>,
           );
 
           if $job<plugin> {
@@ -348,13 +349,14 @@ does Sparky::JobApi::Role
 
     package-install "git";
 
-    bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
+    #bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
 
     package-install "python3";
 
-    bash "zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git", %(
-      description => "update sparky-job-api",
-    );
+    #bash "zef install --/test --force-install https://github.com/melezhik/sparky-job-api.git", %(
+    #  description => "update sparky-job-api",
+    #);
+
     say "dsci agent is ready!!!";
 
   }
@@ -368,6 +370,22 @@ does Sparky::JobApi::Role
     say "run job: {tags()<job_id>}";
 
     say "===";
+
+    my $artifacts = $me.get-stash()<dsci><artifacts>;
+
+    my $job-id = tags()<dispatcher_job_id>;
+
+    my $dispatcher = Sparky::JobApi.new( :$job-id );
+
+    say "load artifacts from previous jobs ...";
+
+    mkdir "{%*ENV<HOME>}/artifacts";
+
+    for $artifacts<> -> $i {
+      $dispatcher.get_file($i);
+      move($i,"{%*ENV<HOME>}/artifacts/$i");
+      say "{%*ENV<HOME>}/artifacts/$i OK"; 
+    }
 
     if tags()<plugin> {
 
@@ -439,6 +457,17 @@ does Sparky::JobApi::Role
     %params<DSCI_MESSAGE> = tags()<message>;
 
     my $s = task-run ".", %params;
+
+    if %*ENV<HOME> && %*ENV<HOME>.IO ~~ :d  && "{%*ENV<HOME>}/artifacts".IO ~~ :d {
+      say "saving job artifacts ...";
+      $s<artifacts> = [];
+      for dir("{%*ENV<HOME>}/artifacts") -> $i {
+        if $i.IO ~~ :f {
+          $dispatcher.put-file($i.Str,$i.IO.basename);
+          push $s<artifacts>, $i.IO.basename;
+        }
+      }
+    }
 
     $me.put-stash($s);
 
