@@ -23,7 +23,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"log/slog"
+	// "log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -46,6 +46,9 @@ import (
 	go_git_http "github.com/go-git/go-git/v6/plumbing/transport/http"
 	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
 
+	"os/signal"
+	"syscall"
+	"context"
 )
 
 // Git related constants
@@ -143,7 +146,7 @@ func main() {
 	e2.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger
 	e2.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
-	// Routes
+	// public routes
 	e1.GET("/login", login_form)
 	e1.POST("/login", create_session)
 	e1.GET("/logout", drop_session)
@@ -154,20 +157,22 @@ func main() {
 	e1.GET("/repo/:repo/file_edit/:file", edit_file)
 	e1.GET("/repo/:repo/dir/:dir", list_files)
 	e1.GET("/builds", builds)
-	e1.POST("/queue", queue_job)
-	e1.POST("/stash", put_job_stash)
 	e1.POST("/repo/:repo/build",manual_build)
 	e1.GET("/livebuilds", livebuilds)
 
+	e1.GET("/report/ui/:project/:key", report_ui)
 	e1.GET("/report/ui2/:project/:build_id", report_ui2)
 	e1.GET("/report/raw/:project/:key", report)
+
+	// private routes
+	e2.POST("/queue", queue_job)
+	e2.POST("/stash", put_job_stash)
 
 	e2.GET("/stash/:project/:key", get_job_stash)
 	e2.GET("/status/:project/:key", status)
 	e2.GET("/report/ui/:project/:key", report_ui)
 	e2.GET("/trigger/:project/:key", trigger)
 
-	e2.GET("/report/ui2/:project/:build_id", report_ui2)
 	e2.GET("/report/raw/:project/:key", report)
 
 	// =========================================================================
@@ -336,16 +341,67 @@ func main() {
 	})
 
 
-	// Start public server
-	if err := e1.Start("0.0.0.0:8080"); err != nil {
-		slog.Error("failed to start public server", "error", err)
+	server1 := &http.Server{
+		Addr:    "0.0.0.0:8080",
+		Handler: e1,
 	}
 
-	// Start private server
-	if err := e2.Start("127.0.0.1:8181"); err != nil {
-		slog.Error("failed to start private server", "error", err)
+	server2 := &http.Server{
+		Addr:    "127.0.0.1:8181",
+		Handler: e2,
 	}
-	
+
+	// Канал для перехвата критических ошибок запуска портов
+	errChan := make(chan error, 2)
+
+	// Запуск первого сервера в фоне (неблокирующий)
+	go func() {
+		log.Println("Start public dsci server, port :8080...")
+		if err := server1.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errChan <- fmt.Errorf("public dsci server error: %w", err)
+		}
+	}()
+
+	// Запуск второго сервера в фоне (неблокирующий)
+	go func() {
+		log.Println("Start ptivate dsci server, port :8181...")
+		if err := server2.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errChan <- fmt.Errorf("private dsci server error: %w", err)
+		}
+	}()
+
+	// Канал для отслеживания сигналов завершения от ОС (Ctrl+C, SIGTERM)
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	// Блокируем главный поток до первой ошибки или сигнала остановки
+	select {
+	case err := <-errChan:
+		log.Printf("Critical server(s) run error: %v", err)
+	case sig := <-stopChan:
+		log.Printf("Signal recieved %v. Start Graceful Shutdown...", sig)
+	}
+
+	// Выделяем 2 секунд на плавное закрытие активных соединений
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// Останавливаем оба сервера параллельно в горутинах
+	go func() {
+		if err := server1.Shutdown(ctx); err != nil {
+			log.Printf("Error when try to stop public dsci server: %v", err)
+		}
+	}()
+
+	go func() {
+		if err := server2.Shutdown(ctx); err != nil {
+			log.Printf("Error when try to stop private dsci server: %v", err)
+		}
+	}()
+
+	// Ждем завершения таймаута контекста
+	<-ctx.Done()
+	log.Println("Both dsci servers successfully stopped.")
 }
 
 // Handlers
