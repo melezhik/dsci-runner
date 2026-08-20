@@ -382,7 +382,7 @@ does Sparky::JobApi::Role
     mkdir "{%*ENV<HOME>}/artifacts";
 
     for $artifacts<> -> $i {
-      $dispatcher.get_file($i);
+      $dispatcher.get-file($i);
       move($i,"{%*ENV<HOME>}/artifacts/$i");
       say "{%*ENV<HOME>}/artifacts/$i OK"; 
     }
