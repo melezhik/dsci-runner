@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"io"
 )
 
 func JobQueueFs(r types.JobRequest, cr string) {
@@ -190,16 +191,42 @@ func GetJobStash(p string, job_id string) string {
 	return string(dat)
 }
 
-func GetJobFile(p string, job_id string, filename string) string {
+func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64, error) {
+
+	utils.CreateSparkyFilesDir(p)
+
+	path := filepath.Join(utils.SparkyFilesDir(p), job_id)
+
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("PutJobFile: Error creating file:", err)
+		return 0, nil
+	}
+
+	defer file.Close()
+
+	bytesWritten, err := io.Copy(file, data)
+	if err != nil {
+		log.Printf("PutJobFile: error occured during write to blob file: %s")
+		return 0, nil
+	}
+	
+	return  bytesWritten, nil
+}
+
+
+func GetJobFile(p string, job_id string, filename string) ([]byte, error) {
 
 	path := filepath.Join(utils.SparkyFilesDir(p), job_id, filename)
 
-	dat, err := os.ReadFile(path)
+	data, err := os.ReadFile(path)
 
 	if err != nil {
-		log.Fatalf("Error reading file:", err)
+		log.Printf("Error reading file:", err)
+		return []byte{}, err
 	}
-	return string(dat)
+
+	return data, nil
 }
 
 func GetSparkyScenarioFile(p string, filename string) string {

@@ -167,7 +167,10 @@ func main() {
 	// private routes
 	e2.POST("/queue", queue_job)
 	e2.POST("/stash", put_job_stash)
+	e2.PUT("/file/project/:project/job/:job_id/filename/:filename", put_job_file)
+	e2.GET("/file/:project/job/:job_id/filename/:filename", get_job_file)
 
+	
 	e2.GET("/stash/:project/:key", get_job_stash)
 	e2.GET("/status/:project/:key", status)
 	e2.GET("/report/ui/:project/:key", report_ui)
@@ -1774,6 +1777,50 @@ func user_is_logged ( c *echo.Context ) bool {
 	return true
 }
 
+func put_job_file(c *echo.Context) error {
+
+	data := c.Request().Body
+
+	defer data.Close()
+
+	bytesWritten, err := job.PutJobFile(
+		c.Param("project"),
+		c.Param("job_id"),
+		c.Param("filename"),
+		data,
+	)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "handleBlobUpload: job.PutJobFile error")
+	}
+	// Возвращаем успешный ответ клиенту
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message":   "File succssfully created",
+		"size_bytes": bytesWritten,
+		"error" : "",
+	})
+}
+
+func get_job_file(c *echo.Context) error {
+
+	project := c.Param("project")
+
+	job_id := c.Param("job_id")
+
+	filename := c.Param("filename")
+
+	data, err := job.GetJobFile(
+		project,
+		job_id,
+		filename,
+	)
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "get_job_file: job.GetJobFile error")
+	}
+
+	return c.Blob(http.StatusOK, "application/octet-stream", data)
+
+}
 func runCLI() {
 
 	actPtr := flag.String("action", "create-secret", "a string")
