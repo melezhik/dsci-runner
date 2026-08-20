@@ -377,14 +377,17 @@ does Sparky::JobApi::Role
     my $project = "dsci";
     my $dispatcher = Sparky::JobApi.new( :$job-id, :$project );
 
-    say "load artifacts from previous jobs ...";
 
     mkdir "{%*ENV<HOME>}/artifacts";
 
-    for $artifacts<> -> $i {
-      $dispatcher.get-file($i);
-      move($i,"{%*ENV<HOME>}/artifacts/$i");
-      say "{%*ENV<HOME>}/artifacts/$i OK"; 
+    if $artifacts {
+      say "load artifacts from previous jobs ...";
+      for $artifacts<> -> $i {
+        say "load $i ..."; 
+        $dispatcher.get-file($i);
+        move($i,"{%*ENV<HOME>}/artifacts/$i");
+        say "{%*ENV<HOME>}/artifacts/$i OK"; 
+      }
     }
 
     if tags()<plugin> {
