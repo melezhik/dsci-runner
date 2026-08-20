@@ -129,34 +129,46 @@ func main() {
     }
   }()
 
-	// Echo instance
-	e := echo.New()
+	// Echo instances - public and private
+
+	// public
+	e1 := echo.New()
+
+	// private
+	e2 := echo.New()
 
 	// Middleware
-	e.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger
-	e.Use(middleware.Recover())       // recover panics as errors for proper error handling
+	e1.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger
+	e1.Use(middleware.Recover())       // recover panics as errors for proper error handling
+	e2.Use(middleware.RequestLogger()) // use the RequestLogger middleware with slog logger
+	e2.Use(middleware.Recover())       // recover panics as errors for proper error handling
 
 	// Routes
-	e.GET("/login", login_form)
-	e.POST("/login", create_session)
-	e.GET("/logout", drop_session)
-	e.GET("/", list_repos)
-	e.GET("/repo/:repo", list_files)
-	e.GET("/repo/:repo/file/:file", dump_file)
-	e.POST("/repo/:repo/file/:file", change_file)
-	e.GET("/repo/:repo/file_edit/:file", edit_file)
-	e.GET("/repo/:repo/dir/:dir", list_files)
-	e.GET("/builds", builds)
-	e.POST("/queue", queue_job)
-	e.POST("/stash", put_job_stash)
-	e.POST("/repo/:repo/build",manual_build)
-	e.GET("/stash/:project/:key", get_job_stash)
-	e.GET("/status/:project/:key", status)
-	e.GET("/report/ui/:project/:key", report_ui)
-	e.GET("/report/ui2/:project/:build_id", report_ui2)
-	e.GET("/report/raw/:project/:key", report)
-	e.GET("/trigger/:project/:key", trigger)
-	e.GET("/livebuilds", livebuilds)
+	e1.GET("/login", login_form)
+	e1.POST("/login", create_session)
+	e1.GET("/logout", drop_session)
+	e1.GET("/", list_repos)
+	e1.GET("/repo/:repo", list_files)
+	e1.GET("/repo/:repo/file/:file", dump_file)
+	e1.POST("/repo/:repo/file/:file", change_file)
+	e1.GET("/repo/:repo/file_edit/:file", edit_file)
+	e1.GET("/repo/:repo/dir/:dir", list_files)
+	e1.GET("/builds", builds)
+	e1.POST("/queue", queue_job)
+	e1.POST("/stash", put_job_stash)
+	e1.POST("/repo/:repo/build",manual_build)
+	e1.GET("/livebuilds", livebuilds)
+
+	e1.GET("/report/ui2/:project/:build_id", report_ui2)
+	e1.GET("/report/raw/:project/:key", report)
+
+	e2.GET("/stash/:project/:key", get_job_stash)
+	e2.GET("/status/:project/:key", status)
+	e2.GET("/report/ui/:project/:key", report_ui)
+	e2.GET("/trigger/:project/:key", trigger)
+
+	e2.GET("/report/ui2/:project/:build_id", report_ui2)
+	e2.GET("/report/raw/:project/:key", report)
 
 	// =========================================================================
 	// Хендлер для Git Clone / Push / Fetch поверх HTTP
@@ -179,7 +191,7 @@ func main() {
 	}
 
 	
-	e.Any("/*", func(c *echo.Context) error {
+	e1.Any("/*", func(c *echo.Context) error {
 
 		// 1. Capture the Echo v5 Response (which is a raw http.ResponseWriter)
 		originalWriter := c.Response()
@@ -190,7 +202,7 @@ func main() {
 		// 3. Re-wrap the interceptor using Echo v5's layout wrapper
 		// Note: Echo v5's NewResponse expects (http.ResponseWriter, *slog.Logger) 
 		// If using an older v5 beta, it might expect (http.ResponseWriter, *echo.Echo)
-		newEchoResponse := echo.NewResponse(sw, e.Logger)
+		newEchoResponse := echo.NewResponse(sw, e1.Logger)
 
 		// 1. Read the body bytes safely
 		req := c.Request()
@@ -324,10 +336,16 @@ func main() {
 	})
 
 
-	// Start server
-	if err := e.Start("0.0.0.0:8080"); err != nil {
-		slog.Error("failed to start server", "error", err)
+	// Start public server
+	if err := e1.Start("0.0.0.0:8080"); err != nil {
+		slog.Error("failed to start public server", "error", err)
 	}
+
+	// Start private server
+	if err := e2.Start("127.0.0.1:8181"); err != nil {
+		slog.Error("failed to start private server", "error", err)
+	}
+	
 }
 
 // Handlers
