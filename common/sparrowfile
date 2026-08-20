@@ -374,8 +374,8 @@ does Sparky::JobApi::Role
     my $artifacts = $me.get-stash()<dsci><artifacts>;
 
     my $job-id = tags()<dispatcher_job_id>;
-
-    my $dispatcher = Sparky::JobApi.new( :$job-id );
+    my $project = "dsci";
+    my $dispatcher = Sparky::JobApi.new( :$job-id, :$project );
 
     say "load artifacts from previous jobs ...";
 
