@@ -399,7 +399,8 @@ does Sparky::JobApi::Role
       say "load artifacts from previous jobs ...";
       for $artifacts<> -> $i {
         say "load $i ..."; 
-        $dispatcher.get-file($i);
+        my $data = $dispatcher.get-file($i);
+        $i.IO.spurt($data);
         move($i,"{%*ENV<HOME>}/artifacts/$i");
         say "{%*ENV<HOME>}/artifacts/$i OK"; 
       }
