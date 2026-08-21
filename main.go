@@ -168,7 +168,7 @@ func main() {
 	e2.POST("/queue", queue_job)
 	e2.POST("/stash", put_job_stash)
 	e2.PUT("/file/project/:project/job/:job_id/filename/:filename", put_job_file)
-	e2.GET("/file/:project/job/:job_id/filename/:filename", get_job_file)
+	e2.GET("/file/:project/:job_id/:filename", get_job_file)
 
 	
 	e2.GET("/stash/:project/:key", get_job_stash)
