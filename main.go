@@ -259,7 +259,7 @@ func main() {
 					repoPath := strings.TrimSuffix(wildcardPath, "/git-receive-pack")
 
 					// Strip the trailing .git extension to get the clean repository path identifier
-					repoName := strings.TrimSuffix(repoPath, ".git") // Returns "company/
+					repoName := strings.TrimSuffix(repoPath, ".git")
 
 					log.Printf("git push to %s, data: %s\n", repoName, data)
 
@@ -311,7 +311,7 @@ func main() {
 					}
 					q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
 						"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
-					AppConfig.DsciContainerRuntime,
+					    AppConfig.DsciContainerRuntime,
 						data[0].RefName,
 						repoName,
 						shortSHA,
@@ -1104,11 +1104,13 @@ func manual_build(c *echo.Context) error {
 		repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
 		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
 	}
+	// Strip the trailing .git extension to get the clean repository path identifier
+	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
 		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
-	AppConfig.DsciContainerRuntime,
+	    AppConfig.DsciContainerRuntime,
 		ref.Name(),
-		c.Param("repo"),
+		repoName,
 		commit.Hash.String(),
 		fmt.Sprintf("http://localhost:8080/%s",c.Param("repo")),
 		msg,
