@@ -197,6 +197,8 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 
 	path := filepath.Join(utils.SparkyFilesDir(p), job_id, filename)
 
+	log.Printf("PutJobFile: saving file: %s", path)
+
 	file, err := os.Create(path)
 	if err != nil {
 		log.Printf("PutJobFile: Error creating file:", err)
