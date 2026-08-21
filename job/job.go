@@ -195,7 +195,7 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 
 	utils.CreateSparkyFilesDir(p)
 
-	path := filepath.Join(utils.SparkyFilesDir(p), job_id)
+	path := filepath.Join(utils.SparkyFilesDir(p), job_id, filename)
 
 	file, err := os.Create(path)
 	if err != nil {
@@ -222,7 +222,7 @@ func GetJobFile(p string, job_id string, filename string) ([]byte, error) {
 	data, err := os.ReadFile(path)
 
 	if err != nil {
-		log.Printf("Error reading file:", err)
+		log.Printf("Error reading file: %s", err)
 		return []byte{}, err
 	}
 
