@@ -286,6 +286,12 @@ does Sparky::JobApi::Role
             %tags<dump-task-code> = True;
           }
 
+          # copy dsci internal cache
+          # to job input parameters
+          # will be available
+          # via config()<dsci>
+          # object
+
           if $job<params> {
             $j.put-stash(%(
               params => $job<params>,
@@ -330,7 +336,15 @@ does Sparky::JobApi::Role
             last;
           }
 
-          %_dsci{$job<id>} = $j.get-stash();
+          my $job-data = $j.get-stash();
+
+          # copy job state to dsci internal cache
+          %_dsci{$job<id>} = $job-data;
+
+          # copy job artifacts (if any) to dsci internal cache
+          if $job-data<artifacts> {
+            %_dsci<dsci_artifacts> = $job-data<artifacts>
+          }
 
           say "job {$job<id>} ... [OK]";
           say "...";
@@ -371,12 +385,11 @@ does Sparky::JobApi::Role
 
     say "===";
 
-    my $artifacts = $me.get-stash()<artifacts>;
+    my $artifacts = $me.get-stash()<dsci_artifacts>;
 
     my $job-id = tags()<dispatcher_job_id>;
     my $project = "dsci";
     my $dispatcher = Sparky::JobApi.new( :$job-id, :$project );
-
 
     mkdir "{%*ENV<HOME>}/artifacts";
 
