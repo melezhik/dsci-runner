@@ -199,7 +199,17 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 
 	log.Printf("PutJobFile: saving file: %s", path)
 
+	dir := filepath.Join(utils.SparkyFilesDir(p), job_id)
+
+	err := os.MkdirAll(dir, 0755)
+
+	if err != nil {
+		log.Printf("PutJobFile: error creating directory: %s", err)
+		return 0, err
+	}
+
 	file, err := os.Create(path)
+
 	if err != nil {
 		log.Printf("PutJobFile: Error creating file:", err)
 		return 0, err
@@ -220,15 +230,6 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 func GetJobFile(p string, job_id string, filename string) ([]byte, error) {
 
 	path := filepath.Join(utils.SparkyFilesDir(p), job_id, filename)
-
-	dir := filepath.Join(utils.SparkyFilesDir(p), job_id)
-
-	err := os.MkdirAll(dir, 0755)
-
-	if err != nil {
-		log.Printf("GetJobFile error creating directory: %s", err)
-		return []byte{}, err
-	}
 
 	data, err := os.ReadFile(path)
 
