@@ -110,6 +110,7 @@ does Sparky::JobApi::Role
       }
       unless $status {
         warn "localhost is forbidden, {tags()<repo_full_name>} should be listed in DsciAllowLocalhostModeRepos";
+        $cont = False;
       }
     }
 
