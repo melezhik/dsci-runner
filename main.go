@@ -37,7 +37,7 @@ import (
 	"sort"
 	"errors"
 	"math/rand/v2"
-
+  html_utils "html"
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/object"
@@ -802,7 +802,7 @@ func edit_file (c *echo.Context)  error {
 		)
     }
 
-	code := string(content)
+	code := html_utils.EscapeString(string(content))
 
 	parts := strings.Split(file, "/")
 
