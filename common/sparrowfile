@@ -385,9 +385,9 @@ does Sparky::JobApi::Role
 
     say "===";
 
-    say $me.get-stash().raku;
-    
-    my $artifacts = $me.get-stash()<dsci_artifacts>;
+    #say $me.get-stash().raku;
+
+    my $artifacts = $me.get-stash()<dsci><dsci_artifacts>;
 
     my $job-id = tags()<dispatcher_job_id>;
     my $project = "dsci";
