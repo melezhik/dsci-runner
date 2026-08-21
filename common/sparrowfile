@@ -193,6 +193,8 @@ does Sparky::JobApi::Role
 
         say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
 
+        say "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
+
         bash "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
 
         unless tags()<DsciAgentSkipBootstrap> {
