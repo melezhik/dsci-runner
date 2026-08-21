@@ -77,7 +77,7 @@ func CreateSparkyProjectDir(p string) string {
 	err := os.MkdirAll(dir, 0755)
 
 	if err != nil {
-		log.Fatalf("Error creating directory:", err)
+		log.Fatalf("Error creating directory: %s", err)
 	}
 
 	return dir
@@ -95,7 +95,7 @@ func CreateSparkyTriggersDir(p string) string {
 	err := os.MkdirAll(dir, 0755)
 
 	if err != nil {
-		log.Fatalf("Error creating directory:", err)
+		log.Fatalf("Error creating directory: %s", err)
 	}
 
 	return dir
@@ -121,7 +121,7 @@ func CreateSparkyCacheDir(job_id string) string {
 	err := os.MkdirAll(dir, 0755)
 
 	if err != nil {
-		log.Fatalf("Error creating directory:", err)
+		log.Fatalf("Error creating directory: %s", err)
 	}
 
 	return dir
@@ -139,7 +139,7 @@ func CreateSparkyFilesDir(p string) string {
 	err := os.MkdirAll(dir, 0755)
 
 	if err != nil {
-		log.Fatalf("Error creating directory:", err)
+		log.Fatalf("Error creating directory: %s", err)
 	}
 
 	return dir
@@ -157,7 +157,7 @@ func CreateSparkyStashDir(p string) string {
 	err := os.MkdirAll(dir, 0755)
 
 	if err != nil {
-		log.Fatalf("Error creating directory:", err)
+		log.Fatalf("Error creating directory: %s", err)
 	}
 
 	return dir

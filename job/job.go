@@ -202,7 +202,7 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 	file, err := os.Create(path)
 	if err != nil {
 		log.Printf("PutJobFile: Error creating file:", err)
-		return 0, nil
+		return 0, err
 	}
 
 	defer file.Close()
@@ -210,7 +210,7 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 	bytesWritten, err := io.Copy(file, data)
 	if err != nil {
 		log.Printf("PutJobFile: error occured during write to blob file: %s")
-		return 0, nil
+		return 0, err
 	}
 	
 	return  bytesWritten, nil
@@ -221,10 +221,19 @@ func GetJobFile(p string, job_id string, filename string) ([]byte, error) {
 
 	path := filepath.Join(utils.SparkyFilesDir(p), job_id, filename)
 
+	dir := filepath.Join(utils.SparkyFilesDir(p), job_id)
+
+	err := os.MkdirAll(dir, 0755)
+
+	if err != nil {
+		log.Printf("GetJobFile error creating directory: %s", err)
+		return []byte{}, err
+	}
+
 	data, err := os.ReadFile(path)
 
 	if err != nil {
-		log.Printf("Error reading file: %s", err)
+		log.Printf("GetJobFile error reading file: %s", err)
 		return []byte{}, err
 	}
 
