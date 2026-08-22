@@ -1,7 +1,6 @@
-FROM melezhik/sparrow:ubuntu_arm
+FROM docker.io/rakudo-star:latest
 
-RUN sudo apt-get update && sudo apt install python3 -yq
+RUN apt-get update && apt install python3 -yq php git
 RUN echo OK && zef install --/test --force-install https://github.com/melezhik/Sparrow6.git
 RUN echo OK && zef install --/test --force-install https://github.com/melezhik/Sparky-Job-Api.git
 RUN git config --global advice.detachedHead false
-RUN sudo apt-get update && sudo apt install php -yq

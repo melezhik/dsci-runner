@@ -42,3 +42,4 @@ ENV HOST_SSH_USER=root
 
 ENV SPARROWDO_DOCKER_BIN=/usr/bin/podman
 
+RUN sed -i 's/^short-name-mode = .*/short-name-mode = "disabled"/' /etc/containers/registries.conf
