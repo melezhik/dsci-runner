@@ -162,7 +162,8 @@ does Sparky::JobApi::Role
 
           if ! $st<OK> {
             $status = False;
-            say "dsci bootstrap ... [FAIL]";
+            my $eff-status = $st<TIMEOUT> ?? "TIMEOUT" !! "FAIL";
+            say "dsci bootstrap ... [$eff-status]";
             say "...";
             say $j.report();
           } else {
@@ -218,7 +219,8 @@ does Sparky::JobApi::Role
 
           if ! $st<OK> {
             $status = False;
-            say "dsci agent bootstrap ... [FAIL]";
+            my $eff-status = $st<TIMEOUT> ?? "TIMEOUT" !! "FAIL";
+            say "dsci agent bootstrap ... [$eff-status]";
             say "...";
             say $j.report();
           } else {
@@ -333,7 +335,8 @@ does Sparky::JobApi::Role
 
           unless $st<OK> {
             $status = False;
-            say "job {$job<id>} ... [FAIL]";
+            my $eff-status = $st<TIMEOUT> ?? "TIMEOUT" !! "FAIL";
+            say "job {$job<id>} ... [$eff-status]";
             say "...";
             say $j.report();
             last;
