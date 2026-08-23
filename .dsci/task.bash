@@ -3,10 +3,17 @@ if [ "$EUID" -eq 0 ]; then
     echo "Error: Do not run this script as root." >&2
     exit 1
 fi
+
 cd ../
-ls -l
+
+
+#ls -l
+
+echo "build dsci-runner from go source code"
+
 go mod tidy
 go build
+
 echo "done"
 
 cp -fv dsci_runner ~/projects/dsci-runner/
