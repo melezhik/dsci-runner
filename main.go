@@ -124,13 +124,13 @@ func main() {
 		AppConfig.GitAuthPassword = "dsci"
 	}
 
-	go func() {
-    for {
-      startJobDispatcher()
-      time.Sleep(10 * time.Second)
-      log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
-    }
-  }()
+	//go func() {
+  // for {
+   //   startJobDispatcher()
+   //   time.Sleep(10 * time.Second)
+  //    log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
+  //  }
+  //}()
 
 	// Echo instances - public and private
 
@@ -1483,9 +1483,6 @@ func startJobDispatcher() {
 	log.Printf("startJobDispatcher: build.sh OK: %s", output)
 
     cmd = exec.Command(
-      AppConfig.DsciContainerRuntime,
-      "exec",
-      "dsci-dispatch",
       "sparkyd",
     )
 

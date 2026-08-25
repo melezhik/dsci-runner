@@ -2,6 +2,8 @@ set -e
 
 echo "start build ..."
 
+exit
+
 pwd
 
 ls -l
