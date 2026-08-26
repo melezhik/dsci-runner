@@ -140,42 +140,6 @@ does Sparky::JobApi::Role
 
       my %_dsci;
     
-      if $localhost-mode {
-
-        unless tags()<DsciAgentSkipBootstrap> {
-          my $j = Sparky::JobApi.new(
-              :project("job.bootstrap"),
-          );
-
-          $j.queue({
-              :description("dsci bootstrap"),
-              :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
-              :sparrowdo(%(
-                :host<127.0.0.1>,
-                :ssh_user(%*ENV<HOST_SSH_USER>),
-                :bootstrap,
-                :no_sudo,
-              )),
-          });
-
-          my $st = self.wait-job($j);
-
-          if ! $st<OK> {
-            $status = False;
-            my $eff-status = $st<TIMEOUT> ?? "TIMEOUT" !! "FAIL";
-            say "dsci bootstrap ... [$eff-status]";
-            say "...";
-            say $j.report();
-          } else {
-            say "dsci bootstrap ... [OK]";
-            say "...";
-            say $j.report();
-          }
-
-        }
-
-      } else {
-
         if $cr eq "docker" {
           bash "sudo chmod 666 /var/run/docker.sock";
         }
@@ -232,8 +196,6 @@ does Sparky::JobApi::Role
           }
 
         }
-
-      }
 
       if $status {
 
@@ -318,8 +280,7 @@ does Sparky::JobApi::Role
               :tags(%tags),
               sparrowdo => %(
                 :no_sudo,
-                :host<127.0.0.1>,
-                :ssh_user("{%*ENV<HOST_SSH_USER>}"),
+                :localhost,
               ),
             });
           } else {
