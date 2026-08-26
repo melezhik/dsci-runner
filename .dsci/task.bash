@@ -15,7 +15,7 @@ go mod tidy
 
 go build
 
-echo "done"
+echo "done!"
 
 #cp -fv dsci_runner ~/projects/dsci-runner/
 
