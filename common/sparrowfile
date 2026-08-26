@@ -181,6 +181,7 @@ does Sparky::JobApi::Role
         }
 
         bash "$cr stop -t 1 dsci-agent || :";
+        bash "$cr rm dsci-agent || :";
 
         my @env;
 
@@ -223,6 +224,7 @@ does Sparky::JobApi::Role
             say "dsci agent bootstrap ... [$eff-status]";
             say "...";
             say $j.report();
+            die "bootstrap job failed";
           } else {
             say "dsci agent bootstrap ... [OK]";
             say "...";
@@ -339,7 +341,8 @@ does Sparky::JobApi::Role
             say "job {$job<id>} ... [$eff-status]";
             say "...";
             say $j.report();
-            last;
+            die "ci job failed";
+            #last;
           }
 
           my $job-data = $j.get-stash();
@@ -359,9 +362,9 @@ does Sparky::JobApi::Role
         }
       }
 
-      if $status == False {
-        die "some child jobs failed"
-      }
+      #if $status == False {
+      #  die "some child jobs failed"
+      #}
     }
   }
 
@@ -395,6 +398,8 @@ does Sparky::JobApi::Role
 
     my $artifacts = $me.get-stash()<dsci><dsci_artifacts>;
 
+    #say $artifacts.raku;
+
     my $job-id = tags()<dispatcher_job_id>;
     my $project = "dsci";
     my $dispatcher = Sparky::JobApi.new( :$job-id, :$project );
@@ -403,9 +408,9 @@ does Sparky::JobApi::Role
 
     if $artifacts {
       say "load artifacts from previous jobs ...";
-      for $artifacts<> -> $i {
+      for $artifacts.flat -> $i {
         say "load $i ..."; 
-        my $data = $dispatcher.get-file($i);
+        my $data = $dispatcher.get-file($i.IO.basename);
         $i.IO.spurt($data);
         move($i,"{%*ENV<HOME>}/artifacts/$i");
         say "{%*ENV<HOME>}/artifacts/$i OK"; 
