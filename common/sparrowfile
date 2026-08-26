@@ -13,7 +13,8 @@ does Sparky::JobApi::Role
 {
 
   method !version {
-      return "0.1.0"
+      run "raku", "-v";
+      return "0.1.0";
   }
 
   method !validate-cond-expression ($exp,$debug = False) {
@@ -331,6 +332,8 @@ does Sparky::JobApi::Role
 
   method stage-bootstrap {
 
+    say "runner version: {self!version()}";
+
     package-install "git";
 
     #bash "zef install --/test https://github.com/melezhik/Sparrow6.git";
@@ -348,6 +351,8 @@ does Sparky::JobApi::Role
   method stage-job-run {
 
     #say tags().raku;
+
+    say "runner version: {self!version()}";
 
     my $me = Sparky::JobApi.new( :mine );
 
