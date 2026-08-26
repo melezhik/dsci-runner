@@ -8,12 +8,55 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"io"
 )
+
+func JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string) {
+
+	var q types.JobRequest
+	//now := time.Now()
+	q.Config.Project = "dsci"
+	//q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
+	q.Config.JobId = job_id
+	q.Config.Description = description
+	skip_bootstrap := ""
+	allow_localhost_mode := ""
+	if app_cfg.DsciAgentSkipBootstrap == true {
+		skip_bootstrap = ",DsciAgentSkipBootstrap"
+	}
+	if len(app_cfg.DsciAllowLocalhostModeRepos) > 0 {
+		repos := strings.Join(app_cfg.DsciAllowLocalhostModeRepos, ":")
+		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s", repos)
+	}
+	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
+		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciAgentImage=%s%s%s",
+		app_cfg.DsciContainerRuntime,
+		ref,
+		repo,
+		sha,
+		fmt.Sprintf("http://localhost:8080/%s.git", repo),
+		msg,
+		app_cfg.DsciAgentImage,
+		skip_bootstrap,
+		allow_localhost_mode,
+	)
+
+	q.Trigger.Sparrowdo.NoSudo = true
+
+	q.Trigger.Sparrowdo.Localhost = true
+
+	dat := GetSparkyScenarioFile("dsci", "sparrowfile")
+
+	q.Sparrowfile = dat
+
+	JobQueueFs(q, app_cfg.DsciContainerRuntime)
+
+	log.Printf("job quedued: %s\n", q.Config.JobId)
+}
 
 func JobQueueFs(r types.JobRequest, cr string) {
 
@@ -222,10 +265,9 @@ func PutJobFile(p string, job_id string, filename string, data io.Reader) (int64
 		log.Printf("PutJobFile: error occured during write to blob file: %s")
 		return 0, err
 	}
-	
-	return  bytesWritten, nil
-}
 
+	return bytesWritten, nil
+}
 
 func GetJobFile(p string, job_id string, filename string) ([]byte, error) {
 
@@ -309,7 +351,7 @@ func JobState(p string, job_id string) string {
 		// set active state
 		active_state = string(dat)
 
-	} 
+	}
 
 	// try to see if there is job in queue
 	path = filepath.Join(utils.SparkyTriggersDir(p), job_id)
@@ -343,7 +385,7 @@ func JobState(p string, job_id string) string {
 		if active_state != "" {
 			return active_state
 		} else {
-			// return default state (unknown) if 
+			// return default state (unknown) if
 			// there is error accessing trigger file
 			// and there is no active_state
 			return state

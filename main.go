@@ -273,53 +273,23 @@ func main() {
 					fmt.Printf("Author: %s <%s>\n", commit.Author.Name, commit.Author.Email)
 					fmt.Printf("Date:   %s\n", commit.Author.When)
 
-					var q types.JobRequest
-					//now := time.Now()
-					q.Config.Project = "dsci"
-					//q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
 					msg := fmt.Sprintf(
 						"%s by %s",
 						commit.Message,
 						commit.Author.Email,
 					)
 					shortSHA := data[0].NewCommit[:7]
-					q.Config.JobId = shortSHA
-					q.Config.Description = fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
-					skip_bootstrap := ""
-					allow_localhost_mode := ""
-					if AppConfig.DsciAgentSkipBootstrap == true {
-						skip_bootstrap = ",DsciAgentSkipBootstrap"
-					}
-					if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
-						repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
-						allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
-					}
-					q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-						"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
-					    AppConfig.DsciContainerRuntime,
-						data[0].RefName,
-						repoName,
+					job_description := fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
+					// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+					job.JobQueue(
+						AppConfig,
 						shortSHA,
-						fmt.Sprintf("http://localhost:8080/%s.git",repoName),
 						msg,
-						AppConfig.DsciFeedbackUrl,
-						AppConfig.DsciAgentImage,
-						skip_bootstrap,
-						allow_localhost_mode,
+						repoName,
+						data[0].RefName,
+						shortSHA,
+						job_description,
 					)
-
-					q.Trigger.Sparrowdo.NoSudo = true
-
-					q.Trigger.Sparrowdo.Localhost = true
-
-					dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
-
-					q.Sparrowfile = dat
-
-					job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
-
-					log.Printf("job quedued: %s\n", q.Config.JobId)
-
 				}
 			}
 		} else {
@@ -1067,55 +1037,30 @@ func manual_build(c *echo.Context) error {
 	if err != nil {
 		log.Fatalf("manual_build: Failed to find commit %s: %v", "HEAD", err)
 	}
+
 	shortSHA := commit.Hash.String()[:7]
 
-	var q types.JobRequest
-	//now := time.Now()
-	q.Config.Project = "dsci"
-	//q.Config.JobId = strconv.FormatInt(now.Unix(), 10)
-	q.Config.JobId = shortSHA
 	msg := fmt.Sprintf(
 		"%s by %s  - manual run",
 		commit.Message,
 		commit.Author.Email,
 	)
-	q.Config.Description = fmt.Sprintf("%s: %s | %s", c.Param("repo"), shortSHA, msg)
-	skip_bootstrap := ""
-	allow_localhost_mode := ""
-	if AppConfig.DsciAgentSkipBootstrap == true {
-		skip_bootstrap = ",DsciAgentSkipBootstrap"
-	}
-	if len(AppConfig.DsciAllowLocalhostModeRepos) > 0 {
-		repos := strings.Join(AppConfig.DsciAllowLocalhostModeRepos,":")
-		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s",repos)
-	}
+
+	job_description := fmt.Sprintf("%s: %s | %s", c.Param("repo"), shortSHA, msg)
+
 	// Strip the trailing .git extension to get the clean repository path identifier
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
-	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciFeedbackUrl=%s,DsciAgentImage=%s%s%s",
-	    AppConfig.DsciContainerRuntime,
-		ref.Name(),
-		repoName,
-		commit.Hash.String(),
-		fmt.Sprintf("http://localhost:8080/%s",c.Param("repo")),
-		msg,
-		AppConfig.DsciFeedbackUrl,
-		AppConfig.DsciAgentImage,
-		skip_bootstrap,
-		allow_localhost_mode,
-	)
 
-	q.Trigger.Sparrowdo.NoSudo = true
-
-	q.Trigger.Sparrowdo.Localhost = true
-
-	dat := job.GetSparkyScenarioFile("dsci", "sparrowfile")
-
-	q.Sparrowfile = dat
-
-	job.JobQueueFs(q,AppConfig.DsciContainerRuntime)
-
-	log.Printf("job quedued: %s\n", q.Config.JobId)
+    // JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+	job.JobQueue(
+	    AppConfig,
+	    commit.Hash.String(),
+	    msg,
+	    repoName,
+	    string(ref.Name()),
+	    shortSHA,
+	    job_description,
+    )
 
 	return c.HTML(
 		http.StatusOK,
@@ -1134,7 +1079,7 @@ func manual_build(c *echo.Context) error {
 	html.NavBar(user_is_logged(c)),
 	c.Param("repo"),
 	c.Param("repo"),
-	q.Config.JobId, 
+	shortSHA, 
 	),
 	)
 
