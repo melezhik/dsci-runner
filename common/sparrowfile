@@ -303,7 +303,7 @@ does Sparky::JobApi::Role
             say "job {$job<id>} ... [$eff-status]";
             say "...";
             say $j.report();
-            die "ci job failed";
+            die "child job <{$job<id>}> failed";
             #last;
           }
 
