@@ -27,3 +27,6 @@ RUN echo OK2 && cd /root/projects && git clone https://github.com/melezhik/Sparr
 ENV RAKULIB=/root/projects/Sparrow6/lib
 
 RUN raku -MSparrow6::Task::Repository -e Sparrow6::Task::Repository::Api.new.index-update
+
+RUN echo 'export PATH=/root/projects/rakupp/rakupp/bin/:/root/.raku/bin:$PATH' >> ~/.profile
+RUN echo 'export RAKULIB=/root/projects/Sparrow6/lib' >> ~/.profile
