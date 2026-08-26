@@ -6,18 +6,19 @@ fi
 
 cd ../
 
-
 #ls -l
 
 echo "build dsci-runner from go source code"
 
 go mod tidy
+
+
 go build
 
 echo "done"
 
-cp -fv dsci_runner ~/projects/dsci-runner/
+#cp -fv dsci_runner ~/projects/dsci-runner/
 
-echo "will restart dsci-runner in 15 sec ..."
+#echo "will restart dsci-runner in 15 sec ..."
 
-nohup bash -c "sleep 15 && sudo service dsci-runner restart"  1>/dev/null 2>/dev/null &
+#nohup bash -c "sleep 15 && sudo service dsci-runner restart"  1>/dev/null 2>/dev/null &
