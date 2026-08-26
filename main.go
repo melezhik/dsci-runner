@@ -21,7 +21,6 @@ import (
 	"github.com/robert-nix/ansihtml"
 	"golang.org/x/net/websocket"
 	"io"
-	"io/fs"
 	"log"
 	// "log/slog"
 	"net/http"
@@ -58,12 +57,6 @@ const (
 	repoRoot     = ".repositories"
 	sshAddr      = ":2222"
 )
-
-//go:embed docker
-var staticFiles embed.FS
-
-//go:embed podman
-var staticFiles11 embed.FS
 
 //go:embed common
 var staticFiles12 embed.FS
@@ -123,14 +116,6 @@ func main() {
 	if AppConfig.GitAuthPassword == "" {
 		AppConfig.GitAuthPassword = "dsci"
 	}
-
-	//go func() {
-  // for {
-   //   startJobDispatcher()
-   //   time.Sleep(10 * time.Second)
-  //    log.Printf("JobDispatcher stopped, restarting it with startJobDispatcher() ...")
-  //  }
-  //}()
 
 	// Echo instances - public and private
 
@@ -1366,163 +1351,6 @@ func builds(c *echo.Context) error {
 		http.StatusOK, 
 		fmt.Sprintf(html.LiveBuilds(), html.Header(), html.NavBar(user_is_logged(c))),
 	)
-}
-
-func startJobDispatcher() {
-
-	log.Printf("startJobDispatcher: start")
-
-	dname, err := os.MkdirTemp("", "dsci_container")
-
-	defer os.RemoveAll(dname)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error creating temp dir: %s", err)
-	}
-
-	log.Printf("startJobDispatcher: creating temp dir: %s OK", dname)
-
-	// Dockerfile
-
-	var content []byte
-
-  if AppConfig.DsciContainerRuntime == "docker" {
-	content, err = fs.ReadFile(staticFiles, "docker/Dockerfile")
-    if err != nil {
-      log.Fatalf("startJobDispatcher: error reading docker/Dockerfile: %s", err)
-    }
-  } else {
-	content, err = fs.ReadFile(staticFiles11, "podman/Dockerfile")
-    if err != nil {
-      log.Fatalf("startJobDispatcher: error reading podman/Dockerfile: %s", err)
-    }
-  }
-
-	fname := filepath.Join(dname, "Dockerfile")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/Dockerfile: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/Dockerfile OK", dname)
-
-	// sparrowfile
-
-  content, err = fs.ReadFile(staticFiles12, "common/sparrowfile")
-
-  if err != nil {
-		  log.Fatalf("startJobDispatcher: error reading common/sparrowfile: %s", err)
-  }
-
-	fname = filepath.Join(dname, "sparrowfile")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/sparrowfile: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/sparrowfile OK", dname)
-
-	// sparky.yaml
-
-	content, err = fs.ReadFile(staticFiles12, "common/sparky.yaml")
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error reading common/sparky.yaml: %s", err)
-	}
-
-	fname = filepath.Join(dname, "sparky.yaml")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/sparky.yaml: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/sparky.yaml OK", dname)
-
-	// build.sh
-
-  if AppConfig.DsciContainerRuntime == "docker" {
-	  content, err = fs.ReadFile(staticFiles, "docker/build.sh")
-	  if err != nil {
-		  log.Fatalf("startJobDispatcher: error reading docker/build.sh: %s", err)
-	  }
-  } else {
-    content, err = fs.ReadFile(staticFiles11, "podman/build.sh")
-    if err != nil {
-      log.Fatalf("startJobDispatcher: error reading podman/build.sh: %s", err)
-    }
-  }
-
-	fname = filepath.Join(dname, "build.sh")
-
-	err = os.WriteFile(fname, []byte(content), 0644)
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher: error writting to %s/build.sh: %s", dname, err)
-	}
-
-	log.Printf("startJobDispatcher: writting %s/build.sh OK", dname)
-
-	// run container build
-
-	cmd := exec.Command("sh", "build.sh")
-
-	cmd.Dir = dname
-
-	output, err := cmd.CombinedOutput() // Run the command and wait for completion
-
-	if err != nil {
-		log.Printf("startJobDispatcher: build.sh failed with: %s\n", output)
-	}
-
-	log.Printf("startJobDispatcher: build.sh OK: %s", output)
-
-    cmd = exec.Command(
-      "sparkyd",
-    )
-
-	stdoutPipe, err := cmd.StdoutPipe()
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stdout pipe: %v", err)
-	}
-
-	stderrPipe, err := cmd.StderrPipe()
-
-	if err != nil {
-		log.Fatalf("startJobDispatcher(sparkyd): Failed to create stderr pipe: %v", err)
-	}
-
-	// Read stdout in a goroutine
-	go func() {
-		scanner := bufio.NewScanner(stdoutPipe)
-		for scanner.Scan() {
-			fmt.Println("sparkyd_stdout",scanner.Text())
-		}
-	}()
-
-	// Read stderr in a goroutine
-	go func() {
-		scanner := bufio.NewScanner(stderrPipe)
-		for scanner.Scan() {
-			fmt.Println("sparkyd_stderr",scanner.Text())
-		}
-	}()
-
-	// Start the infinite/long-running process
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("startJobDispatcher(sparkyd): Failed to start command: %v", err)
-	}
-
-	// Wait for the command to finish (if it ever does)
-	if err := cmd.Wait(); err != nil {
-		log.Printf("startJobDispatcher(sparkyd): Command finished with error: %v", err)
-	}
 }
 
 func login_form(c *echo.Context) error {
