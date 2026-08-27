@@ -196,6 +196,42 @@ func JobQueueFs(r types.JobRequest, cr string) {
 
 }
 
+func UpdateCommitToJobIdState (sha string, job_id string) {
+
+  log.Printf("UpdateCommitToJobIdState: sha:%s job_id:%s\n", sha, job_id)
+
+  dir := utils.CreateJobHistoryCacheDir()
+
+  path := fmt.Sprintf("%s/%s", dir, sha)
+
+  err := os.WriteFile(path, []byte(job_id), 0644)
+  if err != nil {
+    log.Fatalf("UpdateCommitToJobIdState: error writting to file: %s %s\n",path, err)
+  }
+}
+
+func CommitToJobId (sha string) (string) {
+
+  dir := utils.JobHistoryCacheDir()
+
+  path := fmt.Sprintf("%s/%s", dir, sha)
+
+  dat, err := os.ReadFile(path)
+
+  if errors.Is(err, os.ErrNotExist) {
+    log.Printf("CommitToJobId: file %s don't exist - returning empty job_id", path)
+    return ""
+  }
+
+  if err != nil {
+    log.Fatalf("CommitToJobId: can't read file path: %s err: %err", path, err)
+  }
+
+  log.Printf("CommitToJobId: return sha:%s job_id:%s\n", sha, dat)
+
+  return string(dat)
+}
+
 func PutJobStash(p string, job_id string, data interface{}) {
 
 	utils.CreateSparkyStashDir(p)
@@ -231,6 +267,7 @@ func GetJobStash(p string, job_id string) string {
 	if err != nil {
 		log.Fatalf("Error reading file:", err)
 	}
+
 	return string(dat)
 }
 
@@ -321,6 +358,10 @@ func JobState(p string, job_id string) string {
 	// default state - unknown
 
 	state := "-2"
+
+  if job_id == "" {
+    return state
+  }
 
 	active_state := ""
 

@@ -30,6 +30,27 @@ func GitCloneCacheRootDir() string {
 
 }
 
+func JobHistoryCacheDir() string {
+
+  hdir, _ := os.UserHomeDir()
+
+  return fmt.Sprintf("%s/.dsci/job_history", hdir)
+
+}
+
+func CreateJobHistoryCacheDir() string {
+
+  dir := JobHistoryCacheDir()
+
+  err := os.MkdirAll(dir, 0755)
+
+  if err != nil {
+    log.Fatalf("CreateJobHistoryCacheDir: Error creating directory: %s", err)
+  }
+
+  return dir
+}
+
 func DsciRootDir() string {
 
 	hdir, _ := os.UserHomeDir()

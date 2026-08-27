@@ -295,6 +295,7 @@ does Sparky::JobApi::Role
             });
           }
 
+          say "JUMP 1";
           my $st = self.wait-job($j);
 
           unless $st<OK> {

@@ -280,16 +280,18 @@ func main() {
 					)
 					shortSHA := data[0].NewCommit[:7]
 					job_description := fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
+          job_id :=  shortSHA
 					// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
 					job.JobQueue(
 						AppConfig,
-						shortSHA,
+						job_id,
 						msg,
 						repoName,
 						data[0].RefName,
 						shortSHA,
 						job_description,
 					)
+          job.UpdateCommitToJobIdState(shortSHA,job_id)
 				}
 			}
 		} else {
@@ -588,26 +590,28 @@ func list_files(c *echo.Context) error {
 
 	shortSHA := commit.Hash.String()[:7]
 
-	state := job.JobState("dsci", shortSHA)
+  job_id := job.CommitToJobId(shortSHA)
+
+	state := job.JobState("dsci", job_id)
 
 	state_badge := `<span class="tag is-white is-medium">Unknown</span>`
 
 	if state == "0" {
 		state_badge = fmt.Sprintf(
 			`<span class="tag is-warning is-medium"><a href="/report/ui/dsci/%s">Running</a></span>`,
-			shortSHA,
+			job_id,
 		)
 	}
 	if state == "1" {
 		state_badge = fmt.Sprintf(
 			`<span class="tag is-success is-medium"><a href="/report/ui/dsci/%s">Pass</a></span>`,
-			shortSHA,
+			job_id,
 		)
 	}
 	if state == "-1" {
-		state_badge = fmt.Sprintf(
+  	state_badge = fmt.Sprintf(
 			`<span class="tag is-danger" is-medium><a href="/report/ui/dsci/%s">Fail</a></span>`,
-			shortSHA,
+			job_id,
 		)
 	}
 	if state == "-3" {
@@ -1046,22 +1050,24 @@ func manual_build(c *echo.Context) error {
 		commit.Author.Email,
 	)
 
-	job_description := fmt.Sprintf("%s: %s | %s", c.Param("repo"), shortSHA, msg)
+  job_id :=  fmt.Sprintf("%s.%d",shortSHA,time.Now().Unix())
+
+	job_description := fmt.Sprintf("%s: %s | %s", c.Param("repo"), job_id, msg)
 
 	// Strip the trailing .git extension to get the clean repository path identifier
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 
-    // JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+  // JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
 	job.JobQueue(
 	    AppConfig,
-	    commit.Hash.String(),
+	    job_id,
 	    msg,
 	    repoName,
 	    string(ref.Name()),
 	    shortSHA,
 	    job_description,
-    )
-
+  )
+  job.UpdateCommitToJobIdState(shortSHA,job_id)
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -1079,7 +1085,7 @@ func manual_build(c *echo.Context) error {
 	html.NavBar(user_is_logged(c)),
 	c.Param("repo"),
 	c.Param("repo"),
-	shortSHA, 
+	job_id, 
 	),
 	)
 
