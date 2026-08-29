@@ -11,6 +11,7 @@ import (
 	"fmt"
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/config"
 	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	go_git_http "github.com/go-git/go-git/v6/plumbing/transport/http"
@@ -536,7 +537,7 @@ func change_file(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
 	}
 
-	fmt.Println("change_file: remove directory: %s", dname)
+	fmt.Printf("change_file: remove directory: %s", dname)
 
 	err = os.MkdirAll(dname, 0755)
 
@@ -1017,7 +1018,7 @@ func create_repo_form (c *echo.Context) error {
 	  	<div>
 			<p class="title">New Git Repo</p>
     	</div>
-		<form id="login-form" action="/repo" method="POST">
+		<form id="login-form" action="/repo/create" method="POST">
       		<div class="field">
         		<label class="label">Repo/Url</label>
           			<div class="control">
@@ -1065,7 +1066,7 @@ func create_repo(c *echo.Context) error {
 
 	dname, _ := filepath.Abs(repoRoot)
 
-	cmd := exec.Command("git","init","--bare")
+	cmd := exec.Command("git","init","--bare",repoName)
 
 	if r.Migrate == "on" {
 		cmd = exec.Command("git","clone","--bare",repoName)
@@ -1091,7 +1092,7 @@ func create_repo(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
 	}
 
-	fmt.Println("create_repo: remove directory: %s", dname)
+	fmt.Printf("create_repo: remove directory: %s", dname)
 
 	err = os.MkdirAll(dname, 0755)
 
@@ -1106,16 +1107,42 @@ func create_repo(c *echo.Context) error {
 
 	fmt.Printf("create_repo: RepoURL: %s\n", RepoURL)
 
-	fmt.Println("create_repo: cloning repository ...")
+	var repo *go_git.Repository 
 
-	repo, err := go_git.PlainClone(dname, &go_git.CloneOptions{
-		URL: RepoURL,
-	})
+	if r.Migrate == "" {
 
-	if err != nil {
-		log.Printf("create_repo: Failed to clone repo: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone repo")
+		// Init blank git repo
+		repo_, err := go_git.PlainInit(dname, false)
+		if err != nil {
+			log.Printf("create_repo: Failed to init empty repo: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to init empty repo")
+		}
+
+		// Create origin remote pointing to the empty target
+		_, err = repo.CreateRemote(&config.RemoteConfig{
+			Name: "origin",
+			URLs: []string{repoName},
+		})
+		if err != nil {
+			log.Printf("create_repo: Failed to create remote for local repo: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create remote for local repo")
+		}
+		repo = repo_
+	} else {
+
+		fmt.Println("create_repo: cloning repository ...")
+
+		repo_, err := go_git.PlainClone(dname, &go_git.CloneOptions{
+			URL: RepoURL,
+		})
+	
+		if err != nil {
+			log.Printf("create_repo: Failed to clone repo: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone repo")
+		}
+		repo = repo_
 	}
+
 
 	dname = filepath.Join(dname, ".dsci")
 
