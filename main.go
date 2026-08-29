@@ -45,11 +45,6 @@ var staticFiles12 embed.FS
 
 var AppConfig types.AppConfig
 
-type ChangeFilePayload struct {
-	Code    string `form:"code"`
-	Message string `form:"message"`
-}
-
 func main() {
 
 	if len(os.Args) > 1 {
@@ -127,7 +122,7 @@ func main() {
 	e1.POST("/repo/:repo/build", manual_build)
 	e1.GET("/livebuilds", livebuilds)
 
-	// e1.POST("/repo/create", create_repo)
+	e1.POST("/repo/create", create_repo)
 	e1.GET("/repo/create", create_repo_form)
 
 	e1.GET("/report/ui/:project/:key", report_ui)

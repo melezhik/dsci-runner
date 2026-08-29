@@ -28,6 +28,16 @@ import (
 	"time"
 )
 
+type ChangeFilePayload struct {
+	Code    string `form:"code"`
+	Message string `form:"message"`
+}
+
+type CreateRepoPayload struct {
+	Repo    string `form:"repo"`
+	Migrate string `form:"migrate"`
+}
+
 func list_repos(c *echo.Context) error {
 	// Read the root directory contents
 	dir, _ := filepath.Abs(repoRoot)
@@ -1030,4 +1040,174 @@ func create_repo_form (c *echo.Context) error {
 			html.Header(),
 			html.NavBar(user_is_logged(c)),
 		))
+}
+
+func create_repo(c *echo.Context) error {
+
+	if !user_is_logged(c) {
+		return c.Redirect(http.StatusMovedPermanently, "/login")
+	}
+
+	r := new(CreateRepoPayload)
+
+	// Функция Bind автоматически распарсит форму и заполнит структуру
+	if err := c.Bind(r); err != nil {
+		return c.String(http.StatusBadRequest, "Wrong input data")
+	}
+
+	repoName := r.Repo
+
+	if ! strings.HasSuffix(repoName, ".git") {
+		repoName = fmt.Sprintf("%s.git",repoName)
+	}
+
+	log.Printf("create_repo: %s, migrate: %s",repoName,r.Migrate)
+
+	dname, _ := filepath.Abs(repoRoot)
+
+	cmd := exec.Command("git","init","--bare")
+
+	if r.Migrate == "on" {
+		cmd = exec.Command("git","clone","--bare",repoName)
+	}
+	cmd.Dir = dname
+
+	log.Printf("create_repo: git init command: %s",cmd)
+
+	output, err := cmd.CombinedOutput() // Run the command and wait for completion
+
+	if err != nil {
+		log.Printf("create_repo: git init failed with: %s\n", output)
+		return echo.NewHTTPError(http.StatusInternalServerError, "git init failed")
+	}
+
+	log.Printf("create_repo: git init OK: %s", output)
+
+	dname = utils.GitCloneCacheRootDir() + "/" + repoName
+
+	err = os.RemoveAll(dname)
+	if err != nil {
+		fmt.Printf("create_repo: can't remove directory %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
+	}
+
+	fmt.Println("create_repo: remove directory: %s", dname)
+
+	err = os.MkdirAll(dname, 0755)
+
+	if err != nil {
+		log.Printf("create_repo: error creating directory %s: %s", dname, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating directory")
+	}
+
+	log.Printf("create_repo: creating git clone chache dir: %s OK", dname)
+
+	RepoURL := fmt.Sprintf("http://localhost:8080/%s", repoName)
+
+	fmt.Printf("create_repo: RepoURL: %s\n", RepoURL)
+
+	fmt.Println("create_repo: cloning repository ...")
+
+	repo, err := go_git.PlainClone(dname, &go_git.CloneOptions{
+		URL: RepoURL,
+	})
+
+	if err != nil {
+		log.Printf("create_repo: Failed to clone repo: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone repo")
+	}
+
+	dname = filepath.Join(dname, ".dsci")
+
+	err = os.MkdirAll(dname, 0755)
+
+	if err != nil {
+		log.Printf("create_repo: error creating .dsci directory %s: %s", dname, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating .dsci directory")
+	}
+
+	filePath := "jobs.yaml"
+
+	fullPath := filepath.Join(dname, filePath)
+
+	jobs_yaml := `
+	jobs:
+		-
+			id: test
+			path: .
+	`
+	err = os.WriteFile(fullPath, []byte(jobs_yaml), 0644)
+
+	if err != nil {
+		log.Printf("create_repo: failed writing to file: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")
+	}
+
+	filePath = "task.bash"
+
+	fullPath = filepath.Join(dname, filePath)
+
+	task_bash := `echo "hello DSCI"`
+
+	err = os.WriteFile(fullPath, []byte(task_bash), 0644)
+
+	if err != nil {
+		log.Printf("create_repo: failed writing to file: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed writing to file")
+	}
+
+	worktree, err := repo.Worktree()
+
+	if err != nil {
+		log.Printf("create_repo: failed to get worktree: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get worktree")
+	}
+
+	_, err = worktree.Add(".dsci")
+
+	if err != nil {
+		log.Printf("create_repo: failed to add dir: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to add dir")
+
+	}
+
+	fmt.Printf("create_repo: staged file: %s\n", filePath)
+
+	commitMessage := "feat: add or update file via dsci web"
+
+	commitHash, err := worktree.Commit(commitMessage, &go_git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "DSCI Web",
+			Email: "dsci@sparrowhub.io",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		log.Printf("create_repo: failed to commit: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to commit")
+	}
+
+	fmt.Printf("create_repo: committed successfully. Hash: %s\n", commitHash)
+
+	auth := &go_git_http.BasicAuth{
+		Username: AppConfig.GitAuthUser,
+		Password: AppConfig.GitAuthPassword,
+	}
+
+	err = repo.Push(&go_git.PushOptions{
+		RemoteName: "origin",
+		ClientOptions: []go_git_client.Option{
+			go_git_client.WithHTTPAuth(auth),
+		},
+	})
+
+	if err != nil {
+		log.Printf("create_repo: failed pushing to git repository: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed pushing to bare repository")
+	}
+
+	fmt.Println("create_repo: Successfully committed and pushed file to bare repository!")
+
+	return c.Redirect(http.StatusMovedPermanently, "/repo/" + repoName)
+
 }
