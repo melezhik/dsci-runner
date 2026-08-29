@@ -1152,12 +1152,8 @@ func create_repo(c *echo.Context) error {
 
 	fullPath := filepath.Join(dname, filePath)
 
-	jobs_yaml := `
-	jobs:
-		-
-			id: test
-			path: .
-	`
+	jobs_yaml := fmt.Sprintf("jobs:\n -\n  id: test\n  path: .\n")
+
 	err = os.WriteFile(fullPath, []byte(jobs_yaml), 0644)
 
 	if err != nil {
