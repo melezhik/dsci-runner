@@ -1026,13 +1026,6 @@ func create_repo_form (c *echo.Context) error {
           			</div>
 		          <p class="help">Repo/Git Url</p>
       		</div>
-      		<div class="field">
-        		<label class="label">Migrate</label>
-          			<div class="control">
-            			<input name="migrate" type="checkbox">
-          			</div>
-		          <p class="help">Migrated existing Git repo</p>
-      		</div>
 			<button id="submit-btn" class="button is-primary" type="submit">Submit</button>
 		</form>
 	</div>
@@ -1111,17 +1104,19 @@ func create_repo(c *echo.Context) error {
 
 	if r.Migrate == "" {
 
+		fmt.Printf("create_repo: init empty local git repository: %s ...\n", dname)
+
 		// Init blank git repo
 		repo_, err := go_git.PlainInit(dname, false)
 		if err != nil {
-			log.Printf("create_repo: Failed to init empty repo: %v", err)
+			log.Printf("create_repo: failed to init empty repo: %v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to init empty repo")
 		}
-
 		// Create origin remote pointing to the empty target
-		_, err = repo.CreateRemote(&config.RemoteConfig{
+		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",repoName)
+		_, err = repo_.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
-			URLs: []string{repoName},
+			URLs: []string{remote_url},
 		})
 		if err != nil {
 			log.Printf("create_repo: Failed to create remote for local repo: %v", err)
