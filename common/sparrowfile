@@ -247,8 +247,7 @@ does Sparky::JobApi::Role
             %tags<path> = $job<path>
           } else {
             $status = False;
-            say "neither path nor path is set";
-            last;
+            die "neither path nor plugin is set";
           }
 
           if $job<debug> {
