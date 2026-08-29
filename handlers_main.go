@@ -996,3 +996,38 @@ func user_is_logged(c *echo.Context) bool {
 
 	return true
 }
+
+
+func create_repo_form (c *echo.Context) error {
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  	<div>
+			<p class="title">New Git Repo</p>
+    	</div>
+		<form id="login-form" action="/repo" method="POST">
+      		<div class="field">
+        		<label class="label">Repo/Url</label>
+          			<div class="control">
+            			<input name="repo" class="input" type="text" placeholder="repo name">
+          			</div>
+		          <p class="help">Repo/Git Url</p>
+      		</div>
+      		<div class="field">
+        		<label class="label">Migrate</label>
+          			<div class="control">
+            			<input name="migrate" type="checkbox">
+          			</div>
+		          <p class="help">Migrated existing Git repo</p>
+      		</div>
+			<button id="submit-btn" class="button is-primary" type="submit">Submit</button>
+		</form>
+	</div>
+ </body>
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+		))
+}

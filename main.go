@@ -128,7 +128,7 @@ func main() {
 	e1.GET("/livebuilds", livebuilds)
 
 	// e1.POST("/repo/create", create_repo)
-	// e1.GET("/repo/create", create_repo_form)
+	e1.GET("/repo/create", create_repo_form)
 
 	e1.GET("/report/ui/:project/:key", report_ui)
 	e1.GET("/report/ui2/:project/:build_id", report_ui2)

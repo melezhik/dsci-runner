@@ -76,7 +76,7 @@ func NavBar(logged bool) string {
         Logout
       </a>`
 		new_repo_ref = `
-      <a href="/repo_create_form" class="navbar-item">
+      <a href="/repo/create" class="navbar-item">
         New Repo
       </a>`
 	}
