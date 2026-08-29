@@ -63,6 +63,8 @@ func Header () (string ) {
 
 func NavBar ( logged bool ) (string) {
 
+  new_repo_ref := ""
+
   login_or_logout_ref := `
     <a href="/login" class="navbar-item">
         Login
@@ -72,8 +74,11 @@ func NavBar ( logged bool ) (string) {
       login_or_logout_ref = `
       <a href="/logout" class="navbar-item">
         Logout
-      </a>
-      `
+      </a>`
+      new_repo_ref = `
+      <a href="/repo/create" class="navbar-item">
+        New Repo
+      </a>`
   }
 return fmt.Sprintf(`
 <div class="container">
@@ -95,6 +100,7 @@ return fmt.Sprintf(`
       <a href="/builds" class="navbar-item">
         Builds
       </a>
+      %s
       %s
       <a href="http://deadsimpleci.sparrowhub.io" class="navbar-item">
         Documentation
@@ -123,7 +129,7 @@ return fmt.Sprintf(`
   </div>
 </nav>
 </div>
-`,login_or_logout_ref)
+`,new_repo_ref, login_or_logout_ref)
 }
 
 

@@ -617,11 +617,11 @@ func change_file(c *echo.Context) error {
 	})
 
 	if err != nil {
-		log.Printf("Failed pushing to git repository: %v", err)
+		log.Printf("change_file: failed pushing to git repository: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed pushing to bare repository")
 	}
 
-	fmt.Println("Successfully committed and pushed file to bare repository!")
+	fmt.Println("change_file: Successfully committed and pushed file to bare repository!")
 
 	parts := strings.Split(c.Param("file"), "/")
 
