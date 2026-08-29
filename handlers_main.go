@@ -2,29 +2,30 @@
 package main
 
 import (
-
-	"dsci_runner/job"
-	"dsci_runner/utils"
 	"dsci_runner/html"
-	"fmt"
-	"github.com/labstack/echo/v5"
-	_ "github.com/mattn/go-sqlite3"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
+	"dsci_runner/job"
+	"dsci_runner/types"
+	"dsci_runner/utils"
+	"encoding/json"
 	"errors"
-	html_utils "html"
+	"fmt"
 	go_git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	go_git_http "github.com/go-git/go-git/v6/plumbing/transport/http"
-	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
-	"sort"
+	"github.com/labstack/echo/v5"
+	_ "github.com/mattn/go-sqlite3"
+	html_utils "html"
+	"log"
+	"math/rand/v2"
+	"net/http"
+	"os"
 	"os/exec"
-
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
 )
 
 func list_repos(c *echo.Context) error {
@@ -87,7 +88,7 @@ func list_files(c *echo.Context) error {
 	cmd := exec.Command(
 		"git",
 		("--git-dir=" + path),
-		 "--work-tree=.",
+		"--work-tree=.",
 		"checkout",
 		"-f",
 		"HEAD",
@@ -163,7 +164,7 @@ func list_files(c *echo.Context) error {
 
 		parts := strings.Split(c.Param("dir"), "/")
 		cdir := parts[len(parts)-1]
-	
+
 		if len(parts) > 0 {
 			parts = parts[:len(parts)-1]
 		}
@@ -189,7 +190,7 @@ func list_files(c *echo.Context) error {
 				cdir,
 			)
 		}
-	
+
 	}
 
 	gitRoot, _ := filepath.Abs(repoRoot)
@@ -227,13 +228,13 @@ func list_files(c *echo.Context) error {
 		</div>
 	 %s
 	 </body>
-	</html>`, 
-		html.Header(), 
-		html.NavBar(user_is_logged(c)),
-		AppConfig.GitServerAddress,
-		c.Param("repo"),
-		html.CopyPasteButtonScript(),
-	))		
+	</html>`,
+				html.Header(),
+				html.NavBar(user_is_logged(c)),
+				AppConfig.GitServerAddress,
+				c.Param("repo"),
+				html.CopyPasteButtonScript(),
+			))
 	}
 
 	ref, _ := repo.Head()
@@ -249,7 +250,7 @@ func list_files(c *echo.Context) error {
 
 	shortSHA := commit.Hash.String()[:7]
 
-  job_id := job.CommitToJobId(shortSHA)
+	job_id := job.CommitToJobId(shortSHA)
 
 	state := job.JobState("dsci", job_id)
 
@@ -268,7 +269,7 @@ func list_files(c *echo.Context) error {
 		)
 	}
 	if state == "-1" {
-  	state_badge = fmt.Sprintf(
+		state_badge = fmt.Sprintf(
 			`<span class="tag is-danger" is-medium><a href="/report/ui/dsci/%s">Fail</a></span>`,
 			job_id,
 		)
@@ -308,20 +309,19 @@ func list_files(c *echo.Context) error {
     	</div>
     </div>
  </body>
-</html>`, 
-html.Header(), 
-html.NavBar(user_is_logged(c)),
-uplink,
-AppConfig.GitServerAddress,
-c.Param("repo"), c.Param("repo"),
-shortSHA, commit.Message, commit.Author.Email, state_badge,
-data,
-html.CopyPasteButtonScript(),
-))
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			uplink,
+			AppConfig.GitServerAddress,
+			c.Param("repo"), c.Param("repo"),
+			shortSHA, commit.Message, commit.Author.Email, state_badge,
+			data,
+			html.CopyPasteButtonScript(),
+		))
 }
 
-
-func dump_file (c *echo.Context)  error {
+func dump_file(c *echo.Context) error {
 
 	repo := c.Param("repo")
 
@@ -333,13 +333,13 @@ func dump_file (c *echo.Context)  error {
 
 	if err != nil {
 		return c.String(
-			http.StatusNotFound, 
+			http.StatusNotFound,
 			fmt.Sprintf(
-				"dump_file error, repo: %s, file: %s, error: %s", 
+				"dump_file error, repo: %s, file: %s, error: %s",
 				repo, file, err,
 			),
 		)
-    }
+	}
 	code := html.CodeToHtml(string(content))
 
 	parts := strings.Split(file, "/")
@@ -350,7 +350,7 @@ func dump_file (c *echo.Context)  error {
 	if len(parts) > 0 {
 		parts = parts[:len(parts)-1]
 	}
-	
+
 	localdir := strings.Join(parts, "/")
 	link := ""
 	if localdir == "" {
@@ -371,11 +371,11 @@ func dump_file (c *echo.Context)  error {
 	}
 
 	edit_link := ""
-	
+
 	if user_is_logged(c) {
-		edit_link = fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`,repo,c.Param("file"))
+		edit_link = fmt.Sprintf(`<a class="button is-primary" href="/repo/%s/file_edit/%s">edit</a>`, repo, c.Param("file"))
 	}
-	
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -388,19 +388,19 @@ func dump_file (c *echo.Context)  error {
       </div>
     </div>
  </body>
-</html>`, 
-	html.Header(), 
-	html.NavBar(user_is_logged(c)),
-	link, 
-	file_short_name,
-	edit_link,
-	code,
-	),
-)
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			link,
+			file_short_name,
+			edit_link,
+			code,
+		),
+	)
 
 }
 
-func edit_file (c *echo.Context)  error {
+func edit_file(c *echo.Context) error {
 
 	repo := c.Param("repo")
 
@@ -412,13 +412,13 @@ func edit_file (c *echo.Context)  error {
 
 	if err != nil {
 		return c.String(
-			http.StatusNotFound, 
+			http.StatusNotFound,
 			fmt.Sprintf(
-				"edit_file error, repo: %s, file: %s, error: %s", 
+				"edit_file error, repo: %s, file: %s, error: %s",
 				repo, file, err,
 			),
 		)
-    }
+	}
 
 	code := html_utils.EscapeString(string(content))
 
@@ -430,7 +430,7 @@ func edit_file (c *echo.Context)  error {
 	if len(parts) > 0 {
 		parts = parts[:len(parts)-1]
 	}
-	
+
 	localdir := strings.Join(parts, "/")
 	link := ""
 	if localdir == "" {
@@ -449,7 +449,6 @@ func edit_file (c *echo.Context)  error {
 			localdir,
 		)
 	}
-
 
 	return c.HTML(
 		http.StatusOK,
@@ -492,23 +491,23 @@ func edit_file (c *echo.Context)  error {
         });
 	</script>
  </body>
-</html>`, 
-	html.Header(), 
-	html.NavBar(user_is_logged(c)),
-	link, 
-	file_short_name, 
-	c.Param("repo"),
-	c.Param("file"),
-	code,
-	),
-)
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			link,
+			file_short_name,
+			c.Param("repo"),
+			c.Param("file"),
+			code,
+		),
+	)
 
 }
 
 func change_file(c *echo.Context) error {
 
-	if ! user_is_logged(c) {
-		return c.Redirect(http.StatusMovedPermanently, "/login") 
+	if !user_is_logged(c) {
+		return c.Redirect(http.StatusMovedPermanently, "/login")
 	}
 
 	u := new(ChangeFilePayload)
@@ -518,27 +517,27 @@ func change_file(c *echo.Context) error {
 		return c.String(http.StatusBadRequest, "Wrong input data")
 	}
 
-  dname := utils.GitCloneCacheRootDir() + "/" + c.Param("repo")
+	dname := utils.GitCloneCacheRootDir() + "/" + c.Param("repo")
 
-  // Удаляет директорию рекурсивно. Если её нет — ошибки не будет.
+	// Удаляет директорию рекурсивно. Если её нет — ошибки не будет.
 	err := os.RemoveAll(dname)
 	if err != nil {
 		fmt.Printf("change_file: can't remove directory %v\n", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "error removing  directory")
 	}
 
-  fmt.Println("change_file: remove directory: %s", dname)
+	fmt.Println("change_file: remove directory: %s", dname)
 
-  err = os.MkdirAll(dname, 0755)
+	err = os.MkdirAll(dname, 0755)
 
-  if err != nil {
-    log.Printf("change_file: error creating directory %s: %s", dname, err)
+	if err != nil {
+		log.Printf("change_file: error creating directory %s: %s", dname, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "error creating directory")
-  }
+	}
 
-  log.Printf("change_file: creating git clone chache dir: %s OK", dname)
+	log.Printf("change_file: creating git clone chache dir: %s OK", dname)
 
-	RepoURL := fmt.Sprintf("http://localhost:8080/%s",c.Param("repo"))
+	RepoURL := fmt.Sprintf("http://localhost:8080/%s", c.Param("repo"))
 
 	fmt.Printf("change_file: RepoURL: %s\n", RepoURL)
 
@@ -555,11 +554,11 @@ func change_file(c *echo.Context) error {
 
 	filePath := c.Param("file")
 
-  fullPath := filepath.Join(dname, filePath)
+	fullPath := filepath.Join(dname, filePath)
 
-  output := strings.ReplaceAll(u.Code, "\r\n", "\n")
+	output := strings.ReplaceAll(u.Code, "\r\n", "\n")
 
-	err = os.WriteFile(fullPath,[]byte(output),0644)
+	err = os.WriteFile(fullPath, []byte(output), 0644)
 
 	if err != nil {
 		log.Printf("change_file: failed writing to file: %v", err)
@@ -583,12 +582,11 @@ func change_file(c *echo.Context) error {
 
 	fmt.Printf("change_file: staged file: %s\n", filePath)
 
-	
 	commitMessage := "feat: add or update file via dsci web"
 
-  if u.Message != "" {
-    commitMessage = u.Message
-  }
+	if u.Message != "" {
+		commitMessage = u.Message
+	}
 
 	commitHash, err := worktree.Commit(commitMessage, &go_git.CommitOptions{
 		Author: &object.Signature{
@@ -605,8 +603,8 @@ func change_file(c *echo.Context) error {
 	fmt.Printf("change_file: committed successfully. Hash: %s\n", commitHash)
 
 	auth := &go_git_http.BasicAuth{
-		Username: AppConfig.GitAuthUser,           
-		Password: AppConfig.GitAuthPassword, 
+		Username: AppConfig.GitAuthUser,
+		Password: AppConfig.GitAuthPassword,
 	}
 
 	err = repo.Push(&go_git.PushOptions{
@@ -631,7 +629,7 @@ func change_file(c *echo.Context) error {
 	if len(parts) > 0 {
 		parts = parts[:len(parts)-1]
 	}
-	
+
 	localdir := strings.Join(parts, "/")
 	link := ""
 	if localdir == "" {
@@ -667,16 +665,15 @@ func change_file(c *echo.Context) error {
       </div>
     </div>
  </body>
-</html>`, 
-	html.Header(), 
-	html.NavBar(user_is_logged(c)),
-	link, 
-	file_short_name,
-	shortSHA,
-	),
-)
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			link,
+			file_short_name,
+			shortSHA,
+		),
+	)
 }
-
 
 func manual_build(c *echo.Context) error {
 
@@ -709,24 +706,24 @@ func manual_build(c *echo.Context) error {
 		commit.Author.Email,
 	)
 
-  job_id :=  fmt.Sprintf("%s.%d",shortSHA,time.Now().Unix())
+	job_id := fmt.Sprintf("%s.%d", shortSHA, time.Now().Unix())
 
 	job_description := fmt.Sprintf("%s: %s | %s", c.Param("repo"), job_id, msg)
 
 	// Strip the trailing .git extension to get the clean repository path identifier
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 
-  // JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+	// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
 	job.JobQueue(
-	    AppConfig,
-	    job_id,
-	    msg,
-	    repoName,
-	    string(ref.Name()),
-	    shortSHA,
-	    job_description,
-  )
-  job.UpdateCommitToJobIdState(shortSHA,job_id)
+		AppConfig,
+		job_id,
+		msg,
+		repoName,
+		string(ref.Name()),
+		shortSHA,
+		job_description,
+	)
+	job.UpdateCommitToJobIdState(shortSHA, job_id)
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -739,13 +736,263 @@ func manual_build(c *echo.Context) error {
       </div>
     </div>
  </body>
-</html>`, 
-	html.Header(), 
-	html.NavBar(user_is_logged(c)),
-	c.Param("repo"),
-	c.Param("repo"),
-	job_id, 
-	),
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			c.Param("repo"),
+			c.Param("repo"),
+			job_id,
+		),
 	)
 
+}
+
+func login_form(c *echo.Context) error {
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  	<div>
+			<p class="title">DSCI Login</p>
+    	</div>
+		<form id="login-form" action="/login" method="POST">
+      		<div class="field">
+        		<label class="label">Login</label>
+          			<div class="control">
+            			<input name="login" class="input" type="text" placeholder="username">
+          			</div>
+		          <p class="help">Login/Username</p>
+      		</div>
+      		<div class="field">
+        		<label class="label">Password</label>
+          			<div class="control">
+            			<input name="password" class="input" type="password" placeholder="password">
+          			</div>
+		          <p class="help">Password/Token</p>
+      		</div>
+			<button id="submit-btn" class="button is-primary" type="submit">Submit</button>
+		</form>
+	</div>
+ </body>
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+		))
+}
+
+func create_session(c *echo.Context) error {
+
+	user := new(types.Session)
+
+	if err := c.Bind(user); err != nil {
+		return c.String(http.StatusBadRequest, "Wrong input data")
+	}
+
+	//log.Printf("create_session: %s %s", user.Login, user.Password)
+
+	if !(user.Login == AppConfig.GitAuthUser && user.Password == AppConfig.GitAuthPassword) {
+		return c.HTML(
+			http.StatusOK,
+			fmt.Sprintf(
+				`%s %s
+		<div class="container">
+		    <div>
+			  <p class="title">	
+			    <div class="help is-danger">Bad credentials</div>
+			  </p>
+      		</div>
+		</div>
+	 </body>
+	</html>`,
+				html.Header(),
+				html.NavBar(user_is_logged(c)),
+			),
+		)
+	}
+
+	dname := utils.SessionCacheRootDir()
+
+	err := os.MkdirAll(dname, 0755)
+
+	if err != nil {
+		log.Printf("create_session: error creating directory %s: %s", dname, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating directory")
+	}
+
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	var sb strings.Builder
+	length := 10
+	sb.Grow(length)
+	for i := 0; i < length; i++ {
+		// rand.IntN picks a random index from the charset
+		sb.WriteByte(charset[rand.IntN(len(charset))])
+	}
+	cookie := new(http.Cookie)
+	session_id := sb.String()
+
+	// Configure mandatory and security attributes
+	cookie.Name = "user_session"
+	cookie.Value = session_id
+	cookie.Path = "/"                               // Accessible across the entire domain
+	cookie.Expires = time.Now().Add(48 * time.Hour) // Valid for 2 days
+
+	// Security Configurations (Highly Recommended)
+	cookie.HttpOnly = true // Prevents JavaScript/XSS attacks from reading the cookie
+	//cookie.Secure = true    // Forces cookie transport only over HTTPS
+	cookie.SameSite = http.SameSiteLaxMode // Protection against CSRF attacks
+
+	// Send the cookie to the browser using Echo's Context
+	c.SetCookie(cookie)
+
+	// Create the file (or truncate it if it already exists)
+
+	path := dname + "/" + session_id + ".json"
+	file, err := os.Create(path)
+	if err != nil {
+		log.Printf("create_session: error creating file: %s", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating file")
+	}
+	defer file.Close()
+
+	// Create a JSON encoder and write directly to the file
+	encoder := json.NewEncoder(file)
+
+	// Optional: Make the JSON file human-readable (pretty-printed)
+	encoder.SetIndent("", "    ")
+
+	user.Password = "<censored>"
+
+	err = encoder.Encode(user)
+
+	if err != nil {
+		log.Printf("create_session: error encoding session into json: %s", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "error encoding session into json")
+	}
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	    <div>
+        <p class="title">User session</p>
+         <hr>
+			  Successfully logged in
+      </div>
+    </div>
+ </body>
+</html>`,
+			html.Header(),
+			html.NavBar(true),
+		),
+	)
+}
+
+func drop_session(c *echo.Context) error {
+
+	cookie, err := c.Cookie("user_session")
+
+	if err == nil {
+
+		session := cookie.Value
+
+		if session != "" {
+
+			cookie := new(http.Cookie)
+			cookie.Name = "user_session"
+			cookie.Value = session
+			cookie.Path = "/"
+			cookie.MaxAge = -1
+			cookie.HttpOnly = true
+			c.SetCookie(cookie)
+
+			path := fmt.Sprintf("%s/%s.json", utils.SessionCacheRootDir(), session)
+
+			_, err = os.Stat(path)
+
+			if err == nil {
+				fmt.Printf("drop_session: delete session file: %s\n", path)
+				err := os.Remove(path)
+				if err != nil {
+					fmt.Printf("drop_session: can't remove session file %v\n", err)
+				} else {
+					fmt.Printf("drop_session: delete session file OK\n")
+				}
+			}
+
+		}
+
+	}
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	    <div>
+        <p class="title">User session</p>
+        <hr>
+		Successfully logged out
+      </div>
+    </div>
+ </body>
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+		),
+	)
+}
+
+func user_is_logged(c *echo.Context) bool {
+
+	cookie, err := c.Cookie("user_session")
+
+	if err != nil {
+		return false
+	}
+
+	session := cookie.Value
+
+	if session == "" {
+		return false
+	}
+
+	//fmt.Printf("user_is_logged: session: %s\n", session)
+
+	path := fmt.Sprintf("%s/%s.json", utils.SessionCacheRootDir(), session)
+
+	_, err = os.Stat(path)
+
+	//fmt.Printf("user_is_logged: session file: %s\n", path)
+
+	if errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("user_is_logged: session file: %s does not exist\n", path)
+		return false
+	}
+
+	file, err := os.Open(path)
+
+	if err != nil {
+		fmt.Printf("user_is_logged: Error opening file: %v\n", err)
+		return false
+	}
+
+	defer file.Close() // Ensure the file is closed later
+
+	// 3. Create an instance of your struct
+	var user types.Session
+
+	// 4. Decode the file content directly into the struct
+	decoder := json.NewDecoder(file)
+
+	if err := decoder.Decode(&user); err != nil {
+		fmt.Printf("user_is_logged: Error decoding JSON: %v\n", err)
+		return false
+	}
+
+	//fmt.Printf("user_is_logged:  true\n")
+
+	return true
 }

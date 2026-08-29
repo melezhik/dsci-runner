@@ -24,31 +24,31 @@ func GitCacheRootDir() string {
 
 func GitCloneCacheRootDir() string {
 
-  hdir, _ := os.UserHomeDir()
+	hdir, _ := os.UserHomeDir()
 
-  return fmt.Sprintf("%s/.dsci/gitclonecache", hdir)
+	return fmt.Sprintf("%s/.dsci/gitclonecache", hdir)
 
 }
 
 func JobHistoryCacheDir() string {
 
-  hdir, _ := os.UserHomeDir()
+	hdir, _ := os.UserHomeDir()
 
-  return fmt.Sprintf("%s/.dsci/job_history", hdir)
+	return fmt.Sprintf("%s/.dsci/job_history", hdir)
 
 }
 
 func CreateJobHistoryCacheDir() string {
 
-  dir := JobHistoryCacheDir()
+	dir := JobHistoryCacheDir()
 
-  err := os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0755)
 
-  if err != nil {
-    log.Fatalf("CreateJobHistoryCacheDir: Error creating directory: %s", err)
-  }
+	if err != nil {
+		log.Fatalf("CreateJobHistoryCacheDir: Error creating directory: %s", err)
+	}
 
-  return dir
+	return dir
 }
 
 func DsciRootDir() string {
@@ -128,11 +128,11 @@ func SparkyCacheDir(job_id string) string {
 }
 
 func SparkyCacheDirDocker(job_id string, cr string) string {
-  if cr == "podman" {
-	  return fmt.Sprintf("/home/ubuntu/.dsci/.sparky/.cache/%s", job_id)
-  } else {
-	  return fmt.Sprintf("/home/worker/.sparky/.cache/%s", job_id)
-  }
+	if cr == "podman" {
+		return fmt.Sprintf("/home/ubuntu/.dsci/.sparky/.cache/%s", job_id)
+	} else {
+		return fmt.Sprintf("/home/worker/.sparky/.cache/%s", job_id)
+	}
 }
 
 func CreateSparkyCacheDir(job_id string) string {

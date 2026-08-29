@@ -3,15 +3,15 @@ package git
 // git related types and functions
 
 import (
-	"net/http"
 	"encoding/hex"
+	"net/http"
 	//"github.com/labstack/echo/v5"
 	"bufio"
+	"bytes"
+	"fmt"
+	"io"
 	"log"
 	"strings"
-	"io"
-	"fmt"
-	"bytes"
 )
 
 // statusWriter intercepts and records the written HTTP status
@@ -32,15 +32,14 @@ func (w *StatusWriter) WriteHeader(statusCode int) {
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
-
-func HandleGitPush(c []byte) ([]GitUpdate)  {
+func HandleGitPush(c []byte) []GitUpdate {
 
 	var updates []GitUpdate
 
 	reader := bufio.NewReader(bytes.NewReader(c))
 
 	for {
-		log.Printf("uuuu");
+		log.Printf("uuuu")
 		// Read the 4-byte hex length prefix
 		lenBytes := make([]byte, 4)
 		_, err := io.ReadFull(reader, lenBytes)
@@ -59,12 +58,12 @@ func HandleGitPush(c []byte) ([]GitUpdate)  {
 			return updates
 			//return c.String(http.StatusInternalServerError, "Invalid hex length")
 		}
-		
+
 		length := int(lineLen[0])<<8 | int(lineLen[1])
 
 		// Flush packet (0000) signals the end of the ref update section
 		if length == 0 {
-			break 
+			break
 		}
 
 		// Read the actual data slot (length includes the 4 bytes prefix)
@@ -76,17 +75,17 @@ func HandleGitPush(c []byte) ([]GitUpdate)  {
 		}
 
 		line := string(dataBytes)
-		log.Printf("uuuu, line: %s",line);
+		log.Printf("uuuu, line: %s", line)
 
 		// Parse the ref update line: "old_commit new_commit ref_name\0optional_capabilities"
 		parts := strings.Split(line, " ")
 		if len(parts) >= 3 {
 			oldCommit := parts[0]
 			newCommit := parts[1]
-			
+
 			// Extract ref and clean up trailing null bytes/spaces
 			refName := strings.TrimSpace(strings.Split(parts[2], "\x00")[0])
-			
+
 			// Extract branch name if it is a heads ref
 			branchName := ""
 			if strings.HasPrefix(refName, "refs/heads/") {
@@ -104,14 +103,14 @@ func HandleGitPush(c []byte) ([]GitUpdate)  {
 
 	// 3. Do something with the extracted data
 	for _, update := range updates {
-		fmt.Printf("Push Detected!\nBranch: %s\nOld Commit: %s\nNew Commit: %s\n", 
+		fmt.Printf("Push Detected!\nBranch: %s\nOld Commit: %s\nNew Commit: %s\n",
 			update.BranchName, update.OldCommit, update.NewCommit)
 	}
 
-	log.Printf("result: %s",updates)
+	log.Printf("result: %s", updates)
 
 	return updates
-	// Note: To make the git client happy, you would usually forward the remaining 
+	// Note: To make the git client happy, you would usually forward the remaining
 	// stream data to an actual `git-receive-pack` binary and return its response.
 	//return c.String(http.StatusOK, "OK")
 }

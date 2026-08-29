@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string) {
+func JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string, description string) {
 
 	var q types.JobRequest
 	//now := time.Now()
@@ -196,40 +196,40 @@ func JobQueueFs(r types.JobRequest, cr string) {
 
 }
 
-func UpdateCommitToJobIdState (sha string, job_id string) {
+func UpdateCommitToJobIdState(sha string, job_id string) {
 
-  log.Printf("UpdateCommitToJobIdState: sha:%s job_id:%s\n", sha, job_id)
+	log.Printf("UpdateCommitToJobIdState: sha:%s job_id:%s\n", sha, job_id)
 
-  dir := utils.CreateJobHistoryCacheDir()
+	dir := utils.CreateJobHistoryCacheDir()
 
-  path := fmt.Sprintf("%s/%s", dir, sha)
+	path := fmt.Sprintf("%s/%s", dir, sha)
 
-  err := os.WriteFile(path, []byte(job_id), 0644)
-  if err != nil {
-    log.Fatalf("UpdateCommitToJobIdState: error writting to file: %s %s\n",path, err)
-  }
+	err := os.WriteFile(path, []byte(job_id), 0644)
+	if err != nil {
+		log.Fatalf("UpdateCommitToJobIdState: error writting to file: %s %s\n", path, err)
+	}
 }
 
-func CommitToJobId (sha string) (string) {
+func CommitToJobId(sha string) string {
 
-  dir := utils.JobHistoryCacheDir()
+	dir := utils.JobHistoryCacheDir()
 
-  path := fmt.Sprintf("%s/%s", dir, sha)
+	path := fmt.Sprintf("%s/%s", dir, sha)
 
-  dat, err := os.ReadFile(path)
+	dat, err := os.ReadFile(path)
 
-  if errors.Is(err, os.ErrNotExist) {
-    log.Printf("CommitToJobId: file %s don't exist - returning empty job_id", path)
-    return ""
-  }
+	if errors.Is(err, os.ErrNotExist) {
+		log.Printf("CommitToJobId: file %s don't exist - returning empty job_id", path)
+		return ""
+	}
 
-  if err != nil {
-    log.Fatalf("CommitToJobId: can't read file path: %s err: %err", path, err)
-  }
+	if err != nil {
+		log.Fatalf("CommitToJobId: can't read file path: %s err: %err", path, err)
+	}
 
-  log.Printf("CommitToJobId: return sha:%s job_id:%s\n", sha, dat)
+	log.Printf("CommitToJobId: return sha:%s job_id:%s\n", sha, dat)
 
-  return string(dat)
+	return string(dat)
 }
 
 func PutJobStash(p string, job_id string, data interface{}) {
@@ -359,9 +359,9 @@ func JobState(p string, job_id string) string {
 
 	state := "-2"
 
-  if job_id == "" {
-    return state
-  }
+	if job_id == "" {
+		return state
+	}
 
 	active_state := ""
 

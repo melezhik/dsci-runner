@@ -1,15 +1,18 @@
 package main
 
 import (
-
+	"bufio"
+	"bytes"
+	"dsci_runner/git"
 	"dsci_runner/job"
 	"dsci_runner/types"
 	"dsci_runner/utils"
-	"dsci_runner/git"
-	"bufio"
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
+	go_git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,28 +20,24 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/cgi"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-	"net/http/cgi"
-	"bytes"
-	"errors"
-	go_git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing"
 
+	"context"
 	"os/signal"
 	"syscall"
-	"context"
 )
 
 // Git related constants
 // TODO: move to ~/.dsci.toml
 
 const (
-	repoRoot     = ".repositories"
-	sshAddr      = ":2222"
+	repoRoot = ".repositories"
+	sshAddr  = ":2222"
 )
 
 //go:embed common
@@ -47,8 +46,8 @@ var staticFiles12 embed.FS
 var AppConfig types.AppConfig
 
 type ChangeFilePayload struct {
-	Code  string `form:"code"`
-	Message  string `form:"message"`
+	Code    string `form:"code"`
+	Message string `form:"message"`
 }
 
 func main() {
@@ -59,11 +58,11 @@ func main() {
 		return
 	}
 
-  err := os.MkdirAll(repoRoot, 0755)
+	err := os.MkdirAll(repoRoot, 0755)
 
-  if err != nil {
-    log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
-  }
+	if err != nil {
+		log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
+	}
 
 	path := utils.DsciConfigFile()
 
@@ -87,7 +86,7 @@ func main() {
 	if AppConfig.GitPathToHttpBackend == "" {
 		AppConfig.GitPathToHttpBackend = "/usr/lib/git-core/git-http-backend"
 	}
-	
+
 	if AppConfig.GitServerAddress == "" {
 		AppConfig.GitServerAddress = "http://localhost:8080"
 	}
@@ -125,9 +124,8 @@ func main() {
 	e1.GET("/repo/:repo/file_edit/:file", edit_file)
 	e1.GET("/repo/:repo/dir/:dir", list_files)
 	e1.GET("/builds", builds)
-	e1.POST("/repo/:repo/build",manual_build)
+	e1.POST("/repo/:repo/build", manual_build)
 	e1.GET("/livebuilds", livebuilds)
-
 
 	// e1.POST("/repo/create", create_repo)
 	// e1.GET("/repo/create", create_repo_form)
@@ -142,7 +140,6 @@ func main() {
 	e2.PUT("/file/project/:project/job/:job_id/filename/:filename", put_job_file)
 	e2.GET("/file/:project/:job_id/:filename", get_job_file)
 
-	
 	e2.GET("/stash/:project/:key", get_job_stash)
 	e2.GET("/status/:project/:key", status)
 	e2.GET("/report/ui/:project/:key", report_ui)
@@ -155,22 +152,20 @@ func main() {
 	// =========================================================================
 	// Захватываем любые эндпоинты, заканчивающиеся на .git или содержащие его в пути
 
-
 	gitBackendPath := AppConfig.GitPathToHttpBackend
 
 	gitRoot, _ := filepath.Abs(repoRoot)
 
 	cgiHandler := &cgi.Handler{
-	    Path: gitBackendPath,
-	    Env: []string{
-	        "GIT_PROJECT_ROOT=" + gitRoot,
-	        "GIT_HTTP_EXPORT_ALL=1",
-	        "REMOTE_USER=foobarbaz",
-	    },
-	    Dir: gitRoot,
+		Path: gitBackendPath,
+		Env: []string{
+			"GIT_PROJECT_ROOT=" + gitRoot,
+			"GIT_HTTP_EXPORT_ALL=1",
+			"REMOTE_USER=foobarbaz",
+		},
+		Dir: gitRoot,
 	}
 
-	
 	e1.Any("/*", func(c *echo.Context) error {
 
 		// 1. Capture the Echo v5 Response (which is a raw http.ResponseWriter)
@@ -180,7 +175,7 @@ func main() {
 		sw := &git.StatusWriter{ResponseWriter: originalWriter, Status: 200}
 
 		// 3. Re-wrap the interceptor using Echo v5's layout wrapper
-		// Note: Echo v5's NewResponse expects (http.ResponseWriter, *slog.Logger) 
+		// Note: Echo v5's NewResponse expects (http.ResponseWriter, *slog.Logger)
 		// If using an older v5 beta, it might expect (http.ResponseWriter, *echo.Echo)
 		newEchoResponse := echo.NewResponse(sw, e1.Logger)
 
@@ -204,7 +199,7 @@ func main() {
 				if !ok || username != AppConfig.GitAuthUser || password != AppConfig.GitAuthPassword {
 					// 3. Set the WWW-Authenticate header so the browser/client prompts for credentials
 					c.Response().Header().Set("WWW-Authenticate", `Basic realm="DSCI Git Subscribed Area"`)
-					
+
 					// 4. Return 401 Unauthorized error
 					return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 				}
@@ -267,7 +262,7 @@ func main() {
 					)
 					shortSHA := data[0].NewCommit[:7]
 					job_description := fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
-          job_id :=  shortSHA
+					job_id := shortSHA
 					// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
 					job.JobQueue(
 						AppConfig,
@@ -278,7 +273,7 @@ func main() {
 						shortSHA,
 						job_description,
 					)
-          job.UpdateCommitToJobIdState(shortSHA,job_id)
+					job.UpdateCommitToJobIdState(shortSHA, job_id)
 				}
 			}
 		} else {
@@ -286,7 +281,6 @@ func main() {
 		}
 		return nil
 	})
-
 
 	server1 := &http.Server{
 		Addr:    "0.0.0.0:8080",

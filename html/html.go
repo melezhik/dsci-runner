@@ -2,10 +2,10 @@ package html
 
 import (
 	"embed"
+	"fmt"
+	"html"
 	"io/fs"
 	"log"
-  "fmt"
-  "html"
 )
 
 // html helpers
@@ -13,7 +13,7 @@ import (
 //go:embed builds.html
 var staticFiles embed.FS
 
-func Header () (string ) {
+func Header() string {
 	return `
 <html data-theme="dark">
   <head>
@@ -61,26 +61,26 @@ func Header () (string ) {
   `
 }
 
-func NavBar ( logged bool ) (string) {
+func NavBar(logged bool) string {
 
-  new_repo_ref := ""
+	new_repo_ref := ""
 
-  login_or_logout_ref := `
+	login_or_logout_ref := `
     <a href="/login" class="navbar-item">
         Login
     </a>`
 
-  if logged == true {
-      login_or_logout_ref = `
+	if logged == true {
+		login_or_logout_ref = `
       <a href="/logout" class="navbar-item">
         Logout
       </a>`
-      new_repo_ref = `
-      <a href="/repo/create" class="navbar-item">
+		new_repo_ref = `
+      <a href="/repo_create_form" class="navbar-item">
         New Repo
       </a>`
-  }
-return fmt.Sprintf(`
+	}
+	return fmt.Sprintf(`
 <div class="container">
 <nav class="navbar" role="navigation" aria-label="main navigation">
   <div class="navbar-brand">
@@ -129,34 +129,31 @@ return fmt.Sprintf(`
   </div>
 </nav>
 </div>
-`,new_repo_ref, login_or_logout_ref)
+`, new_repo_ref, login_or_logout_ref)
 }
 
-
-func LiveBuilds () (string) {
+func LiveBuilds() string {
 
 	content, err := fs.ReadFile(staticFiles, "builds.html")
 
 	if err != nil {
-			log.Fatalf("LiveBuilds: error reading common/sparrowfile: %s", err)
+		log.Fatalf("LiveBuilds: error reading common/sparrowfile: %s", err)
 	}
 
 	return string(content)
 
 }
 
+func CodeToHtml(code string) string {
 
-func CodeToHtml (code string) string {
+	safe := html.EscapeString(code)
 
-  safe := html.EscapeString(code)
-
-  return fmt.Sprintf("<pre><code>%s</code></pre>", safe)
+	return fmt.Sprintf("<pre><code>%s</code></pre>", safe)
 }
-
 
 func CopyPasteButtonScript() string {
 
-return `<script>	
+	return `<script>	
   document.getElementById('copyBtn').addEventListener('click', function() {
     var input = document.getElementById('copyInput');
     
@@ -179,4 +176,3 @@ return `<script>
   });
 </script>`
 }
-
