@@ -1,32 +1,30 @@
 FROM debian:latest
 
-RUN apt-get update && apt install python3 -yq wget git libssl-dev procps nano
+RUN apt-get update && apt install python3 -yq wget git libssl-dev procps nano curl
 
 RUN git config --global advice.detachedHead false
 
 RUN mkdir -p  ~/projects/rakupp && cd ~/projects/rakupp && \
-wget https://github.com/ash/rakupp/releases/download/v3.7.0/rakupp-linux-x86_64.tar.gz \
+wget https://github.com/ash/rakupp/releases/download/v3.23.0/rakupp-linux-x86_64.tar.gz \
 && tar -xzf rakupp-linux-x86_64.tar.gz && cd rakupp
 
 ENV PATH=/root/projects/rakupp/rakupp/bin/:/root/.raku/bin:$PATH
 
-RUN apt-get install curl -yqq
+ENV SP6_RAKU_COMP=rakupp
 
 RUN rakupp install --no-test JSON::Name JSON::Fast
 
-RUN rakupp install --no-test Sparrow6 
+RUN echo OK3 && \
+cd /root/projects && \
+git clone https://github.com/melezhik/Sparrow6.git && \
+cd Sparrow6 && \
+git checkout rakupp && \
+rakupp install --no-test .
 
 RUN rakupp install --no-test Sparky-Job-Api --no-test
-
-RUN cd /bin && ln -s /root/projects/rakupp/rakupp/bin/rakupp raku
-
-RUN raku -V
-
-RUN echo OK2 && cd /root/projects && git clone https://github.com/melezhik/Sparrow6.git && cd Sparrow6 && git checkout rakupp && git log
-
-ENV RAKULIB=/root/projects/Sparrow6/lib
 
 RUN raku -MSparrow6::Task::Repository -e Sparrow6::Task::Repository::Api.new.index-update
 
 RUN echo 'export PATH=/root/projects/rakupp/rakupp/bin/:/root/.raku/bin:$PATH' >> ~/.profile
-RUN echo 'export RAKULIB=/root/projects/Sparrow6/lib' >> ~/.profile
+
+RUN echo 'SP6_RAKU_COMP=rakupp' >> ~/.profile
