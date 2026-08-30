@@ -14,7 +14,10 @@ ENV SP6_RAKU_COMP=rakupp
 
 RUN rakupp install --no-test JSON::Name JSON::Fast File::Directory::Tree
 
-RUN rakupp install --no-test Sparrow6 Sparky-Job-Api
+RUN mkdir -p ~/projects && git clone https://github.com/melezhik/Sparrow6.git && \
+cd Sparrow6 && git checkout rakupp && rakupp install --no-test .
+
+RUN rakupp install --no-test Sparky-Job-Api
 
 RUN raku -MSparrow6::Task::Repository -e Sparrow6::Task::Repository::Api.new.index-update
 
