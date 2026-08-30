@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+  "path"
 )
 
 type ChangeFilePayload struct {
@@ -1049,21 +1050,31 @@ func create_repo(c *echo.Context) error {
 		return c.String(http.StatusBadRequest, "Wrong input data")
 	}
 
-	repoName := r.Repo
+	repoName := strings.ReplaceAll(r.Repo," ", "")
 
-	if ! strings.HasSuffix(repoName, ".git") {
-		repoName = fmt.Sprintf("%s.git",repoName)
+  base := path.Base(r.Repo)
+
+  isGitUrl := true
+
+  if base == r.Repo {
+    isGitUrl = false
+  }
+
+
+	if ! strings.HasSuffix(base, ".git") {
+		base = fmt.Sprintf("%s.git",base)
 	}
 
-	log.Printf("create_repo: %s, migrate: %s",repoName,r.Migrate)
+	log.Printf("create_repo: base: %s, repoName, isGitUrl: %s", base, repoName, isGitUrl)
 
 	dname, _ := filepath.Abs(repoRoot)
 
-	cmd := exec.Command("git","init","--bare",repoName)
+	cmd := exec.Command("git","init","--bare", base)
 
-	if r.Migrate == "on" {
-		cmd = exec.Command("git","clone","--bare",repoName)
+	if isGitUrl {
+		cmd = exec.Command("git","clone","--bare", repoName, base)
 	}
+
 	cmd.Dir = dname
 
 	log.Printf("create_repo: git init command: %s",cmd)
@@ -1096,13 +1107,9 @@ func create_repo(c *echo.Context) error {
 
 	log.Printf("create_repo: creating git clone chache dir: %s OK", dname)
 
-	RepoURL := fmt.Sprintf("http://localhost:8080/%s", repoName)
-
-	fmt.Printf("create_repo: RepoURL: %s\n", RepoURL)
-
 	var repo *go_git.Repository 
 
-	if r.Migrate == "" {
+	if isGitUrl == false {
 
 		fmt.Printf("create_repo: init empty local git repository: %s ...\n", dname)
 
@@ -1113,7 +1120,7 @@ func create_repo(c *echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to init empty repo")
 		}
 		// Create origin remote pointing to the empty target
-		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",repoName)
+		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",base)
 		_, err = repo_.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
 			URLs: []string{remote_url},
@@ -1126,9 +1133,9 @@ func create_repo(c *echo.Context) error {
 	} else {
 
 		fmt.Println("create_repo: cloning repository ...")
-
+    remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",base)
 		repo_, err := go_git.PlainClone(dname, &go_git.CloneOptions{
-			URL: RepoURL,
+			URL: remote_url,
 		})
 	
 		if err != nil {
@@ -1226,6 +1233,6 @@ func create_repo(c *echo.Context) error {
 
 	fmt.Println("create_repo: Successfully committed and pushed file to bare repository!")
 
-	return c.Redirect(http.StatusMovedPermanently, "/repo/" + repoName)
+	return c.Redirect(http.StatusMovedPermanently, "/repo/" + base)
 
 }
