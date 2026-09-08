@@ -4,23 +4,34 @@ RUN apt-get update && apt install python3 -yq wget git libssl-dev procps nano cu
 
 RUN git config --global advice.detachedHead false
 
-RUN mkdir -p  ~/projects/rakupp && cd ~/projects/rakupp && \
-wget https://github.com/ash/rakupp/releases/download/v3.23.0/rakupp-linux-x86_64.tar.gz \
-&& tar -xzf rakupp-linux-x86_64.tar.gz && cd rakupp
+#RUN mkdir -p  ~/projects/rakupp && cd ~/projects/rakupp && \
+#wget https://github.com/ash/rakupp/releases/download/v3.23.0/rakupp-linux-x86_64.tar.gz \
+#&& tar -xzf rakupp-linux-x86_64.tar.gz && cd rakupp
 
-ENV PATH=/root/projects/rakupp/rakupp/bin/:/root/.raku/bin:$PATH
+RUN mkdir -p  /root/.local/bin/ && ls -l /root/.local/bin
+
+COPY .dist/rakupp  /root/.local/bin/rakupp
+
+RUN mkdir -p ~/.local/libexec/rakupp/
+
+COPY .dist/install.raku /root/.local/libexec/rakupp/install.raku
+
+ENV PATH=/root/.local/bin/:/root/.raku/bin:$PATH
+
+RUN echo 'export PATH=/root/.local/bin/:/root/.raku/bin:$PATH' >> ~/.profile
+
+RUN echo 'SP6_RAKU_COMP=rakupp' >> ~/.profile
+
+RUN rakupp -v
 
 ENV SP6_RAKU_COMP=rakupp
 
 RUN rakupp install --no-test JSON::Name JSON::Fast File::Directory::Tree
 
-RUN mkdir -p ~/projects && git clone https://github.com/melezhik/Sparrow6.git && \
-cd Sparrow6 && git checkout rakupp && rakupp install --no-test .
+RUN mkdir -p ~/projects && cd ~/projects/ && git clone https://github.com/melezhik/Sparrow6.git && \
+cd Sparrow6 && rakupp install --no-test .
 
 RUN rakupp install --no-test Sparky-Job-Api
 
-RUN raku -MSparrow6::Task::Repository -e Sparrow6::Task::Repository::Api.new.index-update
+RUN rakupp -MSparrow6::Task::Repository -e Sparrow6::Task::Repository::Api.new.index-update
 
-RUN echo 'export PATH=/root/projects/rakupp/rakupp/bin/:/root/.raku/bin:$PATH' >> ~/.profile
-
-RUN echo 'SP6_RAKU_COMP=rakupp' >> ~/.profile
