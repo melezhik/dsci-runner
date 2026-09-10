@@ -13,7 +13,11 @@ does Sparky::JobApi::Role
 {
 
   method !version {
-      return "0.1.0"
+      say "rakupp version";
+      run "rakupp", "-v";
+      say "sparrow version";
+      run "s6", "--version";
+      return "0.1.1";
   }
 
   method !validate-cond-expression ($exp,$debug = False) {
@@ -140,47 +144,12 @@ does Sparky::JobApi::Role
 
       my %_dsci;
     
-      if $localhost-mode {
-
-        unless tags()<DsciAgentSkipBootstrap> {
-          my $j = Sparky::JobApi.new(
-              :project("job.bootstrap"),
-          );
-
-          $j.queue({
-              :description("dsci bootstrap"),
-              :tags(%(stage => "bootstrap", SPARKY_HOST => "127.0.0.1")),
-              :sparrowdo(%(
-                :host<127.0.0.1>,
-                :ssh_user(%*ENV<HOST_SSH_USER>),
-                :bootstrap,
-                :no_sudo,
-              )),
-          });
-
-          my $st = self.wait-job($j);
-
-          if ! $st<OK> {
-            $status = False;
-            my $eff-status = $st<TIMEOUT> ?? "TIMEOUT" !! "FAIL";
-            say "dsci bootstrap ... [$eff-status]";
-            say "...";
-            say $j.report();
-          } else {
-            say "dsci bootstrap ... [OK]";
-            say "...";
-            say $j.report();
-          }
-
-        }
-
-      } else {
-
         if $cr eq "docker" {
           bash "sudo chmod 666 /var/run/docker.sock";
         }
 
         bash "$cr stop -t 1 dsci-agent || :";
+        bash "$cr rm dsci-agent || :";
 
         my @env;
 
@@ -223,6 +192,7 @@ does Sparky::JobApi::Role
             say "dsci agent bootstrap ... [$eff-status]";
             say "...";
             say $j.report();
+            die "bootstrap job failed";
           } else {
             say "dsci agent bootstrap ... [OK]";
             say "...";
@@ -230,8 +200,6 @@ does Sparky::JobApi::Role
           }
 
         }
-
-      }
 
       if $status {
 
@@ -282,8 +250,7 @@ does Sparky::JobApi::Role
             %tags<path> = $job<path>
           } else {
             $status = False;
-            say "neither path nor path is set";
-            last;
+            die "neither path nor plugin is set";
           }
 
           if $job<debug> {
@@ -316,8 +283,7 @@ does Sparky::JobApi::Role
               :tags(%tags),
               sparrowdo => %(
                 :no_sudo,
-                :host<127.0.0.1>,
-                :ssh_user("{%*ENV<HOST_SSH_USER>}"),
+                :localhost,
               ),
             });
           } else {
@@ -339,7 +305,8 @@ does Sparky::JobApi::Role
             say "job {$job<id>} ... [$eff-status]";
             say "...";
             say $j.report();
-            last;
+            die "child job <{$job<id>}> failed";
+            #last;
           }
 
           my $job-data = $j.get-stash();
@@ -359,13 +326,15 @@ does Sparky::JobApi::Role
         }
       }
 
-      if $status == False {
-        die "some child jobs failed"
-      }
+      #if $status == False {
+      #  die "some child jobs failed"
+      #}
     }
   }
 
   method stage-bootstrap {
+
+    say "runner version: {self!version()}";
 
     package-install "git";
 
@@ -385,6 +354,8 @@ does Sparky::JobApi::Role
 
     #say tags().raku;
 
+    say "runner version: {self!version()}";
+
     my $me = Sparky::JobApi.new( :mine );
 
     say "run job: {tags()<job_id>}";
@@ -395,6 +366,8 @@ does Sparky::JobApi::Role
 
     my $artifacts = $me.get-stash()<dsci><dsci_artifacts>;
 
+    #say $artifacts.raku;
+
     my $job-id = tags()<dispatcher_job_id>;
     my $project = "dsci";
     my $dispatcher = Sparky::JobApi.new( :$job-id, :$project );
@@ -403,9 +376,9 @@ does Sparky::JobApi::Role
 
     if $artifacts {
       say "load artifacts from previous jobs ...";
-      for $artifacts<> -> $i {
+      for $artifacts.flat -> $i {
         say "load $i ..."; 
-        my $data = $dispatcher.get-file($i);
+        my $data = $dispatcher.get-file($i.IO.basename);
         $i.IO.spurt($data);
         move($i,"{%*ENV<HOME>}/artifacts/$i");
         say "{%*ENV<HOME>}/artifacts/$i OK"; 

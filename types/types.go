@@ -1,15 +1,15 @@
 package types
 
 type AppConfig struct {
-	DsciFeedbackUrl        			string
-	DsciAgentSkipBootstrap 			bool
-	DsciAgentImage         			string
-	DsciAllowLocalhostModeRepos 	[]string
- 	DsciContainerRuntime            string
- 	GitPathToHttpBackend            string
-	GitServerAddress			    string	
-	GitAuthUser						string
-	GitAuthPassword					string
+	DsciFeedbackUrl             string
+	DsciAgentSkipBootstrap      bool
+	DsciAgentImage              string
+	DsciAllowLocalhostModeRepos []string
+	DsciContainerRuntime        string
+	GitPathToHttpBackend        string
+	GitServerAddress            string
+	GitAuthUser                 string
+	GitAuthPassword             string
 }
 
 type Config struct {
@@ -69,8 +69,7 @@ type JobBuild struct {
 	State       int
 }
 
-
 type Session struct {
-	Login   	string `form:"login"`
-	Password    string `form:"password"`
+	Login    string `form:"login"`
+	Password string `form:"password"`
 }

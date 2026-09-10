@@ -4,3 +4,4 @@
 go.sum
 dsci_runner
 .repositories
+.dist/
