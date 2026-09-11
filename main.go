@@ -7,7 +7,6 @@ import (
 	"dsci_runner/job"
 	"dsci_runner/types"
 	"dsci_runner/utils"
-	"embed"
 	"errors"
 	"flag"
 	"fmt"
@@ -30,6 +29,7 @@ import (
 	"context"
 	"os/signal"
 	"syscall"
+  _ "embed"
 )
 
 // Git related constants
@@ -40,8 +40,11 @@ const (
 	sshAddr  = ":2222"
 )
 
-//go:embed common
-var staticFiles12 embed.FS
+//go:embed common/sparky.yaml
+var sparky_yaml []byte
+
+//go:embed common/sparrowfile
+var dsci_sparrowfile []byte
 
 var AppConfig types.AppConfig
 
@@ -53,13 +56,43 @@ func main() {
 		return
 	}
 
-	err := os.MkdirAll(repoRoot, 0755)
+  utils.CreateSparkyProjectDir("dsci");
+
+  hdir, _ := os.UserHomeDir()
+
+  path := fmt.Sprintf("%s/sparky.yaml",hdir);
+
+	err := os.WriteFile(path, sparky_yaml, 0644)
+
+	if err != nil {
+		log.Fatalf("main: error creating file %s: %s",path,err)
+	}
+
+  log.Printf("main: creating file %s OK\n",path)
+
+  path = fmt.Sprintf("%s/sparrowfile",utils.SparkyProjectDir("dsci"))
+
+  err = os.WriteFile(path, dsci_sparrowfile, 0644)
+
+  if err != nil {
+    log.Fatalf("main: error creating file %s: %s",path,err)
+  }
+
+  log.Printf("main: creating file %s OK\n",path)
+
+  err = os.MkdirAll(repoRoot, 0755)
+
+  if err != nil {
+    log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
+  }
+
+	err = os.MkdirAll(repoRoot, 0755)
 
 	if err != nil {
 		log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
 	}
 
-	path := utils.DsciConfigFile()
+	path = utils.DsciConfigFile()
 
 	dat, err := os.ReadFile(path)
 
@@ -300,7 +333,7 @@ func main() {
 
 	// Запуск второго сервера в фоне (неблокирующий)
 	go func() {
-		log.Println("Start ptivate dsci server, port :8181...")
+		log.Println("Start private dsci server, port :8181...")
 		if err := server2.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- fmt.Errorf("private dsci server error: %w", err)
 		}
