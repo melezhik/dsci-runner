@@ -14,8 +14,6 @@ COPY .dist/rakupp  /root/.local/bin/rakupp
 
 RUN mkdir -p ~/.local/libexec/rakupp/
 
-COPY .dist/install.raku /root/.local/libexec/rakupp/install.raku
-
 ENV PATH=/root/.local/bin/:/root/.raku/bin:$PATH
 
 RUN echo 'export PATH=/root/.local/bin/:/root/.raku/bin:$PATH' >> ~/.profile

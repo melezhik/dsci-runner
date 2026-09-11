@@ -12,11 +12,7 @@ wget -S https://github.com/ash/rakupp/releases/download/v3.26.0/rakupp-linux-x86
 
 #COPY .dist/rakupp  /root/.local/bin/rakupp
 
-#COPY .dist/install.raku /root/.local/libexec/rakupp/install.raku
-
 RUN cp ~/projects/rakupp/rakupp/bin/rakupp  /root/.local/bin/rakupp
-
-RUN cp  ~/projects/rakupp/rakupp/libexec/rakupp/install.raku /root/.local/libexec/rakupp/install.raku
 
 ENV PATH=/root/.local/bin/:/root/.raku/bin:$PATH
 
