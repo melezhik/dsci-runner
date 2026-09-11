@@ -13,8 +13,8 @@ does Sparky::JobApi::Role
 {
 
   method !version {
-      say "rakupp version";
-      run "rakupp", "-v";
+      say "raku version";
+      run "raku", "-v";
       say "sparrow version";
       run "s6", "--version";
       return "0.1.1";
