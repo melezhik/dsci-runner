@@ -1295,8 +1295,10 @@ func git_diff (c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate patch")
 	}
 
-	// 6. Выводим результат в стандартном формате Unified Diff
-	fmt.Println(patch.String())
+	authorName := currentCommit.Author.Name
+	//authorEmail := currentCommit.Author.Email
+	commitDate := currentCommit.Author.When.Format("2006-01-02 15:04:05") // Тип time.Time
+	commitMessage := currentCommit.Message
 
 	return c.HTML(
 		http.StatusOK,
@@ -1306,6 +1308,8 @@ func git_diff (c *echo.Context) error {
 	  <div>
         <p class="title"><a href="/repo/%s">%s</a></p>
         <hr>
+		<strong>%s</strong> | %s by %s | %s 
+		<hr>
         <pre><code>%s</code></pre>
       </div>
     </div>
@@ -1313,8 +1317,9 @@ func git_diff (c *echo.Context) error {
 </html>`,
 			html.Header(),
 			html.NavBar(user_is_logged(c)),
-			c.Param("repo"),
-			c.Param("repo"),
+			c.Param("repo"), c.Param("repo"),  			
+			currentCommit.Hash.String()[:7], commitMessage,
+			authorName, commitDate,
 			patch.String(),
 		),
 	)
