@@ -314,8 +314,8 @@ func list_files(c *echo.Context) error {
 			</div>
 		</div>
 		</form>
-		<span class="tag is-dark is-medium">%s | %s by %s </span> %s
-		<hr>	
+		<span class="tag is-dark is-medium"><a href="/repo/%s/commit/%s">%s</a>&nbsp;| %s by %s </span> %s
+		<hr>
         <pre>%s</pre>
 		%s
     	</div>
@@ -327,7 +327,8 @@ func list_files(c *echo.Context) error {
 			uplink,
 			AppConfig.GitServerAddress,
 			c.Param("repo"), c.Param("repo"),
-			shortSHA, commit.Message, commit.Author.Email, state_badge,
+      c.Param("repo"), commit.Hash.String(), shortSHA,
+      commit.Message, commit.Author.Email, state_badge,
 			data,
 			html.CopyPasteButtonScript(),
 		))
@@ -1236,3 +1237,87 @@ func create_repo(c *echo.Context) error {
 	return c.Redirect(http.StatusMovedPermanently, "/repo/" + base)
 
 }
+
+func git_diff (c *echo.Context) error {
+
+	gitRoot, _ := filepath.Abs(repoRoot)
+
+	repo_dir := gitRoot + "/" + c.Param("repo")
+
+	repo, err := go_git.PlainOpen(repo_dir)
+
+	if err != nil {
+		log.Printf("git_diff: failed to open repository: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to open repository")
+	}
+
+	// Хэш нужного коммита (передайте свой)
+	commitSHA := c.Param("commit") 
+
+	log.Printf("git_diff: repo: %s commitSHA: %s\n", c.Param("repo"), commitSHA)
+
+	// 2. Получаем объект текущего коммита
+	currentCommit, err := repo.CommitObject(plumbing.NewHash(commitSHA))
+	if err != nil {
+		log.Printf("git_diff: failed to find commit: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to find commit")
+	}
+
+	// 3. Получаем дерево файлов текущего коммита
+	currentTree, err := currentCommit.Tree()
+	if err != nil {
+		log.Printf("git_diff: failed to get current tree: %v\n", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to get current tree")
+	}
+
+	// 4. Находим родительский коммит, чтобы сравнить с ним
+	var parentTree *object.Tree
+	if currentCommit.NumParents() > 0 {
+		parentCommit, err := currentCommit.Parent(0)
+		if err != nil {
+			log.Printf("git_diff: failed to get parent commit: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get parent commit")
+		}
+		parentTree, err = parentCommit.Tree()
+		if err != nil {
+			log.Printf("git_diff: failed to get parent tree: %v\n", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get current tree")
+		}
+	} else {
+		// Если это самый первый (initial) коммит в репозитории, родителя нет.
+		// parentTree останется nil, go-git корректно покажет все файлы как добавленные.
+	}
+
+	// 5. Генерируем Patch (это и есть аналог git diff)
+	patch, err := parentTree.Patch(currentTree) // Важно: parent первый, current второй
+	if err != nil {
+		log.Printf("git_diff: Failed to generate patch: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate patch")
+	}
+
+	// 6. Выводим результат в стандартном формате Unified Diff
+	fmt.Println(patch.String())
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+	  <div>
+        <p class="title"><a href="/repo/%s">%s</a></p>
+        <hr>
+        <pre><code>%s</code></pre>
+      </div>
+    </div>
+ </body>
+</html>`,
+			html.Header(),
+			html.NavBar(user_is_logged(c)),
+			c.Param("repo"),
+			c.Param("repo"),
+			patch.String(),
+		),
+	)
+
+}
+

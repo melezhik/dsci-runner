@@ -147,6 +147,7 @@ func main() {
 	e1.GET("/logout", drop_session)
 	e1.GET("/", list_repos)
 	e1.GET("/repo/:repo", list_files)
+  e1.GET("/repo/:repo/commit/:commit", git_diff)
 	e1.GET("/repo/:repo/file/:file", dump_file)
 	e1.POST("/repo/:repo/file/:file", change_file)
 	e1.GET("/repo/:repo/file_edit/:file", edit_file)
