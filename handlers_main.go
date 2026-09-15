@@ -1330,7 +1330,7 @@ func job_artifact_list(c *echo.Context) error {
 
 	project := c.Param("project")
 
-	job_id := c.Param("key")
+	build_id := c.Param("build_id")
 
 	//data := job.Report(project, job_id)
 
@@ -1338,9 +1338,15 @@ func job_artifact_list(c *echo.Context) error {
 
 	//htmlOutput := ansihtml.ConvertToHTML([]byte(data))
 
-	entries, err := os.ReadDir(utils.SparkyJobFilesDir(project,job_id))
+	job_id := job.JobByBuildId(build_id)
 
-	if err != nil {
+	dir := utils.SparkyJobFilesDir(project,job_id)
+
+	entries, err := os.ReadDir(dir)
+
+	if err != nil && errors.Is(err, os.ErrNotExist) {
+		log.Printf("job_artifact_list: ReadDir dir: %s does not exist\n", dir)
+	} else if err != nil {
 		log.Fatalf("job_artifact_list: ReadDir error: %s", err)
 	}
 
