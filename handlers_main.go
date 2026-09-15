@@ -1410,6 +1410,26 @@ func view_job_file(c *echo.Context) error {
 
 	build_id := job.JobBuildIdByJobId(job_id)
 
+	ext := filepath.Ext(filename)
+
+	script := ""
+	data_out := ""
+	if ext == "md" {
+		script = `
+	<script type="text/javascript">
+        ;(() => {
+                const str = document.getElementById("data").textContent;
+                var p = document.getElementById("data");
+                const div = document.createElement('div');
+                //div.className = 'markdown-body';
+                p.innerHTML = markdown.default(str)
+                //document.body.appendChild(div)
+        })()
+  	</script>`
+	  data_out = fmt.Sprintf(`<p class="content" id="data">%s</p>`,data)
+	} else {
+		data_out = fmt.Sprintf("<pre>%s</pre>",data)
+	}
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -1420,9 +1440,10 @@ func view_job_file(c *echo.Context) error {
 		<hr>
 		<a href="/report/%s/%s/artifacts">artifacts</a>
 		<hr>
-        <pre>%s</pre>
+        %s
       </div>
     </div>
+%s
 </body>
 </html>`, 
 	html.Header(), html.NavBar(user_is_logged(c)), 
@@ -1431,6 +1452,8 @@ func view_job_file(c *echo.Context) error {
 	filename,
 	project, 
 	build_id, 
-	data))
+	data_out,
+	script,
+	))
 
 }
