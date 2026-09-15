@@ -1386,7 +1386,51 @@ func job_artifact_list(c *echo.Context) error {
 </body>
 </html>`, 
 html.Header(), html.NavBar(user_is_logged(c)), 
-project, 
-job_id, 
+project, job_id,
 data))
+}
+
+func view_job_file(c *echo.Context) error {
+
+	project := c.Param("project")
+
+	job_id := c.Param("job_id")
+
+	filename := c.Param("filename")
+
+	data, err := job.GetJobFile(
+		project,
+		job_id,
+		filename,
+	)
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "view_job_file: job.GetJobFile error")
+	}
+
+	build_id := job.JobBuildIdByJobId(job_id)
+
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+      <div>
+        <p class="title">Artifacts: %s@%s. File: %s</p>
+		<hr>
+		<a href="/report/%s/%s/artifacts">artifacts</a>
+		<hr>
+        <pre>%s</pre>
+      </div>
+    </div>
+</body>
+</html>`, 
+	html.Header(), html.NavBar(user_is_logged(c)), 
+	project, 
+	job_id,
+	filename,
+	project, 
+	build_id, 
+	data))
+
 }

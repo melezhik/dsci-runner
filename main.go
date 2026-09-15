@@ -162,7 +162,7 @@ func main() {
 	e1.GET("/report/ui/:project/:key", report_ui)
 	e1.GET("/report/ui2/:project/:build_id", report_ui2)
 	e1.GET("/report/:project/:build_id/artifacts", job_artifact_list)
-	e1.GET("/file_view/:project/:job_id/:filename", get_job_file)
+	e1.GET("/file_view/:project/:job_id/:filename", view_job_file)
 	e1.GET("/report/raw/:project/:key", report)
 
 	// private routes

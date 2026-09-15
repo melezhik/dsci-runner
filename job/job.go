@@ -532,6 +532,36 @@ func JobByBuildId ( build_id string ) string {
 	return r.JobId
 }
 
+func JobBuildIdByJobId ( job_id string ) string {
+
+	log.Printf("JobBuildIdByJobId: job_id: %s", job_id)
+
+	db, err := sql.Open("sqlite3", utils.SparkyDbFile())
+
+	defer db.Close()
+
+	if err != nil {
+		log.Fatalf("JobBuildIdByJobId: error opening db file: %s", err)
+	}
+
+	sqlQuery := `SELECT id FROM builds WHERE job_id = ? order by id desc LIMIT 1`
+
+	// QueryRow returns a *sql.Row
+	row := db.QueryRow(sqlQuery, job_id)
+
+	r := struct {
+		Id string 
+	}{}
+
+	err = row.Scan(&r.Id)
+
+	if err != nil {
+		log.Printf("JobBuildIdByJobId: return emtpy, database error: %s", err)
+		return ""
+	}
+	return r.Id
+}
+
 func JobTriggerFile(p string, job_id string) string {
 
 	log.Printf("JobTriggerFile. look up trigger: %s %s\n", p, job_id)
