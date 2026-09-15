@@ -91,6 +91,17 @@ func SparkyProjectDir(p string) string {
 
 }
 
+func SparkyJobFilesDir(p string, key string) string {
+
+	hdir, _ := os.UserHomeDir()
+
+	pdir := SparkyProjectDir(p)
+
+	return fmt.Sprintf("%s/.dsci/.sparky/projects/%s/.files/%s", hdir, pdir,key)
+
+
+}
+
 func CreateSparkyProjectDir(p string) string {
 
 	dir := SparkyProjectDir(p)

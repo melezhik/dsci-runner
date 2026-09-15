@@ -1326,3 +1326,61 @@ func git_diff (c *echo.Context) error {
 
 }
 
+func job_artifact_list(c *echo.Context) error {
+
+	project := c.Param("project")
+
+	job_id := c.Param("key")
+
+	//data := job.Report(project, job_id)
+
+	//data = strings.ReplaceAll(data, "\r\n", "\n")
+
+	//htmlOutput := ansihtml.ConvertToHTML([]byte(data))
+
+	entries, err := os.ReadDir(utils.SparkyJobFilesDir(project,job_id))
+
+	if err != nil {
+		log.Fatalf("job_artifact_list: ReadDir error: %s", err)
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		// Otherwise, sort alphabetically by name
+		return entries[i].Name() < entries[j].Name()
+	})
+
+	data := ""
+
+	for _, entry := range entries {
+		// Output the name and whether it is a directory
+		if ! entry.IsDir() {
+			data += fmt.Sprintf(
+				"<a href=\"/file_view/%s/%s/%s\">%s</a>\n",
+				"dsci",
+				job_id,
+				entry.Name(),
+				entry.Name(),
+			)
+		}
+	}
+	if data == "" {
+       data = "not found"
+	}
+	return c.HTML(
+		http.StatusOK,
+		fmt.Sprintf(
+			`%s %s
+    <div class="container">
+      <div>
+        <p class="title">Artifacts: %s@%s</p>
+        <hr>
+        <pre>%s</pre>
+      </div>
+    </div>
+</body>
+</html>`, 
+html.Header(), html.NavBar(user_is_logged(c)), 
+project, 
+job_id, 
+data))
+}
