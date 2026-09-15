@@ -1414,7 +1414,7 @@ func view_job_file(c *echo.Context) error {
 
 	script := ""
 	data_out := ""
-	if ext == "md" {
+	if ext == ".md" {
 		script = `
 	<script type="text/javascript">
         ;(() => {
@@ -1449,7 +1449,7 @@ func view_job_file(c *echo.Context) error {
 	html.Header(), html.NavBar(user_is_logged(c)), 
 	project, 
 	job_id,
-	filename,
+	filename, 
 	project, 
 	build_id, 
 	data_out,
