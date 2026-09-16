@@ -6,6 +6,8 @@ use JSON::Fast;
 
 use YAMLish;
 
+use Base64;
+
 class Pipeline
 
 does Sparky::JobApi::Role
@@ -142,7 +144,11 @@ does Sparky::JobApi::Role
 
     if $cont {
 
-      my %_dsci;
+        my %_dsci;
+        
+        if tags()<ai_agent_message> {
+          %_dsci<ai_agent_message> = decode-base64(tags()<ai_agent_message>);
+        }
     
         if $cr eq "docker" {
           bash "sudo chmod 666 /var/run/docker.sock";
