@@ -1380,12 +1380,15 @@ func job_artifact_list(c *echo.Context) error {
       <div>
         <p class="title">Artifacts: %s@%s</p>
         <hr>
+		<a href="/report/ui2/%s/%s">build</a>
+		<hr>
         <pre>%s</pre>
       </div>
     </div>
 </body>
 </html>`, 
 html.Header(), html.NavBar(user_is_logged(c)), 
+project, build_id,
 project, job_id,
 data))
 }
