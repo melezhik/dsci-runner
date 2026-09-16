@@ -6,8 +6,6 @@ use JSON::Fast;
 
 use YAMLish;
 
-use Base64;
-
 class Pipeline
 
 does Sparky::JobApi::Role
@@ -147,7 +145,8 @@ does Sparky::JobApi::Role
         my %_dsci;
         
         if tags()<ai_agent_message> {
-          %_dsci<ai_agent_message> = decode-base64(tags()<ai_agent_message>);
+          say "ai_agent_message set: {tags()<ai_agent_message>}";
+          %_dsci<ai_agent_message> = tags()<ai_agent_message>;
         }
     
         if $cr eq "docker" {

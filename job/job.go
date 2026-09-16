@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"encoding/base64"
+  "encoding/hex"
 )
 
 func JobQueue(
@@ -50,7 +50,7 @@ func JobQueue(
 		sha,
 		fmt.Sprintf("http://localhost:8080/%s.git", repo),
 		msg,
-		base64.StdEncoding.EncodeToString([]byte(ai_agent_message)),
+		hex.EncodeToString([]byte(ai_agent_message)),
 		app_cfg.DsciAgentImage,
 		skip_bootstrap,
 		allow_localhost_mode,

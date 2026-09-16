@@ -41,7 +41,7 @@ type CreateRepoPayload struct {
 }
 
 type ManualBuildPayload struct {
-	AiAgentMessage string `form:ai_agent_message`
+	AiAgentMessage string `form:"ai_agent_message"`
 }
 
 func list_repos(c *echo.Context) error {
