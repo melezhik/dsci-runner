@@ -628,3 +628,25 @@ func Builds(db *sql.DB) []types.JobBuild {
 	return builds
 
 }
+
+func JobHasArtifacts(p string, build_id string) (bool, error) {
+
+  job_id := JobByBuildId(build_id)
+
+  dir := utils.SparkyJobFilesDir(p,job_id)
+
+	f, err := os.Open(dir)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	// ReadNames limits reading to exactly 1 entry. 
+	// If the directory is empty, it returns io.EOF.
+	_, err = f.Readdirnames(1)
+	if errors.Is(err, io.EOF) {
+		return false, nil
+	}
+	
+	return true, err // returns false if there's an item, or passes through other errors
+}

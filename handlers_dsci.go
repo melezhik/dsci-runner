@@ -159,6 +159,15 @@ func report_ui2(c *echo.Context) error {
 
 	htmlOutput := ansihtml.ConvertToHTML([]byte(data))
 
+  artifacts_link := "<hr>"
+
+  if s, _ := job.JobHasArtifacts(project, build_id); s == true {
+    artifacts_link = fmt.Sprintf(
+      `<hr><a href="/report/%s/%s/artifacts">artifacts</a><hr>`,
+      project, build_id,
+    )
+  }
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -166,17 +175,15 @@ func report_ui2(c *echo.Context) error {
     <div class="container">
       <div>
         <p class="title">DSCI Report: %s@%s</p>
-		<hr>
-		<a href="/report/%s/%s/artifacts">artifacts</a>
-        <hr>
+		      %s
         <pre>%s</pre>
       </div>
     </div>
 </body>
 </html>`, 
 	html.Header(), html.NavBar(user_is_logged(c)),
-	project, build_id, 
-	project, build_id, 
+	project, build_id,
+  artifacts_link,
 	string(htmlOutput)))
 }
 
