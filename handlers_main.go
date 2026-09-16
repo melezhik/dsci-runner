@@ -40,6 +40,10 @@ type CreateRepoPayload struct {
 	Migrate string `form:"migrate"`
 }
 
+type ManualBuildPayload struct {
+	AiAgentMessage string `form:ai_agent_message`
+}
+
 func list_repos(c *echo.Context) error {
 	// Read the root directory contents
 	dir, _ := filepath.Abs(repoRoot)
@@ -305,8 +309,13 @@ func list_files(c *echo.Context) error {
 					<button class="button is-info" id="copyBtn">Copy</button>
 				</div>
 	    	</div>
-		<form action="/repo/%s/build" method="POST">
+		<form action="/repo/%s/build" method="POST" id="myForm">
 		<!-- Website URL Input -->
+		<!-- Скрытый блок с дополнительным текстовым полем -->
+		<div id="additionalFields" style="display: none;">
+			<label for="ai_agent_message">Message to AI agent:</label><br>
+			<textarea id="ai_agent_message" name="ai_agent_message" rows="20" cols="100"></textarea><br><br>
+		</div>
 		<!-- Submit Button -->
 		<div class="field is-grouped">
 			<div class="control">
@@ -320,7 +329,30 @@ func list_files(c *echo.Context) error {
 		%s
     	</div>
     </div>
- </body>
+	<script>
+	const form = document.getElementById('myForm');
+	const additionalFields = document.getElementById('additionalFields');
+	const reasonTextarea = document.getElementById('ai_agent_message');
+
+	form.addEventListener('submit', function(event) {
+		// Проверяем, видно ли уже дополнительное поле
+		if (additionalFields.style.display === 'none') {
+		// 1. Отменяем стандартную отправку формы
+		event.preventDefault(); 
+		
+		// 2. Показываем скрытый textarea
+		additionalFields.style.display = 'block';
+		
+		// 3. Делаем поле обязательным для заполнения (по желанию)
+		reasonTextarea.setAttribute('required', 'true');
+		
+		// 4. Переводим фокус на появившееся поле
+		reasonTextarea.focus();
+		}
+		// Если поле уже открыто и валидно, форма отправится со второго клика автоматически
+	});
+	</script>
+  </body>
 </html>`,
 			html.Header(),
 			html.NavBar(user_is_logged(c)),
@@ -690,6 +722,13 @@ func change_file(c *echo.Context) error {
 
 func manual_build(c *echo.Context) error {
 
+	r := new(ManualBuildPayload)
+
+	// Функция Bind автоматически распарсит форму и заполнит структуру
+	if err := c.Bind(r); err != nil {
+		return c.String(http.StatusBadRequest, "Wrong input data")
+	}
+
 	gitRoot, _ := filepath.Abs(repoRoot)
 
 	repo_dir := gitRoot + "/" + c.Param("repo")
@@ -726,7 +765,16 @@ func manual_build(c *echo.Context) error {
 	// Strip the trailing .git extension to get the clean repository path identifier
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 
-	// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+	// func JobQueue(
+	// 	app_cfg types.AppConfig, 
+	// 	job_id string, 
+	// 	msg string, 
+	// 	repo string, 
+	// 	ref string, 
+	// 	sha string, 
+	// 	description string,
+	// 	ai_agent_message string,
+	
 	job.JobQueue(
 		AppConfig,
 		job_id,
@@ -735,6 +783,7 @@ func manual_build(c *echo.Context) error {
 		string(ref.Name()),
 		shortSHA,
 		job_description,
+		r.AiAgentMessage,
 	)
 	job.UpdateCommitToJobIdState(shortSHA, job_id)
 	return c.HTML(
@@ -1053,14 +1102,13 @@ func create_repo(c *echo.Context) error {
 
 	repoName := strings.ReplaceAll(r.Repo," ", "")
 
-  base := path.Base(r.Repo)
+	base := path.Base(r.Repo)
 
-  isGitUrl := true
+	isGitUrl := true
 
-  if base == r.Repo {
-    isGitUrl = false
-  }
-
+	if base == r.Repo {
+		isGitUrl = false
+	}
 
 	if ! strings.HasSuffix(base, ".git") {
 		base = fmt.Sprintf("%s.git",base)

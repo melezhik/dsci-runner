@@ -294,7 +294,15 @@ func main() {
 					shortSHA := data[0].NewCommit[:7]
 					job_description := fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
 					job_id := shortSHA
-					// JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string,description string)
+					// func JobQueue(
+					// 	app_cfg types.AppConfig, 
+					// 	job_id string, 
+					// 	msg string, 
+					// 	repo string, 
+					// 	ref string, 
+					// 	sha string, 
+					// 	description string,
+					// 	ai_agent_message string,
 					job.JobQueue(
 						AppConfig,
 						job_id,
@@ -303,6 +311,7 @@ func main() {
 						data[0].RefName,
 						shortSHA,
 						job_description,
+						"",
 					)
 					job.UpdateCommitToJobIdState(shortSHA, job_id)
 				}

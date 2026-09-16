@@ -13,9 +13,19 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"encoding/base64"
 )
 
-func JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, ref, sha string, description string) {
+func JobQueue(
+	app_cfg types.AppConfig, 
+	job_id string, 
+	msg string, 
+	repo string, 
+	ref string, 
+	sha string, 
+	description string,
+	ai_agent_message string,
+	) {
 
 	var q types.JobRequest
 	//now := time.Now()
@@ -33,13 +43,14 @@ func JobQueue(app_cfg types.AppConfig, job_id string, msg string, repo string, r
 		allow_localhost_mode = fmt.Sprintf(",DsciAllowLocalhostModeRepos=%s", repos)
 	}
 	q.Trigger.Sparrowdo.Tags = fmt.Sprintf(
-		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,DsciAgentImage=%s%s%s",
+		"cr=%s,ref=%s,repo_full_name=%s,sha=%s,scm=%s,message=%s,ai_agent_message=%s,DsciAgentImage=%s%s%s",
 		app_cfg.DsciContainerRuntime,
 		ref,
 		repo,
 		sha,
 		fmt.Sprintf("http://localhost:8080/%s.git", repo),
 		msg,
+		base64.StdEncoding.EncodeToString([]byte(ai_agent_message)),
 		app_cfg.DsciAgentImage,
 		skip_bootstrap,
 		allow_localhost_mode,
