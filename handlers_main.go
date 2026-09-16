@@ -1332,12 +1332,6 @@ func job_artifact_list(c *echo.Context) error {
 
 	build_id := c.Param("build_id")
 
-	//data := job.Report(project, job_id)
-
-	//data = strings.ReplaceAll(data, "\r\n", "\n")
-
-	//htmlOutput := ansihtml.ConvertToHTML([]byte(data))
-
 	job_id := job.JobByBuildId(build_id)
 
 	dir := utils.SparkyJobFilesDir(project,job_id)
@@ -1351,14 +1345,12 @@ func job_artifact_list(c *echo.Context) error {
 	}
 
 	sort.Slice(entries, func(i, j int) bool {
-		// Otherwise, sort alphabetically by name
 		return entries[i].Name() < entries[j].Name()
 	})
 
 	data := ""
 
 	for _, entry := range entries {
-		// Output the name and whether it is a directory
 		if ! entry.IsDir() {
 			data += fmt.Sprintf(
 				"<a href=\"/file_view/%s/%s/%s\">%s</a>\n",
@@ -1380,16 +1372,16 @@ func job_artifact_list(c *echo.Context) error {
       <div>
         <p class="title">Artifacts: %s@%s</p>
         <hr>
-		<a href="/report/ui2/%s/%s">build</a>
-		<hr>
+		      <a href="/report/ui2/%s/%s">build</a>
+    		<hr>
         <pre>%s</pre>
       </div>
     </div>
 </body>
 </html>`, 
 html.Header(), html.NavBar(user_is_logged(c)), 
-project, build_id,
 project, job_id,
+project, build_id,
 data))
 }
 
