@@ -314,7 +314,7 @@ func list_files(c *echo.Context) error {
 		<!-- Скрытый блок с дополнительным текстовым полем -->
 		<div id="additionalFields" style="display: none;">
 			<label for="ai_agent_message">Message to AI agent:</label><br>
-			<textarea id="ai_agent_message" name="ai_agent_message" rows="20" cols="100"></textarea><br><br>
+			<textarea class="textarea" placeholder="pass your message to smart AI agent" id="ai_agent_message" name="ai_agent_message" rows="20" cols="100"></textarea><br><br>
 		</div>
 		<!-- Submit Button -->
 		<div class="field is-grouped">
