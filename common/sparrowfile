@@ -144,9 +144,10 @@ does Sparky::JobApi::Role
 
         my %_dsci;
         
-        bash "$cr stop -t 1 dsci-agent || :";
-
-        bash "$cr rm dsci-agent || :";
+        unless $localhost-mode {
+          bash "$cr stop -t 1 dsci-agent || :";
+          bash "$cr rm dsci-agent || :";
+        }
 
         my @env;
 
@@ -161,9 +162,10 @@ does Sparky::JobApi::Role
 
         say "run dsci agent container from image: {tags()<DsciAgentImage>||'alpine:latest'}";
 
-        say "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
-
-        bash "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
+        unless $localhost-mode {
+          say "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {tags()<DsciAgentImage> || 'alpine:latest'}";
+          bash "$cr run --network host  -dit --rm --name dsci-agent --entrypoint /bin/sh {@env.join(' ')} {tags()<DsciAgentImage> || 'alpine:latest'}";
+        }
 
         unless tags()<DsciAgentSkipBootstrap> {
           my $j = Sparky::JobApi.new(
