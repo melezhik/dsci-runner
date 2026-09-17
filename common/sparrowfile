@@ -144,11 +144,8 @@ does Sparky::JobApi::Role
 
         my %_dsci;
         
-        if $cr eq "docker" {
-          bash "sudo chmod 666 /var/run/docker.sock";
-        }
-
         bash "$cr stop -t 1 dsci-agent || :";
+
         bash "$cr rm dsci-agent || :";
 
         my @env;
