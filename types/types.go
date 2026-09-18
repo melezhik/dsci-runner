@@ -5,6 +5,7 @@ type AppConfig struct {
 	DsciAgentSkipBootstrap      bool
 	DsciAgentImage              string
 	DsciAllowLocalhostModeRepos []string
+	DsciAiModeRepos             []string
 	DsciContainerRuntime        string
 	GitPathToHttpBackend        string
 	GitServerAddress            string

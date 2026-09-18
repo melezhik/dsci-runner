@@ -27,9 +27,9 @@ import (
 	"time"
 
 	"context"
+	_ "embed"
 	"os/signal"
 	"syscall"
-  _ "embed"
 )
 
 // Git related constants
@@ -56,35 +56,35 @@ func main() {
 		return
 	}
 
-  utils.CreateSparkyProjectDir("dsci");
+	utils.CreateSparkyProjectDir("dsci")
 
-  hdir, _ := os.UserHomeDir()
+	hdir, _ := os.UserHomeDir()
 
-  path := fmt.Sprintf("%s/sparky.yaml",hdir);
+	path := fmt.Sprintf("%s/sparky.yaml", hdir)
 
 	err := os.WriteFile(path, sparky_yaml, 0644)
 
 	if err != nil {
-		log.Fatalf("main: error creating file %s: %s",path,err)
+		log.Fatalf("main: error creating file %s: %s", path, err)
 	}
 
-  log.Printf("main: creating file %s OK\n",path)
+	log.Printf("main: creating file %s OK\n", path)
 
-  path = fmt.Sprintf("%s/sparrowfile",utils.SparkyProjectDir("dsci"))
+	path = fmt.Sprintf("%s/sparrowfile", utils.SparkyProjectDir("dsci"))
 
-  err = os.WriteFile(path, dsci_sparrowfile, 0644)
+	err = os.WriteFile(path, dsci_sparrowfile, 0644)
 
-  if err != nil {
-    log.Fatalf("main: error creating file %s: %s",path,err)
-  }
+	if err != nil {
+		log.Fatalf("main: error creating file %s: %s", path, err)
+	}
 
-  log.Printf("main: creating file %s OK\n",path)
+	log.Printf("main: creating file %s OK\n", path)
 
-  err = os.MkdirAll(repoRoot, 0755)
+	err = os.MkdirAll(repoRoot, 0755)
 
-  if err != nil {
-    log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
-  }
+	if err != nil {
+		log.Fatalf("main: error creating directory %s: %s", repoRoot, err)
+	}
 
 	err = os.MkdirAll(repoRoot, 0755)
 
@@ -147,7 +147,7 @@ func main() {
 	e1.GET("/logout", drop_session)
 	e1.GET("/", list_repos)
 	e1.GET("/repo/:repo", list_files)
-  	e1.GET("/repo/:repo/commit/:commit", git_diff)
+	e1.GET("/repo/:repo/commit/:commit", git_diff)
 	e1.GET("/repo/:repo/file/:file", dump_file)
 	e1.POST("/repo/:repo/file/:file", change_file)
 	e1.GET("/repo/:repo/file_edit/:file", edit_file)
@@ -295,12 +295,12 @@ func main() {
 					job_description := fmt.Sprintf("%s: %s | %s", repoName, shortSHA, msg)
 					job_id := shortSHA
 					// func JobQueue(
-					// 	app_cfg types.AppConfig, 
-					// 	job_id string, 
-					// 	msg string, 
-					// 	repo string, 
-					// 	ref string, 
-					// 	sha string, 
+					// 	app_cfg types.AppConfig,
+					// 	job_id string,
+					// 	msg string,
+					// 	repo string,
+					// 	ref string,
+					// 	sha string,
 					// 	description string,
 					// 	ai_agent_message string,
 					job.JobQueue(

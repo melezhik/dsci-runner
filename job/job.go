@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"dsci_runner/types"
 	"dsci_runner/utils"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,19 +14,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-  "encoding/hex"
 )
 
 func JobQueue(
-	app_cfg types.AppConfig, 
-	job_id string, 
-	msg string, 
-	repo string, 
-	ref string, 
-	sha string, 
+	app_cfg types.AppConfig,
+	job_id string,
+	msg string,
+	repo string,
+	ref string,
+	sha string,
 	description string,
 	ai_agent_message string,
-	) {
+) {
 
 	var q types.JobRequest
 	//now := time.Now()
@@ -513,7 +513,7 @@ func Report(p string, job_id string) string {
 
 }
 
-func JobByBuildId ( build_id string ) string {
+func JobByBuildId(build_id string) string {
 
 	log.Printf("JobByBuildId: build_id: %s", build_id)
 
@@ -531,7 +531,7 @@ func JobByBuildId ( build_id string ) string {
 	row := db.QueryRow(sqlQuery, build_id)
 
 	r := struct {
-		JobId string 
+		JobId string
 	}{}
 
 	err = row.Scan(&r.JobId)
@@ -543,7 +543,7 @@ func JobByBuildId ( build_id string ) string {
 	return r.JobId
 }
 
-func JobBuildIdByJobId ( job_id string ) string {
+func JobBuildIdByJobId(job_id string) string {
 
 	log.Printf("JobBuildIdByJobId: job_id: %s", job_id)
 
@@ -561,7 +561,7 @@ func JobBuildIdByJobId ( job_id string ) string {
 	row := db.QueryRow(sqlQuery, job_id)
 
 	r := struct {
-		Id string 
+		Id string
 	}{}
 
 	err = row.Scan(&r.Id)
@@ -642,9 +642,9 @@ func Builds(db *sql.DB) []types.JobBuild {
 
 func JobHasArtifacts(p string, build_id string) (bool, error) {
 
-  job_id := JobByBuildId(build_id)
+	job_id := JobByBuildId(build_id)
 
-  dir := utils.SparkyJobFilesDir(p,job_id)
+	dir := utils.SparkyJobFilesDir(p, job_id)
 
 	f, err := os.Open(dir)
 	if err != nil {
@@ -652,12 +652,12 @@ func JobHasArtifacts(p string, build_id string) (bool, error) {
 	}
 	defer f.Close()
 
-	// ReadNames limits reading to exactly 1 entry. 
+	// ReadNames limits reading to exactly 1 entry.
 	// If the directory is empty, it returns io.EOF.
 	_, err = f.Readdirnames(1)
 	if errors.Is(err, io.EOF) {
 		return false, nil
 	}
-	
+
 	return true, err // returns false if there's an item, or passes through other errors
 }

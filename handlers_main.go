@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	go_git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/plumbing"
 	go_git_client "github.com/go-git/go-git/v6/plumbing/client"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	go_git_http "github.com/go-git/go-git/v6/plumbing/transport/http"
@@ -23,11 +23,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
-  "path"
 )
 
 type ChangeFilePayload struct {
@@ -294,6 +295,13 @@ func list_files(c *echo.Context) error {
 		state_badge = `<span class="tag is-dark is-medium">Queued</span>`
 	}
 
+	enable_ai_mode := "return;"
+
+	_repo := strings.TrimSuffix(c.Param("repo"), ".git")
+	if slices.Contains(AppConfig.DsciAiModeRepos, _repo) {
+		enable_ai_mode = ""
+	}
+
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -335,6 +343,7 @@ func list_files(c *echo.Context) error {
 	const reasonTextarea = document.getElementById('ai_agent_message');
 
 	form.addEventListener('submit', function(event) {
+		%s
 		// Проверяем, видно ли уже дополнительное поле
 		if (additionalFields.style.display === 'none') {
 		// 1. Отменяем стандартную отправку формы
@@ -359,10 +368,11 @@ func list_files(c *echo.Context) error {
 			uplink,
 			AppConfig.GitServerAddress,
 			c.Param("repo"), c.Param("repo"),
-      c.Param("repo"), commit.Hash.String(), shortSHA,
-      commit.Message, commit.Author.Email, state_badge,
+			c.Param("repo"), commit.Hash.String(), shortSHA,
+			commit.Message, commit.Author.Email, state_badge,
 			data,
 			html.CopyPasteButtonScript(),
+			enable_ai_mode,
 		))
 }
 
@@ -766,15 +776,15 @@ func manual_build(c *echo.Context) error {
 	repoName := strings.TrimSuffix(c.Param("repo"), ".git")
 
 	// func JobQueue(
-	// 	app_cfg types.AppConfig, 
-	// 	job_id string, 
-	// 	msg string, 
-	// 	repo string, 
-	// 	ref string, 
-	// 	sha string, 
+	// 	app_cfg types.AppConfig,
+	// 	job_id string,
+	// 	msg string,
+	// 	repo string,
+	// 	ref string,
+	// 	sha string,
 	// 	description string,
 	// 	ai_agent_message string,
-	
+
 	job.JobQueue(
 		AppConfig,
 		job_id,
@@ -1059,8 +1069,7 @@ func user_is_logged(c *echo.Context) bool {
 	return true
 }
 
-
-func create_repo_form (c *echo.Context) error {
+func create_repo_form(c *echo.Context) error {
 	return c.HTML(
 		http.StatusOK,
 		fmt.Sprintf(
@@ -1100,7 +1109,7 @@ func create_repo(c *echo.Context) error {
 		return c.String(http.StatusBadRequest, "Wrong input data")
 	}
 
-	repoName := strings.ReplaceAll(r.Repo," ", "")
+	repoName := strings.ReplaceAll(r.Repo, " ", "")
 
 	base := path.Base(r.Repo)
 
@@ -1110,23 +1119,23 @@ func create_repo(c *echo.Context) error {
 		isGitUrl = false
 	}
 
-	if ! strings.HasSuffix(base, ".git") {
-		base = fmt.Sprintf("%s.git",base)
+	if !strings.HasSuffix(base, ".git") {
+		base = fmt.Sprintf("%s.git", base)
 	}
 
 	log.Printf("create_repo: base: %s, repoName, isGitUrl: %s", base, repoName, isGitUrl)
 
 	dname, _ := filepath.Abs(repoRoot)
 
-	cmd := exec.Command("git","init","--bare", base)
+	cmd := exec.Command("git", "init", "--bare", base)
 
 	if isGitUrl {
-		cmd = exec.Command("git","clone","--bare", repoName, base)
+		cmd = exec.Command("git", "clone", "--bare", repoName, base)
 	}
 
 	cmd.Dir = dname
 
-	log.Printf("create_repo: git init command: %s",cmd)
+	log.Printf("create_repo: git init command: %s", cmd)
 
 	output, err := cmd.CombinedOutput() // Run the command and wait for completion
 
@@ -1156,7 +1165,7 @@ func create_repo(c *echo.Context) error {
 
 	log.Printf("create_repo: creating git clone chache dir: %s OK", dname)
 
-	var repo *go_git.Repository 
+	var repo *go_git.Repository
 
 	if isGitUrl == false {
 
@@ -1169,7 +1178,7 @@ func create_repo(c *echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to init empty repo")
 		}
 		// Create origin remote pointing to the empty target
-		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",base)
+		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s", base)
 		_, err = repo_.CreateRemote(&config.RemoteConfig{
 			Name: "origin",
 			URLs: []string{remote_url},
@@ -1182,18 +1191,17 @@ func create_repo(c *echo.Context) error {
 	} else {
 
 		fmt.Println("create_repo: cloning repository ...")
-    remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s",base)
+		remote_url := fmt.Sprintf("http://127.0.0.1:8080/%s", base)
 		repo_, err := go_git.PlainClone(dname, &go_git.CloneOptions{
 			URL: remote_url,
 		})
-	
+
 		if err != nil {
 			log.Printf("create_repo: Failed to clone repo: %v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to clone repo")
 		}
 		repo = repo_
 	}
-
 
 	dname = filepath.Join(dname, ".dsci")
 
@@ -1282,11 +1290,11 @@ func create_repo(c *echo.Context) error {
 
 	fmt.Println("create_repo: Successfully committed and pushed file to bare repository!")
 
-	return c.Redirect(http.StatusMovedPermanently, "/repo/" + base)
+	return c.Redirect(http.StatusMovedPermanently, "/repo/"+base)
 
 }
 
-func git_diff (c *echo.Context) error {
+func git_diff(c *echo.Context) error {
 
 	gitRoot, _ := filepath.Abs(repoRoot)
 
@@ -1300,7 +1308,7 @@ func git_diff (c *echo.Context) error {
 	}
 
 	// Хэш нужного коммита (передайте свой)
-	commitSHA := c.Param("commit") 
+	commitSHA := c.Param("commit")
 
 	log.Printf("git_diff: repo: %s commitSHA: %s\n", c.Param("repo"), commitSHA)
 
@@ -1365,7 +1373,7 @@ func git_diff (c *echo.Context) error {
 </html>`,
 			html.Header(),
 			html.NavBar(user_is_logged(c)),
-			c.Param("repo"), c.Param("repo"),  			
+			c.Param("repo"), c.Param("repo"),
 			currentCommit.Hash.String()[:7], commitMessage,
 			authorName, commitDate,
 			patch.String(),
@@ -1382,7 +1390,7 @@ func job_artifact_list(c *echo.Context) error {
 
 	job_id := job.JobByBuildId(build_id)
 
-	dir := utils.SparkyJobFilesDir(project,job_id)
+	dir := utils.SparkyJobFilesDir(project, job_id)
 
 	entries, err := os.ReadDir(dir)
 
@@ -1399,7 +1407,7 @@ func job_artifact_list(c *echo.Context) error {
 	data := ""
 
 	for _, entry := range entries {
-		if ! entry.IsDir() {
+		if !entry.IsDir() {
 			data += fmt.Sprintf(
 				"<a href=\"/file_view/%s/%s/%s\">%s</a>\n",
 				"dsci",
@@ -1410,7 +1418,7 @@ func job_artifact_list(c *echo.Context) error {
 		}
 	}
 	if data == "" {
-       data = "not found"
+		data = "not found"
 	}
 	return c.HTML(
 		http.StatusOK,
@@ -1426,11 +1434,11 @@ func job_artifact_list(c *echo.Context) error {
       </div>
     </div>
 </body>
-</html>`, 
-html.Header(), html.NavBar(user_is_logged(c)), 
-project, job_id,
-project, build_id,
-data))
+</html>`,
+			html.Header(), html.NavBar(user_is_logged(c)),
+			project, job_id,
+			project, build_id,
+			data))
 }
 
 func view_job_file(c *echo.Context) error {
@@ -1469,9 +1477,9 @@ func view_job_file(c *echo.Context) error {
                 //document.body.appendChild(div)
         })()
   	</script>`
-	  data_out = fmt.Sprintf(`<p class="content" id="data">%s</p>`,data)
+		data_out = fmt.Sprintf(`<p class="content" id="data">%s</p>`, data)
 	} else {
-		data_out = fmt.Sprintf("<pre>%s</pre>",html_utils.EscapeString(string(data)))
+		data_out = fmt.Sprintf("<pre>%s</pre>", html_utils.EscapeString(string(data)))
 	}
 	return c.HTML(
 		http.StatusOK,
@@ -1488,15 +1496,15 @@ func view_job_file(c *echo.Context) error {
     </div>
 %s
 </body>
-</html>`, 
-	html.Header(), html.NavBar(user_is_logged(c)), 
-	project, 
-	job_id,
-	filename, 
-	project, 
-	build_id, 
-	data_out,
-	script,
-	))
+</html>`,
+			html.Header(), html.NavBar(user_is_logged(c)),
+			project,
+			job_id,
+			filename,
+			project,
+			build_id,
+			data_out,
+			script,
+		))
 
 }

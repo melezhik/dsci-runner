@@ -95,8 +95,7 @@ func SparkyJobFilesDir(p string, key string) string {
 
 	pdir := SparkyProjectDir(p)
 
-	return fmt.Sprintf("%s/.files/%s", pdir,key)
-
+	return fmt.Sprintf("%s/.files/%s", pdir, key)
 
 }
 
@@ -137,8 +136,8 @@ func SparkyCacheDir(job_id string) string {
 }
 
 func SparkyCacheDirDocker(job_id string, cr string) string {
-  hdir, _ := os.UserHomeDir()
-  return fmt.Sprintf("%s/.dsci/.sparky/.cache/%s", hdir,job_id)
+	hdir, _ := os.UserHomeDir()
+	return fmt.Sprintf("%s/.dsci/.sparky/.cache/%s", hdir, job_id)
 }
 
 func CreateSparkyCacheDir(job_id string) string {
