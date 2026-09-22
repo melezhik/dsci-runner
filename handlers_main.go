@@ -532,28 +532,32 @@ func edit_file(c *echo.Context) error {
 		<div id="editor" style="height: 400px;">%s</div>
 	</div>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.44.0/ace.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.44.0/ext-modelist.js"></script>
 	<script>
+    const modelist = ace.require("ace/ext/modelist");
+    const mode = modelist.getModeForPath("%s");
 		var editor = ace.edit("editor");
-		//editor.setTheme("ace/theme/monokai");
-		//editor.session.setMode("ace/mode/yaml");
+		  //editor.setTheme("ace/theme/monokai");
+		  //editor.session.setMode("ace/mode/yaml");
+      editor.setTheme("ace/theme/textmate");
+      editor.session.setMode(mode.mode);
     	editor.session.setNewLineMode("unix");
-		const codeForm = document.getElementById("code-form");
+  		const codeForm = document.getElementById("code-form");
     	const hiddenTextarea = document.getElementById("hidden-textarea");
     	const submitBtn = document.getElementById("submit-code-btn");
-		codeForm.addEventListener("submit", function(event) {
-		const editorCode = editor.getValue().trim();
-		hiddenTextarea.value = editorCode;
+	  	codeForm.addEventListener("submit", function(event) {
+		  const editorCode = editor.getValue().trim();
+	  	hiddenTextarea.value = editorCode;
         });
 	</script>
  </body>
 </html>`,
-			html.Header(),
-			html.NavBar(user_is_logged(c)),
-			link,
-			file_short_name,
+			html.Header(), html.NavBar(user_is_logged(c)),
+			link,file_short_name,
 			c.Param("repo"),
 			c.Param("file"),
 			code,
+      file_short_name,
 		),
 	)
 
