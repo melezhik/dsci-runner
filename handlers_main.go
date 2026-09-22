@@ -537,9 +537,9 @@ func edit_file(c *echo.Context) error {
     const modelist = ace.require("ace/ext/modelist");
     const mode = modelist.getModeForPath("%s");
 		var editor = ace.edit("editor");
-		  //editor.setTheme("ace/theme/monokai");
+		  editor.setTheme("ace/theme/monokai");
 		  //editor.session.setMode("ace/mode/yaml");
-      editor.setTheme("ace/theme/textmate");
+      //editor.setTheme("ace/theme/textmate");
       editor.session.setMode(mode.mode);
     	editor.session.setNewLineMode("unix");
   		const codeForm = document.getElementById("code-form");
