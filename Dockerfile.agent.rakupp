@@ -11,6 +11,7 @@ RUN git config --global advice.detachedHead false
 RUN mkdir -p  /root/.local/bin/ && ls -l /root/.local/bin
 
 COPY .dist/rakupp  /root/.local/bin/rakupp
+COPY .dist/rakupp  /root/.local/bin/raku
 
 RUN mkdir -p ~/.local/libexec/rakupp/
 
