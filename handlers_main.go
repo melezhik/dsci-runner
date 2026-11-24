@@ -1481,7 +1481,7 @@ func view_job_file(c *echo.Context) error {
                 //document.body.appendChild(div)
         })()
   	</script>`
-		data_out = fmt.Sprintf(`<p class="content" id="data">%s</p>`, data)
+		data_out = fmt.Sprintf(`<p class="content" id="data">%s</p>`, html_utils.EscapeString(string(data)) )
 	} else {
 		data_out = fmt.Sprintf("<pre>%s</pre>", html_utils.EscapeString(string(data)))
 	}

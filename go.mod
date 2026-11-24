@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/go-git/go-git/v6 v6.0.0-alpha.5
+	github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c
 	github.com/labstack/echo/v5 v5.0.0
 	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/pelletier/go-toml/v2 v2.2.4
